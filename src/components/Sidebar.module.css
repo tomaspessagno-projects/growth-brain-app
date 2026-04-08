@@ -4,8 +4,7 @@
   position: fixed;
   left: 0;
   top: 0;
-  background: rgba(16, 21, 29, 0.7);
-  backdrop-filter: blur(20px);
+  background: #000000;
   border-right: 1px solid var(--surface-border);
   display: flex;
   flex-direction: column;
@@ -23,13 +22,12 @@
 .logoBox {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
+  border-radius: 6px;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 4px 15px var(--primary-glow);
+  color: #000000;
 }
 
 .brand h2 {
@@ -65,14 +63,13 @@
 }
 
 .navItem.active {
-  background: linear-gradient(90deg, rgba(109, 40, 217, 0.15) 0%, transparent 100%);
-  color: var(--secondary-color);
-  border-left: 2px solid var(--secondary-color);
-  border-radius: 0 12px 12px 0;
+  background: #ffffff;
+  color: #000000;
+  border-radius: 6px;
 }
 
 .navItem.active .icon {
-  color: var(--secondary-color);
+  color: #000000;
 }
 
 .icon {
@@ -90,13 +87,9 @@
 }
 
 .tag {
-  background: rgba(69, 243, 255, 0.1);
-  color: var(--secondary-color);
-  padding: 6px 12px;
-  border-radius: 20px;
+  color: var(--text-secondary);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 1px;
   text-transform: uppercase;
-  border: 1px solid rgba(69, 243, 255, 0.2);
 }

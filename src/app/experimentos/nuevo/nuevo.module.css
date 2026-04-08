@@ -55,11 +55,11 @@
 .formGroup input[type="date"],
 .formGroup textarea,
 .formGroup select {
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   border: 1px solid var(--surface-border);
   color: white;
   padding: 14px 16px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-family: inherit;
   font-size: 1rem;
   transition: var(--transition);
@@ -78,9 +78,8 @@
 }
 
 .formGroup input:focus, .formGroup textarea:focus, .formGroup select:focus {
-  border-color: var(--secondary-color);
-  box-shadow: 0 0 10px rgba(69, 243, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: #555555;
+  background: transparent;
 }
 
 .actions {
@@ -109,20 +108,19 @@
 }
 
 .submitBtn {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
-  color: white;
+  background: #ffffff;
+  color: #000000;
   padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  border: 1px solid #ffffff;
   cursor: pointer;
-  box-shadow: 0 4px 15px var(--primary-glow);
   transition: var(--transition);
 }
 
 .submitBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--primary-glow);
+  background: #000000;
+  color: #ffffff;
 }
 
 .submitBtn:disabled {
@@ -135,7 +133,7 @@
   border: 1px solid var(--danger-color);
   color: var(--danger-color);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 6px;
   margin-bottom: 24px;
   font-weight: 500;
 }

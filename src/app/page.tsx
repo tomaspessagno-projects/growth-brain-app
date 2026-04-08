@@ -96,13 +96,18 @@ export default function Dashboard() {
           <h1 className={styles.title}>Dashboard General</h1>
           <p className={styles.subtitle}>Resumen de todos tus experimentos de Growth.</p>
         </div>
-        <button 
-          onClick={handleGenerateReport} 
-          disabled={isGenerating} 
-          className={styles.reportBtn}
-        >
-          {isGenerating ? 'IA Generando Reporte...' : '📄 Reporte Semanal'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={handleGenerateReport} 
+            disabled={isGenerating} 
+            className={styles.reportBtn}
+          >
+            {isGenerating ? 'IA Generando Reporte...' : '📄 Reporte Semanal'}
+          </button>
+          <Link href="/experimentos/nuevo" className={styles.primaryAction}>
+            + Crear Experimento
+          </Link>
+        </div>
       </header>
 
       <section className={styles.statsGrid}>
