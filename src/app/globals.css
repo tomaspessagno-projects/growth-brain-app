@@ -76,7 +76,8 @@ a {
 .main-content {
   flex-grow: 1;
   padding: 40px;
-  margin-left: 280px; /* Space for Sidebar */
+  margin-left: var(--sidebar-width, 280px); 
+  transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
 }

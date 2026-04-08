@@ -1,5 +1,6 @@
 .sidebar {
-  width: 280px;
+  width: var(--sidebar-width, 280px);
+  transition: width 0.3s ease;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -17,6 +18,15 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 48px;
+  overflow: hidden;
+}
+
+.brand h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
 }
 
 .logoBox {
@@ -54,6 +64,8 @@
   transition: var(--transition);
   font-weight: 500;
   border: 1px solid transparent;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .navItem:hover {
@@ -92,4 +104,29 @@
   font-weight: 400;
   letter-spacing: 1px;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.collapseBtn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  top: 36px;
+  right: -16px;
+  background: black;
+  z-index: 101;
+  transition: var(--transition);
+}
+
+.collapseBtn:hover {
+  background: white;
+  color: black;
 }

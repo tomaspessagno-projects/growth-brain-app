@@ -1,11 +1,16 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '80px' : '280px');
+  }, [isCollapsed]);
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <DashboardIcon /> },
@@ -13,12 +18,16 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.brand}>
-        <div className={styles.logoBox}>
+    <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+      <button className={styles.collapseBtn} onClick={() => setIsCollapsed(!isCollapsed)}>
+        {isCollapsed ? '→' : '←'}
+      </button>
+
+      <div className={styles.brand} style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
+        <div className={styles.logoBox} style={{ width: isCollapsed ? '32px' : '40px', height: isCollapsed ? '32px' : '40px' }}>
           <BrainIcon />
         </div>
-        <h2>Growth Brain</h2>
+        {!isCollapsed && <h2>Growth Brain</h2>}
       </div>
 
       <nav className={styles.nav}>
@@ -26,16 +35,16 @@ export default function Sidebar() {
           const isActive = pathname === item.path || (pathname?.startsWith(item.path) && item.path !== '/');
           
           return (
-            <Link href={item.path} key={item.path} className={`${styles.navItem} ${isActive ? styles.active : ''}`}>
+            <Link href={item.path} key={item.path} className={`${styles.navItem} ${isActive ? styles.active : ''}`} style={{ justifyContent: isCollapsed ? 'center' : 'flex-start', padding: isCollapsed ? '12px 0' : '12px 16px' }}>
               <span className={styles.icon}>{item.icon}</span>
-              <span className={styles.label}>{item.name}</span>
+              {!isCollapsed && <span className={styles.label}>{item.name}</span>}
             </Link>
           );
         })}
       </nav>
 
       <div className={styles.footer}>
-        <div className={styles.tag}>AI Powered</div>
+        {!isCollapsed ? <div className={styles.tag}>AI Powered</div> : <div className={styles.tag}>AI</div>}
       </div>
     </aside>
   );
