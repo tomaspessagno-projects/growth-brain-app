@@ -1,7 +1,7 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 64px;
 }
 
 .header {
@@ -12,21 +12,20 @@
 }
 
 .reportBtn {
-  background: white;
-  color: #1a1a2e;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 0.95rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 4px 15px rgba(255,255,255,0.2);
 }
 
 .reportBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+  color: var(--text-primary);
+  border-color: #444;
 }
 
 .reportBtn:disabled {
@@ -35,21 +34,21 @@
 }
 
 .primaryAction {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
+  background: #ffffff;
+  color: #000000;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 15px var(--primary-glow);
   transition: var(--transition);
+  border: 1px solid #ffffff;
 }
 
 .primaryAction:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--primary-glow);
+  background: #000000;
+  color: #ffffff;
 }
 
 .statsGrid {
@@ -138,14 +137,14 @@
 }
 
 .viewAll {
-  color: var(--secondary-color);
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: 400;
   font-size: 0.9rem;
   transition: var(--transition);
 }
 
 .viewAll:hover {
-  text-shadow: 0 0 8px var(--secondary-glow);
+  color: var(--text-primary);
 }
 
 .table {
@@ -172,7 +171,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--surface-border);
   transition: var(--transition);
   align-items: center;
 }
@@ -197,23 +196,21 @@
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
 }
 
 .dot.Encurso {
-  background: var(--secondary-color);
-  box-shadow: 0 0 8px var(--secondary-color);
+  background: #3b82f6;
 }
 
 .dot.Planeado {
-  background: var(--warning-color);
-  box-shadow: 0 0 8px var(--warning-color);
+  background: var(--text-secondary);
 }
 
 .dot.Finalizado {
-  background: var(--text-secondary);
+  background: #10b981;
 }
 
 .expDate {
