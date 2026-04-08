@@ -121,19 +121,33 @@ export default function Dashboard() {
       </section>
 
       <section className={`glass-panel stagger-4 ${styles.recentSection}`}>
-        <h2>Experimentos Recientes</h2>
-        <div className={styles.recentGrid}>
-          {recentExperiments.map(exp => (
-            <Link href={`/experimentos/${exp.id}`} key={exp.id} className={styles.experimentCard}>
-              <div className={styles.cardHeader}>
-                <span className={styles.statusBadge}>{exp.estado}</span>
-              </div>
-              <h3 className={styles.cardTitle}>{exp.nombre}</h3>
-            </Link>
-          ))}
-          {recentExperiments.length === 0 && (
-            <p style={{ color: '#a0aab2' }}>No tienes experimentos recientes. ¡Empieza creando uno en el menú lateral!</p>
-          )}
+        <div className={styles.sectionHeader}>
+          <h2>Experimentos Recientes</h2>
+          <Link href="/experimentos" className={styles.viewAll}>Ver Todos →</Link>
+        </div>
+        <div className={styles.table}>
+          <div className={styles.tableHead}>
+            <span>Nombre del Experimento</span>
+            <span>Estado</span>
+            <span>Fecha Inicio</span>
+          </div>
+          <div className={styles.tableBody}>
+            {recentExperiments.map(exp => (
+              <Link href={`/experimentos/${exp.id}`} key={exp.id} className={styles.tableRow} style={{textDecoration: 'none', color: 'inherit'}}>
+                <span className={styles.expTitle}>{exp.nombre}</span>
+                <span className={styles.expStatus}>
+                  <div className={`${styles.dot} ${exp.estado === 'En Curso' ? styles.Encurso : exp.estado === 'Planeado' ? styles.Planeado : styles.Finalizado}`}></div>
+                  {exp.estado}
+                </span>
+                <span className={styles.expDate}>
+                  {exp.fecha_inicio ? new Date(exp.fecha_inicio).toLocaleDateString('es-ES') : '-'}
+                </span>
+              </Link>
+            ))}
+            {recentExperiments.length === 0 && (
+              <p style={{ padding: '16px', color: '#a0aab2' }}>No tienes experimentos recientes. ¡Empieza creando uno en el menú lateral!</p>
+            )}
+          </div>
         </div>
       </section>
 
