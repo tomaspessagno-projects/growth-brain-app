@@ -85,6 +85,13 @@ export default function ExperimentoDetalle() {
     }
   };
 
+  const handleDeleteLearning = async (learningId: string) => {
+    if (!confirm('¿Deseas eliminar este aprendizaje permanentemente?')) return;
+    setLoading(true);
+    await supabase.from('aprendizajes').delete().eq('id', learningId);
+    loadExperimentData();
+  };
+
   const [aiGenerating, setAiGenerating] = useState(false);
 
   const handleAnalizarConIA = async () => {
@@ -114,6 +121,7 @@ export default function ExperimentoDetalle() {
           insights: data.analysis.insightsClave || '-',
           validado: data.analysis.hipotesisAparentementeValidada || false
         });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setShowLearningModal(true);
       }
     } catch (e: any) {
@@ -157,7 +165,10 @@ export default function ExperimentoDetalle() {
         <section className={`glass-panel stagger-1 ${styles.section}`}>
           <div className={styles.sectionHeader}>
             <h2>Métricas Snapshots</h2>
-            <button className={styles.secondaryAction} onClick={() => setShowMetricModal(true)}>+ Registrar Métrica</button>
+            <button className={styles.secondaryAction} onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setShowMetricModal(true);
+            }}>+ Registrar Métrica</button>
           </div>
 
           {metrics.length > 0 && (
@@ -213,7 +224,10 @@ export default function ExperimentoDetalle() {
               >
                 {aiGenerating ? 'Analizando...' : 'Analizar con IA ✨'}
               </button>
-              <button className={styles.secondaryAction} onClick={() => setShowLearningModal(true)}>+ Nuevo Aprendizaje</button>
+              <button className={styles.secondaryAction} onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setShowLearningModal(true);
+              }}>+ Nuevo Aprendizaje</button>
             </div>
           </div>
 
@@ -222,8 +236,17 @@ export default function ExperimentoDetalle() {
             {learnings.map(l => (
               <div key={l.id} className={styles.learningCard}>
                 <div className={styles.learningHeader}>
-                  <span className={styles.badgeLabel}>Hipótesis Central</span>
-                  {l.validado && <span className={styles.validatedBadge}>✓ Validada</span>}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span className={styles.badgeLabel}>Hipótesis Central</span>
+                    {l.validado && <span className={styles.validatedBadge}>✓ Validada</span>}
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteLearning(l.id)} 
+                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                    title="Eliminar aprendizaje"
+                  >
+                    ×
+                  </button>
                 </div>
                 <p className={styles.hypothesisText}>&quot;{l.hipotesis}&quot;</p>
                 

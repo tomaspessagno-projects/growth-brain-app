@@ -86,11 +86,11 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <div className={styles.container}>Iniciando panel principal...</div>;
+    return <div className={styles.dashboard}>Iniciando panel principal...</div>;
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.dashboard}>
       <header className={`animate-fade-in ${styles.header}`}>
         <div>
           <h1 className={styles.title}>Dashboard General</h1>
