@@ -5,9 +5,33 @@
 }
 
 .header {
+  margin-bottom: 40px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.reportBtn {
+  background: white;
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+}
+
+.reportBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+}
+
+.reportBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .primaryAction {
