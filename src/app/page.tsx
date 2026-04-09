@@ -4,11 +4,14 @@ import Link from "next/link";
 import { supabase } from "@/utils/supabase/client";
 import { useReactToPrint } from 'react-to-print';
 import WeeklyReportPdf from '@/components/WeeklyReportPdf';
+import FunnelChart from '@/components/FunnelChart';
+import { FUNNEL_STEPS } from '@/config/funnel';
 import styles from "./page.module.css";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ planeados: 0, en_curso: 0, finalizados: 0 });
   const [recentExperiments, setRecentExperiments] = useState<any[]>([]);
+  const [funnelData, setFunnelData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Estados para el Modal/PDF del Reporte
@@ -45,6 +48,54 @@ export default function Dashboard() {
         .limit(3);
       
       setRecentExperiments(recents || []);
+
+      // ── FUNNEL: traer experimentos con su paso del funnel y métricas
+      const { data: allExpsForFunnel } = await supabase
+        .from('experimentos')
+        .select('id, estado, funnel_step, metricas_snapshots(nombre_metrica, valor, fecha_registro)');
+
+      // Construir datos del funnel por cada paso
+      const funnel = FUNNEL_STEPS.map(step => {
+        // Experimentos anclados a este paso
+        const expsInStep = (allExpsForFunnel || []).filter((e: any) => e.funnel_step === step.key);
+        const byEstado = { en_curso: 0, finalizado: 0, planeado: 0 };
+        expsInStep.forEach((e: any) => {
+          const est = e.estado?.toLowerCase();
+          if (est === 'en curso') byEstado.en_curso++;
+          else if (est === 'finalizado') byEstado.finalizado++;
+          else byEstado.planeado++;
+        });
+
+        // Valor del paso: la métrica más reciente cuyo nombre contiene el label del paso
+        // (busca en TODOS los experimentos que tienen ese paso)
+        let latestValue: number | null = null;
+        const stepLabel = step.label.toLowerCase();
+        const stepKey = step.key.replace(/_/g, ' ');
+        ;(allExpsForFunnel || []).forEach((e: any) => {
+          e.metricas_snapshots?.forEach((m: any) => {
+            const mName = m.nombre_metrica?.toLowerCase() || '';
+            if (mName.includes(stepLabel.slice(0, 8)) || mName.includes(stepKey)) {
+              const val = Number(m.valor);
+              if (!isNaN(val) && (latestValue === null || val > latestValue)) {
+                latestValue = val;
+              }
+            }
+          });
+        });
+
+        return {
+          key: step.key,
+          value: latestValue,
+          experiments: {
+            total: expsInStep.length,
+            en_curso: byEstado.en_curso,
+            finalizado: byEstado.finalizado,
+            planeado: byEstado.planeado,
+          },
+        };
+      });
+      setFunnelData(funnel);
+
       setLoading(false);
     }
     
@@ -235,6 +286,22 @@ export default function Dashboard() {
           <h3>Finalizados</h3>
           <p className={styles.statNumber}>{stats.finalizados}</p>
         </div>
+      </section>
+
+      {/* ── FUNNEL GENERAL ──────────────────────────────── */}
+      <section className={`glass-panel stagger-2 ${styles.recentSection}`}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2>Embudo de Conversión</h2>
+            <p style={{ fontSize: '0.8rem', color: '#555', marginTop: '4px' }}>Hover en «exp» para ver el desglose por estado</p>
+          </div>
+          <Link href="/experimentos" className={styles.viewAll}>Ver Experimentos →</Link>
+        </div>
+        {funnelData.length > 0 ? (
+          <FunnelChart data={funnelData} />
+        ) : (
+          <p style={{ color: '#444', fontSize: '0.9rem' }}>Cargando embudo...</p>
+        )}
       </section>
 
       <section className={`glass-panel stagger-4 ${styles.recentSection}`}>

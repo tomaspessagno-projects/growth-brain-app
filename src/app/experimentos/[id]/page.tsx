@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import ModalPortal from '@/components/ModalPortal';
+import FunnelChart from '@/components/FunnelChart';
+import { FUNNEL_STEPS } from '@/config/funnel';
 import styles from './detalle.module.css';
 
 export default function ExperimentoDetalle() {
@@ -28,7 +30,7 @@ export default function ExperimentoDetalle() {
   // Forms
   const [newMetric, setNewMetric] = useState({ nombre_metrica: '', valor: '' });
   const [newLearning, setNewLearning] = useState({ hipotesis: '', resultado: '', insights: '', validado: false });
-  const [editForm, setEditForm] = useState({ nombre: '', descripcion: '', estado: '', fecha_inicio: '', fecha_fin: '' });
+  const [editForm, setEditForm] = useState({ nombre: '', descripcion: '', estado: '', funnel_step: '', fecha_inicio: '', fecha_fin: '' });
 
   useEffect(() => {
     if (id) loadExperimentData();
@@ -43,6 +45,7 @@ export default function ExperimentoDetalle() {
         nombre: exp.nombre || '',
         descripcion: exp.descripcion || '',
         estado: exp.estado || 'planeado',
+        funnel_step: exp.funnel_step || '',
         fecha_inicio: exp.fecha_inicio ? exp.fecha_inicio.split('T')[0] : '',
         fecha_fin: exp.fecha_fin ? exp.fecha_fin.split('T')[0] : '',
       });
@@ -62,6 +65,7 @@ export default function ExperimentoDetalle() {
       nombre: editForm.nombre,
       descripcion: editForm.descripcion,
       estado: editForm.estado,
+      funnel_step: editForm.funnel_step || null,
       fecha_inicio: editForm.fecha_inicio || null,
       fecha_fin: editForm.fecha_fin || null,
     }).eq('id', id);
@@ -174,6 +178,27 @@ export default function ExperimentoDetalle() {
 
   const estadoKey = (experiment.estado.charAt(0).toUpperCase() + experiment.estado.slice(1)).replace(/\s+/g, '');
 
+  // ── MINI FUNNEL: datos de métricas mapeados a pasos del funnel
+  const miniFunnelData = FUNNEL_STEPS.map(step => {
+    const stepLabel = step.label.toLowerCase();
+    const stepKey = step.key.replace(/_/g, ' ');
+    // Buscar en las métricas del experimento una que coincida con este paso
+    const matching = metrics.filter(m => {
+      const mName = (m.nombre_metrica || '').toLowerCase();
+      return mName.includes(stepLabel.slice(0, 8)) || mName.includes(stepKey);
+    });
+    // Tomar el valor del snapshot más reciente que coincida
+    const latest = matching.sort((a, b) =>
+      new Date(b.fecha_registro).getTime() - new Date(a.fecha_registro).getTime()
+    )[0];
+    return {
+      key: step.key,
+      value: latest ? Number(latest.valor) : null,
+    };
+  });
+
+  const hasMiniFunnelData = miniFunnelData.some(d => d.value !== null);
+
   return (
     <div className={`animate-fade-in ${styles.container}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -205,6 +230,33 @@ export default function ExperimentoDetalle() {
           </div>
         </div>
       </header>
+
+      {/* ── MINI FUNNEL DEL EXPERIMENTO ── */}
+      <section className={`glass-panel ${styles.section}`}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2>Posición en el Embudo</h2>
+            {experiment.funnel_step ? (
+              <p style={{ fontSize: '0.8rem', color: '#555', marginTop: '4px' }}>
+                Este experimento impacta el paso: <strong style={{ color: '#aaa' }}>
+                  {FUNNEL_STEPS.find(s => s.key === experiment.funnel_step)?.label || experiment.funnel_step}
+                </strong>
+              </p>
+            ) : (
+              <p style={{ fontSize: '0.8rem', color: '#444', marginTop: '4px' }}>
+                No asignado a ningún paso — <button onClick={() => setShowEditModal(true)} style={{ background: 'none', border: 'none', color: '#666', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.8rem', padding: 0 }}>Asignar →</button>
+              </p>
+            )}
+          </div>
+        </div>
+        {hasMiniFunnelData ? (
+          <FunnelChart data={miniFunnelData} highlightStep={experiment.funnel_step} compact={false} />
+        ) : (
+          <p style={{ color: '#333', fontSize: '0.85rem', fontStyle: 'italic' }}>
+            Aún no hay métricas que coincidan con los pasos del funnel. Registrá métricas con el nombre exacto de un paso (ej: &quot;Cotizaron&quot;, &quot;Visitas a armatuplan&quot;) para que aparezcan aquí.
+          </p>
+        )}
+      </section>
 
       <div className={styles.contentGrid}>
         {/* METRICS */}
@@ -317,6 +369,15 @@ export default function ExperimentoDetalle() {
                 <option value="planeado" style={{ background: '#0a0a0a' }}>Planeado</option>
                 <option value="en curso" style={{ background: '#0a0a0a' }}>En Curso</option>
                 <option value="finalizado" style={{ background: '#0a0a0a' }}>Finalizado</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Paso del Funnel que impacta</label>
+              <select value={editForm.funnel_step} onChange={e => setEditForm({ ...editForm, funnel_step: e.target.value })} style={{ background: 'transparent', border: '1px solid #222', color: 'white', padding: '10px 14px', borderRadius: '6px', fontFamily: 'inherit', fontSize: '0.95rem', outline: 'none', width: '100%' }}>
+                <option value="" style={{ background: '#0a0a0a' }}>— Sin asignar —</option>
+                {FUNNEL_STEPS.map(step => (
+                  <option key={step.key} value={step.key} style={{ background: '#0a0a0a' }}>{step.label}</option>
+                ))}
               </select>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
