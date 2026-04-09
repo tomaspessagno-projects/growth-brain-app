@@ -108,7 +108,6 @@ export default function ExperimentoDetalle() {
   const openEditMetric = (m: any) => {
     setEditingMetric(m);
     setNewMetric({ nombre_metrica: m.nombre_metrica, valor: String(m.valor) });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowMetricModal(true);
   };
 
@@ -179,7 +178,7 @@ export default function ExperimentoDetalle() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link href="/experimentos" className={styles.backLink}>← Volver a Experimentos</Link>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className={styles.secondaryAction} onClick={() => { setShowEditModal(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <button className={styles.secondaryAction} onClick={() => setShowEditModal(true)}>
             ✏ Editar
           </button>
           <button onClick={handleDeleteExperiment} style={{ background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 500, fontSize: '0.85rem' }}>
@@ -214,7 +213,6 @@ export default function ExperimentoDetalle() {
             <button className={styles.secondaryAction} onClick={() => {
               setEditingMetric(null);
               setNewMetric({ nombre_metrica: '', valor: '' });
-              window.scrollTo({ top: 0, behavior: 'smooth' });
               setShowMetricModal(true);
             }}>+ Registrar Métrica</button>
           </div>
@@ -266,7 +264,6 @@ export default function ExperimentoDetalle() {
                 {aiGenerating ? 'Analizando...' : 'Analizar con IA ✨'}
               </button>
               <button className={styles.secondaryAction} onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
                 setShowLearningModal(true);
               }}>+ Nuevo Aprendizaje</button>
             </div>
