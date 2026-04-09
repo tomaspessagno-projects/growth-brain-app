@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import ModalPortal from '@/components/ModalPortal';
 import styles from './detalle.module.css';
 
 export default function ExperimentoDetalle() {
@@ -297,99 +298,93 @@ export default function ExperimentoDetalle() {
         </section>
       </div>
 
-      {/* === MODAL: EDITAR EXPERIMENTO === */}
+      {/* === PORTAL: EDITAR EXPERIMENTO === */}
       {showEditModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`glass-panel ${styles.modalContent} animate-fade-in`}>
-            <h3>Editar Experimento</h3>
-            <form onSubmit={handleUpdateExperiment} className={styles.modalForm}>
+        <ModalPortal onClose={() => setShowEditModal(false)}>
+          <h3 style={{ marginBottom: '24px', fontSize: '1.2rem', color: 'white' }}>Editar Experimento</h3>
+          <form onSubmit={handleUpdateExperiment} className={styles.modalForm}>
+            <div className={styles.formGroup}>
+              <label>Nombre</label>
+              <input type="text" required value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Descripción</label>
+              <textarea rows={3} value={editForm.descripcion} onChange={e => setEditForm({ ...editForm, descripcion: e.target.value })} />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Estado</label>
+              <select value={editForm.estado} onChange={e => setEditForm({ ...editForm, estado: e.target.value })} style={{ background: 'transparent', border: '1px solid #222', color: 'white', padding: '10px 14px', borderRadius: '6px', fontFamily: 'inherit', fontSize: '0.95rem', outline: 'none', width: '100%' }}>
+                <option value="planeado" style={{ background: '#0a0a0a' }}>Planeado</option>
+                <option value="en curso" style={{ background: '#0a0a0a' }}>En Curso</option>
+                <option value="finalizado" style={{ background: '#0a0a0a' }}>Finalizado</option>
+              </select>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className={styles.formGroup}>
-                <label>Nombre</label>
-                <input type="text" required value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} />
+                <label>Fecha Inicio</label>
+                <input type="date" value={editForm.fecha_inicio} onChange={e => setEditForm({ ...editForm, fecha_inicio: e.target.value })} />
               </div>
               <div className={styles.formGroup}>
-                <label>Descripción</label>
-                <textarea rows={3} value={editForm.descripcion} onChange={e => setEditForm({ ...editForm, descripcion: e.target.value })} />
+                <label>Fecha Fin</label>
+                <input type="date" value={editForm.fecha_fin} onChange={e => setEditForm({ ...editForm, fecha_fin: e.target.value })} />
               </div>
-              <div className={styles.formGroup}>
-                <label>Estado</label>
-                <select value={editForm.estado} onChange={e => setEditForm({ ...editForm, estado: e.target.value })} style={{ background: 'transparent', border: '1px solid #222', color: 'white', padding: '10px 14px', borderRadius: '6px', fontFamily: 'inherit', fontSize: '0.95rem', outline: 'none' }}>
-                  <option value="planeado">Planeado</option>
-                  <option value="en curso">En Curso</option>
-                  <option value="finalizado">Finalizado</option>
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className={styles.formGroup}>
-                  <label>Fecha Inicio</label>
-                  <input type="date" value={editForm.fecha_inicio} onChange={e => setEditForm({ ...editForm, fecha_inicio: e.target.value })} />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Fecha Fin</label>
-                  <input type="date" value={editForm.fecha_fin} onChange={e => setEditForm({ ...editForm, fecha_fin: e.target.value })} />
-                </div>
-              </div>
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.btnCancel} onClick={() => setShowEditModal(false)}>Cancelar</button>
-                <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : 'Guardar Cambios'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnCancel} onClick={() => setShowEditModal(false)}>Cancelar</button>
+              <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : 'Guardar Cambios'}</button>
+            </div>
+          </form>
+        </ModalPortal>
       )}
 
-      {/* === MODAL: MÉTRICA (Nueva / Editar) === */}
+      {/* === PORTAL: MÉTRICA === */}
       {showMetricModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`glass-panel ${styles.modalContent} animate-fade-in`}>
-            <h3>{editingMetric ? 'Editar Métrica' : 'Registrar Nueva Métrica'}</h3>
-            <form onSubmit={handleSaveMetric} className={styles.modalForm}>
-              <div className={styles.formGroup}>
-                <label>Nombre de la Métrica</label>
-                <input type="text" required placeholder="Ej. Tasa de Conversión" value={newMetric.nombre_metrica} onChange={e => setNewMetric({ ...newMetric, nombre_metrica: e.target.value })} />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Valor (Numérico)</label>
-                <input type="number" step="0.01" required placeholder="Ej. 12.5" value={newMetric.valor} onChange={e => setNewMetric({ ...newMetric, valor: e.target.value })} />
-              </div>
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.btnCancel} onClick={() => { setShowMetricModal(false); setEditingMetric(null); setNewMetric({ nombre_metrica: '', valor: '' }); }}>Cancelar</button>
-                <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : editingMetric ? 'Actualizar' : 'Guardar'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ModalPortal onClose={() => { setShowMetricModal(false); setEditingMetric(null); setNewMetric({ nombre_metrica: '', valor: '' }); }}>
+          <h3 style={{ marginBottom: '24px', fontSize: '1.2rem', color: 'white' }}>{editingMetric ? 'Editar Métrica' : 'Registrar Nueva Métrica'}</h3>
+          <form onSubmit={handleSaveMetric} className={styles.modalForm}>
+            <div className={styles.formGroup}>
+              <label>Nombre de la Métrica</label>
+              <input type="text" required placeholder="Ej. Tasa de Conversión" value={newMetric.nombre_metrica} onChange={e => setNewMetric({ ...newMetric, nombre_metrica: e.target.value })} />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Valor (Numérico)</label>
+              <input type="number" step="0.01" required placeholder="Ej. 12.5" value={newMetric.valor} onChange={e => setNewMetric({ ...newMetric, valor: e.target.value })} />
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnCancel} onClick={() => { setShowMetricModal(false); setEditingMetric(null); setNewMetric({ nombre_metrica: '', valor: '' }); }}>Cancelar</button>
+              <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : editingMetric ? 'Actualizar' : 'Guardar'}</button>
+            </div>
+          </form>
+        </ModalPortal>
       )}
 
-      {/* === MODAL: APRENDIZAJE === */}
+      {/* === PORTAL: APRENDIZAJE === */}
       {showLearningModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`glass-panel ${styles.modalContent} animate-fade-in`}>
-            <h3>Registrar Nuevo Aprendizaje</h3>
-            <form onSubmit={handleSaveLearning} className={styles.modalForm}>
-              <div className={styles.formGroup}>
-                <label>Hipótesis Central</label>
-                <textarea required rows={4} placeholder="¿Qué probamos?" value={newLearning.hipotesis} onChange={e => setNewLearning({ ...newLearning, hipotesis: e.target.value })} />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Resultado Observado</label>
-                <textarea required rows={4} placeholder="¿Qué pasó en la realidad?" value={newLearning.resultado} onChange={e => setNewLearning({ ...newLearning, resultado: e.target.value })} />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Insights Clave</label>
-                <textarea rows={4} placeholder="Conclusiones..." value={newLearning.insights} onChange={e => setNewLearning({ ...newLearning, insights: e.target.value })} />
-              </div>
-              <div className={styles.formRowCheck}>
-                <input type="checkbox" id="validado" checked={newLearning.validado} onChange={e => setNewLearning({ ...newLearning, validado: e.target.checked })} />
-                <label htmlFor="validado">¿Hipótesis Validada Exitosamente?</label>
-              </div>
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.btnCancel} onClick={() => setShowLearningModal(false)}>Cancelar</button>
-                <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : 'Guardar'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ModalPortal onClose={() => setShowLearningModal(false)}>
+          <h3 style={{ marginBottom: '24px', fontSize: '1.2rem', color: 'white' }}>Registrar Nuevo Aprendizaje</h3>
+          <form onSubmit={handleSaveLearning} className={styles.modalForm}>
+            <div className={styles.formGroup}>
+              <label>Hipótesis Central</label>
+              <textarea required rows={4} placeholder="¿Qué probamos?" value={newLearning.hipotesis} onChange={e => setNewLearning({ ...newLearning, hipotesis: e.target.value })} />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Resultado Observado</label>
+              <textarea required rows={4} placeholder="¿Qué pasó en la realidad?" value={newLearning.resultado} onChange={e => setNewLearning({ ...newLearning, resultado: e.target.value })} />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Insights Clave</label>
+              <textarea rows={4} placeholder="Conclusiones..." value={newLearning.insights} onChange={e => setNewLearning({ ...newLearning, insights: e.target.value })} />
+            </div>
+            <div className={styles.formRowCheck}>
+              <input type="checkbox" id="validado" checked={newLearning.validado} onChange={e => setNewLearning({ ...newLearning, validado: e.target.checked })} />
+              <label htmlFor="validado">¿Hipótesis Validada Exitosamente?</label>
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnCancel} onClick={() => setShowLearningModal(false)}>Cancelar</button>
+              <button type="submit" className={styles.btnSubmit} disabled={modalLoading}>{modalLoading ? '...' : 'Guardar'}</button>
+            </div>
+          </form>
+        </ModalPortal>
       )}
     </div>
   );
