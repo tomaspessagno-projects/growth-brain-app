@@ -78,82 +78,115 @@ export default function Dashboard() {
       const summary = aiData.summary || 'No se pudo generar el resumen IA.';
       setAiSummary(summary);
 
-      // Generar y descargar PDF directamente via jsPDF
+      // Generar y descargar PDF ejecutivo via jsPDF
       setTimeout(async () => {
         const { default: jsPDF } = await import('jspdf');
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        
         const weekStartStr = weekAgo.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
         const todayStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-        
-        let y = 20;
-        
-        // Header
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Weekly Growth Report', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100);
-        doc.text(`Semana del ${weekStartStr} al ${todayStr}`, 20, y);
-        doc.text('GROWTH BRAIN AI', 190, y - 8, { align: 'right' });
-        y += 10;
-        doc.setDrawColor(0);
-        doc.line(20, y, 190, y);
-        y += 12;
-        
-        // AI Summary
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0);
-        doc.text('RESUMEN EJECUTIVO (IA)', 20, y);
-        y += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const summaryLines = doc.splitTextToSize(summary, 165);
-        doc.text(summaryLines, 20, y);
-        y += summaryLines.length * 5 + 12;
-        
-        // Experiments
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Experimentos de la Semana (${allExps.length})`, 20, y);
-        y += 8;
-        
-        allExps.forEach((exp: any) => {
-          if (y > 260) { doc.addPage(); y = 20; }
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text(exp.nombre, 20, y);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(80);
-          doc.text(`Estado: ${exp.estado}`, 20, y + 5);
-          y += 10;
-          if (exp.descripcion) {
-            doc.setTextColor(60);
-            const descLines = doc.splitTextToSize(exp.descripcion, 165);
-            doc.text(descLines, 20, y);
-            y += descLines.length * 4 + 4;
-          }
-          if (exp.aprendizajes?.length > 0) {
-            doc.setTextColor(0);
-            doc.setFont('helvetica', 'bold');
-            doc.text('Aprendizaje clave:', 20, y);
-            y += 5;
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(60);
-            const insightLines = doc.splitTextToSize(exp.aprendizajes[0].insights || exp.aprendizajes[0].resultado, 165);
-            doc.text(insightLines, 20, y);
-            y += insightLines.length * 4 + 4;
-          }
-          doc.setDrawColor(220);
-          doc.line(20, y, 190, y);
-          y += 6;
-          doc.setTextColor(0);
+        let y = 18;
+
+        // ── HEADER NEGRO ────────────────────────────────────────
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 0, 210, 28, 'F');
+        doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(255, 255, 255);
+        doc.text('WEEKLY GROWTH REPORT', 20, y);
+        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text(`${weekStartStr} – ${todayStr}`, 20, y + 6);
+        doc.text('GROWTH BRAIN AI  |  CONFIDENCIAL', 190, y + 6, { align: 'right' });
+        y = 38;
+
+        // ── FILA DE KPIs ─────────────────────────────────────────
+        const enCurso = allExps.filter((e: any) => e.estado === 'en curso').length;
+        const finalizados = allExps.filter((e: any) => e.estado === 'finalizado').length;
+        const planeados = allExps.filter((e: any) => e.estado === 'planeado').length;
+        const totalAprendizajes = allExps.reduce((acc: number, e: any) => acc + (e.aprendizajes?.length || 0), 0);
+        const validados = allExps.reduce((acc: number, e: any) => acc + (e.aprendizajes?.filter((a: any) => a.validado).length || 0), 0);
+        const kpis = [
+          { label: 'En Curso', value: String(enCurso) },
+          { label: 'Finalizados', value: String(finalizados) },
+          { label: 'Planeados', value: String(planeados) },
+          { label: 'Aprendizajes', value: String(totalAprendizajes) },
+          { label: 'Validadas', value: String(validados) },
+        ];
+        const colW = 170 / kpis.length;
+        kpis.forEach((kpi, i) => {
+          const x = 20 + i * colW;
+          doc.setDrawColor(200); doc.rect(x, y, colW - 2, 18);
+          doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+          doc.text(kpi.value, x + (colW - 2) / 2, y + 11, { align: 'center' });
+          doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+          doc.text(kpi.label.toUpperCase(), x + (colW - 2) / 2, y + 16, { align: 'center' });
         });
-        
+        y += 26;
+
+        // ── UNA LÍNEA DE IA ──────────────────────────────────────
+        doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(80);
+        doc.text(`IA: ${summary.split('.')[0]}.`, 20, y, { maxWidth: 170 });
+        y += 10;
+
+        // ── TABLA EXPERIMENTOS ───────────────────────────────────
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text('EXPERIMENTOS', 20, y); y += 5;
+        doc.setFillColor(0, 0, 0); doc.rect(20, y, 170, 7, 'F');
+        doc.setFontSize(7.5); doc.setTextColor(255, 255, 255);
+        doc.text('EXPERIMENTO', 22, y + 5);
+        doc.text('ESTADO', 95, y + 5);
+        doc.text('MÉTRICAS', 122, y + 5);
+        doc.text('APREND.', 148, y + 5);
+        doc.text('VALIDADO', 175, y + 5);
+        y += 9;
+        allExps.forEach((exp: any, idx: number) => {
+          if (y > 265) { doc.addPage(); y = 20; }
+          if (idx % 2 === 0) { doc.setFillColor(248, 248, 248); doc.rect(20, y, 170, 9, 'F'); }
+          doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+          doc.text((exp.nombre.length > 38 ? exp.nombre.slice(0, 36) + '…' : exp.nombre), 22, y + 6);
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+          doc.text(exp.estado, 95, y + 6);
+          doc.text(String(exp.metricas_snapshots?.length || 0), 132, y + 6);
+          doc.text(String(exp.aprendizajes?.length || 0), 155, y + 6);
+          const v = exp.aprendizajes?.filter((a: any) => a.validado).length || 0;
+          doc.setTextColor(v > 0 ? 16 : 150, v > 0 ? 185 : 150, v > 0 ? 129 : 150);
+          doc.text(v > 0 ? `✓ ${v}` : '—', 178, y + 6);
+          y += 9;
+        });
+
+        // ── DETALLE MÉTRICAS CON DELTA ───────────────────────────
+        y += 8;
+        allExps.forEach((exp: any) => {
+          if (!exp.metricas_snapshots?.length) return;
+          if (y > 255) { doc.addPage(); y = 20; }
+          doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+          doc.text(exp.nombre.length > 50 ? exp.nombre.slice(0, 48) + '…' : exp.nombre, 20, y); y += 5;
+          doc.setFontSize(7); doc.setTextColor(120);
+          doc.text('MÉTRICA', 22, y); doc.text('INICIO', 100, y); doc.text('ACTUAL', 133, y); doc.text('Δ%', 170, y);
+          y += 3; doc.setDrawColor(200); doc.line(20, y, 190, y); y += 3;
+          const grouped: Record<string, any[]> = {};
+          exp.metricas_snapshots.forEach((m: any) => {
+            if (!grouped[m.nombre_metrica]) grouped[m.nombre_metrica] = [];
+            grouped[m.nombre_metrica].push(m);
+          });
+          Object.entries(grouped).forEach(([name, snaps]) => {
+            if (y > 270) { doc.addPage(); y = 20; }
+            const sorted = [...snaps].sort((a, b) => new Date(a.fecha_registro).getTime() - new Date(b.fecha_registro).getTime());
+            const first = sorted[0].valor;
+            const last = sorted[sorted.length - 1].valor;
+            const delta = last - first;
+            const pct = first !== 0 ? ((delta / first) * 100).toFixed(1) : '—';
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
+            doc.text(name.length > 38 ? name.slice(0, 36) + '…' : name, 22, y);
+            doc.text(String(first), 100, y); doc.text(String(last), 133, y);
+            const pos = delta >= 0;
+            doc.setTextColor(pos ? 16 : 239, pos ? 185 : 68, pos ? 129 : 68);
+            doc.text(`${pos ? '+' : ''}${pct}%`, 170, y);
+            doc.setTextColor(0); y += 6;
+          });
+          y += 4;
+        });
+
+        // ── FOOTER ──────────────────────────────────────────────
+        doc.setFontSize(7); doc.setTextColor(160); doc.setFont('helvetica', 'italic');
+        doc.text('Generado automáticamente por Growth Brain AI. Uso interno de la organización.', 20, 290);
         doc.save(`GrowthBrain_Reporte_${new Date().toISOString().split('T')[0]}.pdf`);
         setIsGenerating(false);
       }, 800);
