@@ -11,6 +11,10 @@ interface StepData {
     finalizado: number;
     planeado: number;
   };
+  learnings?: {
+    total: number;
+    validated: number;
+  };
 }
 
 interface FunnelChartProps {
@@ -27,6 +31,24 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '6px' : '10px', width: '100%' }}>
+      {/* Header de columnas — solo en modo completo */}
+      {!compact && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          paddingBottom: '8px',
+          borderBottom: '1px solid #1a1a1a',
+          marginBottom: '4px',
+        }}>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '16px' }} />
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '160px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Paso</span>
+          <div style={{ flex: 1 }} />
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '60px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Valor</span>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '48px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Conv.</span>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '60px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Exp.</span>
+        </div>
+      )}
       {FUNNEL_STEPS.map((step, idx) => {
         const stepData = data.find(d => d.key === step.key);
         const value = stepData?.value ?? null;
@@ -175,6 +197,25 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
                           <span style={{ color: '#aaa', fontWeight: '700' }}>{experiments.planeado}</span>
                         </div>
                       </div>
+
+                      {stepData?.learnings && stepData.learnings.total > 0 && (
+                        <>
+                          <div style={{ height: '1px', background: '#222', margin: '12px 0' }} />
+                          <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Memoria del Equipo
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
+                              <span style={{ color: '#aaa' }}>Aprendizajes Totales</span>
+                              <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.total}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
+                              <span style={{ color: '#10b981' }}>Hipótesis Validadas</span>
+                              <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.validated}</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -184,24 +225,6 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
         );
       })}
 
-      {/* Leyenda de columnas */}
-      {!compact && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginTop: '8px',
-          paddingTop: '8px',
-          borderTop: '1px solid #1a1a1a',
-        }}>
-          <span style={{ minWidth: '16px' }} />
-          <span style={{ fontSize: '10px', color: '#333', minWidth: '160px' }}>PASO</span>
-          <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '10px', color: '#333', minWidth: '60px', textAlign: 'right' }}>VALOR</span>
-          <span style={{ fontSize: '10px', color: '#333', minWidth: '48px', textAlign: 'right' }}>CONV.</span>
-          <span style={{ fontSize: '10px', color: '#333', minWidth: '60px', textAlign: 'right' }}>EXP.</span>
-        </div>
-      )}
     </div>
   );
 }

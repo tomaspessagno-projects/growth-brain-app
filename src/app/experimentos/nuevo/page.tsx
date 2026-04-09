@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
+import { FUNNEL_STEPS } from '@/config/funnel';
 import styles from './nuevo.module.css';
 
 export default function NuevoExperimento() {
@@ -14,6 +15,7 @@ export default function NuevoExperimento() {
     nombre: '',
     descripcion: '',
     estado: 'planeado',
+    funnel_step: '',
     fecha_inicio: '',
     fecha_fin: ''
   });
@@ -38,6 +40,7 @@ export default function NuevoExperimento() {
       nombre: formData.nombre,
       descripcion: formData.descripcion || null,
       estado: formData.estado,
+      funnel_step: formData.funnel_step || null,
       ...(formData.fecha_inicio ? { fecha_inicio: new Date(formData.fecha_inicio).toISOString() } : {}),
       ...(formData.fecha_fin ? { fecha_fin: new Date(formData.fecha_fin).toISOString() } : {})
     };
@@ -98,14 +101,14 @@ export default function NuevoExperimento() {
 
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
-              <label htmlFor="estado">Estado Inicial</label>
-              <select id="estado" name="estado" value={formData.estado} onChange={handleChange}>
-                <option value="planeado">Planeado</option>
-                <option value="en curso">En Curso</option>
-                <option value="finalizado">Finalizado</option>
+              <label htmlFor="funnel_step">Paso del Funnel que impacta</label>
+              <select id="funnel_step" name="funnel_step" value={formData.funnel_step} onChange={handleChange}>
+                <option value="">— Sin asignar —</option>
+                {FUNNEL_STEPS.map(step => (
+                  <option key={step.key} value={step.key}>{step.label}</option>
+                ))}
               </select>
             </div>
-            <div className={styles.formGroup}></div>
           </div>
 
           <div className={styles.formRow}>

@@ -52,18 +52,27 @@ export default function Dashboard() {
       // ── FUNNEL: traer experimentos con su paso del funnel y métricas
       const { data: allExpsForFunnel } = await supabase
         .from('experimentos')
-        .select('id, estado, funnel_step, metricas_snapshots(nombre_metrica, valor, fecha_registro)');
+        .select('id, estado, funnel_step, aprendizajes(validado), metricas_snapshots(nombre_metrica, valor, fecha_registro)');
 
       // Construir datos del funnel por cada paso
       const funnel = FUNNEL_STEPS.map(step => {
         // Experimentos anclados a este paso
         const expsInStep = (allExpsForFunnel || []).filter((e: any) => e.funnel_step === step.key);
         const byEstado = { en_curso: 0, finalizado: 0, planeado: 0 };
+        let totalLearnings = 0;
+        let validatedLearnings = 0;
+
         expsInStep.forEach((e: any) => {
           const est = e.estado?.toLowerCase();
           if (est === 'en curso') byEstado.en_curso++;
           else if (est === 'finalizado') byEstado.finalizado++;
           else byEstado.planeado++;
+
+          // Sumar aprendizajes de este experimento
+          if (e.aprendizajes) {
+            totalLearnings += e.aprendizajes.length;
+            validatedLearnings += e.aprendizajes.filter((a: any) => a.validado).length;
+          }
         });
 
         // Valor del paso: la métrica más reciente cuyo nombre contiene el label del paso
@@ -92,6 +101,10 @@ export default function Dashboard() {
             finalizado: byEstado.finalizado,
             planeado: byEstado.planeado,
           },
+          learnings: {
+            total: totalLearnings,
+            validated: validatedLearnings,
+          }
         };
       });
       setFunnelData(funnel);
