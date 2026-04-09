@@ -30,9 +30,10 @@ export default function Dashboard() {
       const counts = { planeados: 0, en_curso: 0, finalizados: 0 };
       
       countData?.forEach(exp => {
-        if (exp.estado === 'Planeado') counts.planeados++;
-        if (exp.estado === 'En Curso') counts.en_curso++;
-        if (exp.estado === 'Finalizado') counts.finalizados++;
+        const estado = exp.estado?.toLowerCase();
+        if (estado === 'planeado') counts.planeados++;
+        if (estado === 'en curso') counts.en_curso++;
+        if (estado === 'finalizado') counts.finalizados++;
       });
       setStats(counts);
 
@@ -53,34 +54,112 @@ export default function Dashboard() {
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     try {
-      // 1. Conseguir fecha de hace 7 días
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
-      
-      // 2. Traer experimentos recientes con sus aprendizajes y metricas
+
+      // Traer TODOS los experimentos activos o modificados esta semana:
+      // - Creados esta semana, O
+      // - En Curso (siempre relevantes), O  
+      // - Que tengan métricas/aprendizajes registrados esta semana
       const { data: exps } = await supabase
         .from('experimentos')
         .select('*, aprendizajes(*), metricas_snapshots(*)')
-        .gte('created_at', weekAgo.toISOString());
-        
-      setReportData(exps || []);
+        .or(`creado_en.gte.${weekAgo.toISOString()},estado.eq.en curso`);
 
-      // 3. Obtener el texto del CEO desde la IA de Gemini
+      const allExps = exps || [];
+      setReportData(allExps);
+
       const aiResponse = await fetch('/api/weekly-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ experiments: exps || [] })
+        body: JSON.stringify({ experiments: allExps })
       });
       const aiData = await aiResponse.json();
-      setAiSummary(aiData.summary || "No se pudo generar reporte IA.");
+      const summary = aiData.summary || 'No se pudo generar el resumen IA.';
+      setAiSummary(summary);
 
-      // 4. Retraso brevisimo para asegurar renderizado de datos, luego imprimir
-      setTimeout(() => {
-        handlePrint();
-      }, 1000);
+      // Generar y descargar PDF directamente via jsPDF
+      setTimeout(async () => {
+        const { default: jsPDF } = await import('jspdf');
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        
+        const weekStartStr = weekAgo.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+        const todayStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        let y = 20;
+        
+        // Header
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Weekly Growth Report', 20, y);
+        y += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(`Semana del ${weekStartStr} al ${todayStr}`, 20, y);
+        doc.text('GROWTH BRAIN AI', 190, y - 8, { align: 'right' });
+        y += 10;
+        doc.setDrawColor(0);
+        doc.line(20, y, 190, y);
+        y += 12;
+        
+        // AI Summary
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0);
+        doc.text('RESUMEN EJECUTIVO (IA)', 20, y);
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const summaryLines = doc.splitTextToSize(summary, 165);
+        doc.text(summaryLines, 20, y);
+        y += summaryLines.length * 5 + 12;
+        
+        // Experiments
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Experimentos de la Semana (${allExps.length})`, 20, y);
+        y += 8;
+        
+        allExps.forEach((exp: any) => {
+          if (y > 260) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(exp.nombre, 20, y);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(80);
+          doc.text(`Estado: ${exp.estado}`, 20, y + 5);
+          y += 10;
+          if (exp.descripcion) {
+            doc.setTextColor(60);
+            const descLines = doc.splitTextToSize(exp.descripcion, 165);
+            doc.text(descLines, 20, y);
+            y += descLines.length * 4 + 4;
+          }
+          if (exp.aprendizajes?.length > 0) {
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Aprendizaje clave:', 20, y);
+            y += 5;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(60);
+            const insightLines = doc.splitTextToSize(exp.aprendizajes[0].insights || exp.aprendizajes[0].resultado, 165);
+            doc.text(insightLines, 20, y);
+            y += insightLines.length * 4 + 4;
+          }
+          doc.setDrawColor(220);
+          doc.line(20, y, 190, y);
+          y += 6;
+          doc.setTextColor(0);
+        });
+        
+        doc.save(`GrowthBrain_Reporte_${new Date().toISOString().split('T')[0]}.pdf`);
+        setIsGenerating(false);
+      }, 800);
 
     } catch (e: any) {
-      alert("Error generando el reporte: " + e.message);
+      alert('Error generando el reporte: ' + e.message);
       setIsGenerating(false);
     }
   };

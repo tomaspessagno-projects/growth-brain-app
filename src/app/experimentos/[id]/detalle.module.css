@@ -266,7 +266,9 @@
 
 .modalContent {
   width: 100%;
-  max-width: 500px;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
   background: #0a0a0a;
   border: 1px solid var(--surface-border);
   border-radius: 6px;
@@ -307,6 +309,9 @@
   font-size: 0.95rem;
   outline: none;
   transition: var(--transition);
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
 }
 
 .formGroup input:focus, .formGroup textarea:focus {
