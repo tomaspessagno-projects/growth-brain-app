@@ -94,13 +94,61 @@
 .footer {
   margin-top: auto;
   display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.userSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--surface-border);
+  padding-top: 24px;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.userEmail {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.logoutBtn {
+  display: flex;
   align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: 1px solid #222;
+  color: #ff4444;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  width: 100%;
+}
+
+.logoutBtn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+}
+
+.tagLine {
+  display: flex;
   justify-content: center;
 }
 
 .tag {
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 400;
   letter-spacing: 1px;
   text-transform: uppercase;

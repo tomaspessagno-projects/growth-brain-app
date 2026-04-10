@@ -7,10 +7,23 @@ import styles from './Sidebar.module.css';
 export default function Sidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '80px' : '280px');
+    
+    // Obtener el usuario actual
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
   }, [isCollapsed]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload(); // Recarga para que AuthWrapper redireccione
+  };
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: <DashboardIcon /> },
@@ -43,9 +56,26 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className={styles.footer}>
-        {!isCollapsed ? <div className={styles.tag}>AI Powered</div> : <div className={styles.tag}>AI</div>}
-      </div>
+      <footer className={styles.footer}>
+        <div className={styles.userSection}>
+          {!isCollapsed && user && (
+            <div className={styles.userInfo}>
+              <span className={styles.userEmail}>{user.email}</span>
+            </div>
+          )}
+          <button onClick={handleLogout} className={styles.logoutBtn} title="Cerrar Sesión">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            {!isCollapsed && <span>Cerrar Sesión</span>}
+          </button>
+        </div>
+        <div className={styles.tagLine}>
+          {!isCollapsed ? <div className={styles.tag}>Medicus AI Powered</div> : <div className={styles.tag}>AI</div>}
+        </div>
+      </footer>
     </aside>
   );
 }

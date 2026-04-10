@@ -27,11 +27,18 @@ export default function LoginPage() {
         router.push('/');
       }
     } else {
+      // Validar dominio Medicus
+      if (!email.toLowerCase().endsWith('@medicus.com.ar')) {
+        setErrorMsg('Solo se permiten pases de Medicus (@medicus.com.ar). Contacta a soporte si crees que es un error.');
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setErrorMsg(error.message);
       } else {
-        setSuccessMsg('Registro exitoso. Ya puedes iniciar sesión.');
+        setSuccessMsg('¡Bienvenido al Equipo Medicus! Registro exitoso. Ya puedes iniciar sesión.');
         setIsLogin(true);
       }
     }
@@ -60,7 +67,7 @@ export default function LoginPage() {
             <BrainIcon />
           </div>
           <h1>Growth Brain AI</h1>
-          <p>Tu analista experto de producto</p>
+          <p>Panel de Control del Equipo Medicus</p>
         </div>
 
         {errorMsg && <div className={styles.errorBox}>{errorMsg}</div>}
