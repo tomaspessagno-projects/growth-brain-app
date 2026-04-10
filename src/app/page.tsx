@@ -33,7 +33,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       // Fetch conteos por estado
-      const { data: countData } = await supabase.from('experimentos').select('estado, fecha_inicio, aprendizajes(id), paso_funnel');
+      const { data: countData } = await supabase.from('experimentos').select('estado, fecha_inicio, aprendizajes(id), funnel_step');
       const counts = { planeados: 0, en_curso: 0, finalizados: 0 };
       
       const experiments = countData || [];
@@ -75,8 +75,8 @@ export default function Dashboard() {
       // Funnel Logic
       const { data: snapshots } = await supabase.from('metricas_snapshots').select('*');
       const funnel = FUNNEL_STEPS.map((step) => {
-        const expsInStep = experiments.filter(e => e.paso_funnel === step.key);
-        const totalLearnings = experiments.reduce((acc, e) => e.paso_funnel === step.key ? acc + (e.aprendizajes?.length || 0) : acc, 0);
+        const expsInStep = experiments.filter(e => e.funnel_step === step.key);
+        const totalLearnings = experiments.reduce((acc, e) => e.funnel_step === step.key ? acc + (e.aprendizajes?.length || 0) : acc, 0);
         const latestValue = snapshots?.filter(s => s.nombre_metrica === step.key).sort((a,b) => new Date(b.fecha_registro).getTime() - new Date(a.fecha_registro).getTime())[0]?.valor;
 
         return {

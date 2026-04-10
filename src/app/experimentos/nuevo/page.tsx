@@ -101,6 +101,7 @@ export default function NuevoExperimento() {
             />
           </div>
 
+          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="funnel_step">Paso del Funnel que impacta</label>
               <select id="funnel_step" name="funnel_step" value={formData.funnel_step} onChange={handleChange}>

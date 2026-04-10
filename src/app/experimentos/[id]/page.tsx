@@ -181,7 +181,7 @@ export default function ExperimentoDetalle() {
   if (loading) return <div className={styles.container}>Cargando...</div>;
   if (!experiment) return <div className={styles.container}>Experimento no encontrado.</div>;
 
-  const estadoKey = (experiment.estado.charAt(0).toUpperCase() + experiment.estado.slice(1)).replace(/\s+/g, '');
+  const estadoKey = (experiment?.estado || 'planeado').charAt(0).toUpperCase() + (experiment?.estado || 'planeado').slice(1).replace(/\s+/g, '');
 
   // ── MINI FUNNEL: datos de métricas mapeados a pasos del funnel
   const miniFunnelData = FUNNEL_STEPS.map(step => {
