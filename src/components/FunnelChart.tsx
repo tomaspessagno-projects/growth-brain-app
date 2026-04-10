@@ -57,13 +57,19 @@ const CustomTooltip = ({ active, payload }: any) => {
             <span>Registros:</span>
             <span style={{ fontWeight: 'bold' }}>{data.value?.toLocaleString('es-AR')}</span>
           </div>
+          {data.conversion && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', color: '#888' }}>
+              <span>Conv. vs Anterior:</span>
+              <span style={{ fontWeight: 'bold', color: '#fff' }}>{data.conversion}</span>
+            </div>
+          )}
           {exps && (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginTop: '4px', borderTop: '0.5px solid #222', paddingTop: '4px' }}>
                 <span>Experimentos:</span>
                 <span style={{ color: '#fff' }}>[{exps.total}]</span>
               </div>
-              <div style={{ paddingLeft: '8px', color: '#888' }}>
+              <div style={{ paddingLeft: '8px', color: '#666' }}>
                 <div>• En curso: {exps.en_curso}</div>
                 <div>• Finalizados: {exps.finalizado}</div>
               </div>
@@ -126,25 +132,31 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
   }
 
   return (
-    <div style={{ width: '100%', height: 350, marginTop: '20px' }}>
+    <div style={{ width: '100%', minHeight: 450, marginTop: '20px' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} barSize={40} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-          <XAxis 
+        <BarChart 
+          data={chartData} 
+          layout="vertical" 
+          barSize={24} 
+          margin={{ top: 20, right: 80, left: 40, bottom: 20 }}
+        >
+          <XAxis type="number" hide />
+          <YAxis 
+            type="category" 
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
             fontSize={10} 
-            stroke="#666" 
-            dy={10}
+            stroke="#666"
+            width={70}
           />
-          <YAxis hide />
           <Tooltip 
             content={<CustomTooltip />} 
             cursor={{ fill: 'rgba(255,255,255,0.03)' }}
           />
           <Bar 
             dataKey="value" 
-            radius={[4, 4, 0, 0]}
+            radius={[0, 4, 4, 0]}
             animationDuration={1500}
           >
             {chartData.map((entry, index) => (
@@ -156,9 +168,17 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
               />
             ))}
             <LabelList 
+              dataKey="value" 
+              position="right" 
+              formatter={(val: any) => typeof val === 'number' && val > 0 ? val.toLocaleString('es-AR') : ''}
+              style={{ fill: '#fff', fontSize: '11px', fontWeight: 'bold' }} 
+              offset={10}
+            />
+            <LabelList 
               dataKey="conversion" 
-              position="top" 
-              style={{ fill: '#888', fontSize: '10px', fontWeight: 'bold' }} 
+              position="right" 
+              style={{ fill: '#666', fontSize: '10px', fontWeight: 'bold' }} 
+              offset={55}
             />
           </Bar>
         </BarChart>

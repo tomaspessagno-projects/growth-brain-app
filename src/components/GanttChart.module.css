@@ -7,6 +7,35 @@
   padding-bottom: 20px;
 }
 
+.ganttHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.navControls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.navBtn {
+  background: transparent;
+  border: 1px solid #222;
+  color: #888;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.navBtn:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
 .timelineHeader {
   height: 30px;
   position: relative;
