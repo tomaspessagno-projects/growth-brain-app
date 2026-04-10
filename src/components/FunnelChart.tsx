@@ -42,11 +42,9 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
           marginBottom: '4px',
         }}>
           <span style={{ fontSize: '10px', color: '#666', minWidth: '16px' }} />
-          <span style={{ fontSize: '10px', color: '#666', minWidth: '160px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Paso</span>
-          <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '10px', color: '#666', minWidth: '60px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Valor</span>
-          <span style={{ fontSize: '10px', color: '#666', minWidth: '48px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Conv.</span>
-          <span style={{ fontSize: '10px', color: '#666', minWidth: '60px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Exp.</span>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '200px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Etapa</span>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '100px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Conversión</span>
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '100px', textAlign: 'right', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Experimentos</span>
         </div>
       )}
       {FUNNEL_STEPS.map((step, idx) => {
@@ -79,148 +77,124 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
               display: 'flex',
               alignItems: 'center',
               gap: compact ? '8px' : '12px',
+              padding: '8px 0',
+              borderBottom: '1px solid #0f0f0f',
             }}>
-              {/* Step number */}
-              <span style={{
-                fontSize: compact ? '10px' : '11px',
-                color: isHighlighted ? '#ffffff' : '#555',
-                fontWeight: isHighlighted ? '700' : '400',
-                minWidth: compact ? '14px' : '16px',
-                textAlign: 'right',
-              }}>
-                {idx + 1}
-              </span>
-
-              {/* Label */}
-              <span style={{
-                fontSize: compact ? '10px' : '12px',
-                color: isHighlighted ? '#ffffff' : '#888',
-                fontWeight: isHighlighted ? '600' : '400',
-                minWidth: compact ? '90px' : '160px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {compact ? step.shortLabel : step.label}
-              </span>
-
-              {/* Bar */}
-              <div style={{ flex: 1, position: 'relative', height: compact ? '18px' : '24px' }}>
-                <div style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: `${widthPct}%`,
-                  background: isHighlighted
-                    ? '#ffffff'
-                    : value === null
-                      ? '#1a1a1a'
-                      : '#333',
-                  borderRadius: '2px',
-                  transition: 'width 0.6s ease',
-                  border: isHighlighted ? '1px solid #fff' : '1px solid #222',
-                }} />
-              </div>
-
-              {/* Value */}
-              <span style={{
-                fontSize: compact ? '11px' : '13px',
-                fontWeight: '700',
-                color: isHighlighted ? '#ffffff' : value !== null ? '#aaa' : '#333',
-                minWidth: compact ? '40px' : '60px',
-                textAlign: 'right',
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {value !== null ? value.toLocaleString('es-AR') : '—'}
-              </span>
-
-              {/* Conversion % */}
-              {!compact && (
-                <span style={{
-                  fontSize: '10px',
-                  color: conversionPct ? '#10b981' : '#333',
-                  minWidth: '48px',
-                  textAlign: 'right',
-                }}>
-                  {conversionPct ? `${conversionPct}%` : ''}
-                </span>
-              )}
-
-              {/* Experiment count badge */}
-              {experiments !== undefined && !compact && (
-                <div style={{ position: 'relative' }}>
+              {/* Etapa (Paso + Nombre) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '200px' }}>
+                <span style={{ fontSize: '10px', color: '#333', width: '12px' }}>{idx + 1}</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{
-                    fontSize: '10px',
-                    background: experiments.total > 0 ? '#1a1a1a' : 'transparent',
-                    border: experiments.total > 0 ? '1px solid #333' : '1px solid #1a1a1a',
-                    color: experiments.total > 0 ? '#aaa' : '#333',
-                    padding: '2px 7px',
-                    borderRadius: '10px',
-                    cursor: experiments.total > 0 ? 'default' : 'default',
-                    fontVariantNumeric: 'tabular-nums',
-                    minWidth: '28px',
-                    textAlign: 'center',
-                    display: 'inline-block',
+                    fontSize: compact ? '11px' : '13px',
+                    color: isHighlighted ? '#fff' : '#ccc',
+                    fontWeight: isHighlighted ? '600' : '400',
                   }}>
-                    {experiments.total > 0 ? `${experiments.total} exp` : '—'}
+                    {compact ? step.shortLabel : step.label}
                   </span>
-
-                  {/* Hover tooltip para desglose de experimentos */}
-                  {isHovered && experiments.total > 0 && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '-80px',
-                      right: 0,
-                      background: '#0a0a0a',
-                      border: '1px solid #222',
-                      borderRadius: '6px',
-                      padding: '12px 16px',
-                      zIndex: 1000,
-                      whiteSpace: 'nowrap',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
-                    }}>
-                      <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {step.label}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
-                          <span style={{ color: '#3b82f6' }}>● En Curso</span>
-                          <span style={{ color: '#aaa', fontWeight: '700' }}>{experiments.en_curso}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
-                          <span style={{ color: '#10b981' }}>● Finalizado</span>
-                          <span style={{ color: '#aaa', fontWeight: '700' }}>{experiments.finalizado}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
-                          <span style={{ color: '#666' }}>● Planeado</span>
-                          <span style={{ color: '#aaa', fontWeight: '700' }}>{experiments.planeado}</span>
-                        </div>
-                      </div>
-
-                      {stepData?.learnings && stepData.learnings.total > 0 && (
-                        <>
-                          <div style={{ height: '1px', background: '#222', margin: '12px 0' }} />
-                          <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Memoria del Equipo
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
-                              <span style={{ color: '#aaa' }}>Aprendizajes Totales</span>
-                              <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.total}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px', fontSize: '12px' }}>
-                              <span style={{ color: '#10b981' }}>Hipótesis Validadas</span>
-                              <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.validated}</span>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                  {!compact && value !== null && (
+                    <span style={{ fontSize: '10px', color: '#555' }}>
+                      {value.toLocaleString('es-AR')} unidades
+                    </span>
                   )}
                 </div>
-              )}
+              </div>
+
+              {/* Tasa de Conversión */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minWidth: '100px' }}>
+                {conversionPct ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold' }}>{conversionPct}%</span>
+                    <span style={{ fontSize: '8px', color: '#333', textTransform: 'uppercase' }}>Conv.</span>
+                  </div>
+                ) : (
+                  <span style={{ color: '#1a1a1a' }}>—</span>
+                )}
+              </div>
+
+              {/* Cantidad de Experimentos y Desglose (Hover) */}
+              <div style={{ minWidth: '100px', display: 'flex', justifyContent: 'flex-end', position: 'relative' }}>
+                {experiments !== undefined && (
+                  <>
+                    <div style={{ 
+                      background: experiments.total > 0 ? '#111' : 'transparent',
+                      border: '1px solid #222',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      cursor: 'default',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span style={{ fontSize: '12px', color: experiments.total > 0 ? '#fff' : '#444', fontWeight: '600' }}>
+                        {experiments.total}
+                      </span>
+                      <span style={{ fontSize: '9px', color: '#555', textTransform: 'uppercase' }}>Exp.</span>
+                    </div>
+
+                    {/* Desglose Tooltip (Hover) */}
+                    {isHovered && experiments.total > 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        right: 0,
+                        marginTop: '8px',
+                        background: '#0a0a0a',
+                        border: '1px solid #222',
+                        borderRadius: '6px',
+                        padding: '12px 16px',
+                        zIndex: 10000,
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.9)',
+                      }}>
+                         <div style={{ fontSize: '10px', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Desglose: {step.label}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', fontSize: '12px' }}>
+                            <span style={{ color: '#3b82f6' }}>En Curso</span>
+                            <span style={{ color: '#fff', fontWeight: '700' }}>{experiments.en_curso}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', fontSize: '12px' }}>
+                            <span style={{ color: '#10b981' }}>Finalizado</span>
+                            <span style={{ color: '#fff', fontWeight: '700' }}>{experiments.finalizado}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', fontSize: '12px' }}>
+                            <span style={{ color: '#666' }}>Planeado</span>
+                            <span style={{ color: '#fff', fontWeight: '700' }}>{experiments.planeado}</span>
+                          </div>
+                          
+                          {stepData?.learnings && stepData.learnings.total > 0 && (
+                            <>
+                              <div style={{ height: '1px', background: '#222', margin: '8px 0' }} />
+                              <div style={{ fontSize: '10px', color: '#555', marginBottom: '4px', textTransform: 'uppercase' }}>Memoria</div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', fontSize: '12px' }}>
+                                <span style={{ color: '#aaa' }}>Aprendizajes</span>
+                                <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.total}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '32px', fontSize: '12px' }}>
+                                <span style={{ color: '#10b981' }}>Validados</span>
+                                <span style={{ color: '#fff', fontWeight: '700' }}>{stepData.learnings.validated}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
+            
+            {/* Barra visual sutil como fondo o indicador de progreso */}
+            <div style={{ 
+              position: 'absolute', 
+              left: 0, 
+              bottom: 0, 
+              height: '1px', 
+              width: `${widthPct}%`, 
+              background: isHighlighted ? '#fff' : '#333',
+              opacity: 0.3,
+            }} />
           </div>
         );
       })}
