@@ -7,20 +7,31 @@ import Sidebar from "@/components/Sidebar";
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [domainError, setDomainError] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const isMedicus = (email?: string) => email?.toLowerCase().endsWith('@medicus.com.ar');
 
   useEffect(() => {
     // Revisión inmediata al montar la app
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (session) {
+        if (!isMedicus(session.user.email)) {
+          await supabase.auth.signOut();
+          setDomainError(true);
+          setIsAuthenticated(false);
+        } else {
+          setIsAuthenticated(true);
+        }
+      }
+
       if (!session && pathname !== '/login') {
         router.push('/login');
-      } else if (session && pathname === '/login') {
-        router.push('/'); // Evita que un logueado vea el login
-      } else if (session) {
-        setIsAuthenticated(true);
+      } else if (session && pathname === '/login' && isMedicus(session.user.email)) {
+        router.push('/'); 
       }
       
       setLoading(false);
@@ -29,15 +40,20 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     checkSession();
 
     // Escuchar si la sesión cambia en tiempo real
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session && pathname !== '/login') {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        if (!isMedicus(session.user.email)) {
+          await supabase.auth.signOut();
+          setDomainError(true);
+          setIsAuthenticated(false);
+          router.push('/login');
+        } else {
+          setIsAuthenticated(true);
+          if (pathname === '/login') router.push('/');
+        }
+      } else {
         setIsAuthenticated(false);
-        router.push('/login');
-      } else if (session && pathname === '/login') {
-        setIsAuthenticated(true);
-        router.push('/');
-      } else if (session) {
-        setIsAuthenticated(true);
+        if (pathname !== '/login') router.push('/login');
       }
     });
 
@@ -45,6 +61,21 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       authListener.subscription.unsubscribe();
     };
   }, [pathname, router]);
+
+  if (domainError) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#0b0c10', textAlign: 'center', padding: '20px' }}>
+        <h1 style={{ color: '#ff4444' }}>Acceso Restringido</h1>
+        <p>Solo se permite el acceso al personal de Medicus (@medicus.com.ar).</p>
+        <button 
+          onClick={() => { setDomainError(false); router.push('/login'); }}
+          style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'white', color: 'black', cursor: 'pointer' }}
+        >
+          Volver al Login
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#0b0c10' }}>Iniciando entorno seguro...</div>;
