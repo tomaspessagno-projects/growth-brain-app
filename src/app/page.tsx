@@ -28,20 +28,20 @@ export default function Dashboard() {
     contentRef: reportRef,
     documentTitle: 'GrowthBrain_WeeklyReport',
     onAfterPrint: () => setIsGenerating(false)
-  } as any); 
+  });
 
   useEffect(() => {
     async function fetchDashboardData() {
       // Fetch conteos por estado
       const { data: countData } = await supabase.from('experimentos').select('estado, fecha_inicio, aprendizajes(id), funnel_step');
+      const experiments = (countData as any[]) || [];
       const counts = { planeados: 0, en_curso: 0, finalizados: 0 };
       
-      const experiments = countData || [];
       experiments.forEach(exp => {
         const estado = exp.estado?.toLowerCase();
         if (estado === 'planeado') counts.planeados++;
-        if (estado === 'en curso') counts.en_curso++;
-        if (estado === 'finalizado') counts.finalizados++;
+        else if (estado === 'en curso') counts.en_curso++;
+        else if (estado === 'finalizado') counts.finalizados++;
       });
       setStats(counts);
 
