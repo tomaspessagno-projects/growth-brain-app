@@ -236,19 +236,28 @@ export default function Dashboard() {
 
         // ── DETALLE MÉTRICAS CON DELTA ───────────────────────────
         y += 8;
+        doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text('DETALLE DE MÉTRICAS', 20, y); y += 6;
+
         allExps.forEach((exp: any) => {
           if (!exp.metricas_snapshots?.length) return;
           if (y > 255) { doc.addPage(); y = 20; }
+          
           doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
-          doc.text(exp.nombre.length > 50 ? exp.nombre.slice(0, 48) + '…' : exp.nombre, 20, y); y += 5;
+          const estadoLabel = exp.estado === 'en curso' ? '[ACTIVO]' : '[FINALIZADO]';
+          doc.text(`${estadoLabel} ${exp.nombre.length > 50 ? exp.nombre.slice(0, 48) + '…' : exp.nombre}`, 20, y); 
+          y += 5;
+          
           doc.setFontSize(7); doc.setTextColor(120);
           doc.text('MÉTRICA', 22, y); doc.text('INICIO', 100, y); doc.text('ACTUAL', 133, y); doc.text('Δ%', 170, y);
           y += 3; doc.setDrawColor(200); doc.line(20, y, 190, y); y += 3;
+          
           const grouped: Record<string, any[]> = {};
           exp.metricas_snapshots.forEach((m: any) => {
             if (!grouped[m.nombre_metrica]) grouped[m.nombre_metrica] = [];
             grouped[m.nombre_metrica].push(m);
           });
+          
           Object.entries(grouped).forEach(([name, snaps]) => {
             if (y > 270) { doc.addPage(); y = 20; }
             const sorted = [...snaps].sort((a, b) => new Date(a.fecha_registro).getTime() - new Date(b.fecha_registro).getTime());
@@ -256,6 +265,7 @@ export default function Dashboard() {
             const last = sorted[sorted.length - 1].valor;
             const delta = last - first;
             const pct = first !== 0 ? ((delta / first) * 100).toFixed(1) : '—';
+            
             doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(0);
             doc.text(name.length > 38 ? name.slice(0, 36) + '…' : name, 22, y);
             doc.text(String(first), 100, y); doc.text(String(last), 133, y);
@@ -266,6 +276,60 @@ export default function Dashboard() {
           });
           y += 4;
         });
+
+        // ── DETALLE DE APRENDIZAJES E HIPÓTESIS ──────────────────
+        y += 6;
+        if (allExps.some(e => e.aprendizajes?.length)) {
+          if (y > 250) { doc.addPage(); y = 20; }
+          doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+          doc.text('HIPÓTESIS Y APRENDIZAJES', 20, y); y += 8;
+
+          allExps.forEach((exp: any) => {
+            if (!exp.aprendizajes?.length) return;
+            if (y > 240) { doc.addPage(); y = 20; }
+
+            doc.setFillColor(245, 245, 245); doc.rect(20, y, 170, 7, 'F');
+            doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(60);
+            doc.text(exp.nombre.toUpperCase(), 22, y + 5);
+            y += 12;
+
+            exp.aprendizajes.forEach((a: any) => {
+              if (y > 250) { doc.addPage(); y = 20; }
+              
+              // Hipótesis
+              doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+              doc.text('Hipótesis:', 25, y);
+              doc.setFont('helvetica', 'italic'); doc.setTextColor(100);
+              const hypLines = doc.splitTextToSize(a.hipotesis || 'Sin hipótesis registrada', 135);
+              doc.text(hypLines, 45, y);
+              y += (hypLines.length * 4) + 2;
+
+              // Resultado / Insights
+              if (y > 250) { doc.addPage(); y = 20; }
+              doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+              doc.text('Sustento / Resultados:', 25, y);
+              doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+              const resLines = doc.splitTextToSize(a.resultado || 'Pendiente de resultados', 135);
+              doc.text(resLines, 45, y);
+              y += (resLines.length * 4) + 2;
+
+              // Insights
+              if (a.insights) {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(16, 185, 129);
+                doc.text('Insight Clave:', 25, y);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+                const insLines = doc.splitTextToSize(a.insights, 135);
+                doc.text(insLines, 45, y);
+                y += (insLines.length * 4) + 4;
+              }
+              
+              doc.setDrawColor(240); doc.line(25, y, 185, y);
+              y += 6;
+            });
+            y += 4;
+          });
+        }
 
         // ── FOOTER ──────────────────────────────────────────────
         doc.setFontSize(7); doc.setTextColor(160); doc.setFont('helvetica', 'italic');
