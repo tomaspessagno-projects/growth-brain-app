@@ -17,7 +17,8 @@ export default function NuevoExperimento() {
     estado: 'planeado',
     funnel_step: '',
     fecha_inicio: '',
-    fecha_fin: ''
+    fecha_fin: '',
+    categoria: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -41,6 +42,7 @@ export default function NuevoExperimento() {
       descripcion: formData.descripcion || null,
       estado: formData.estado,
       funnel_step: formData.funnel_step || null,
+      categoria: formData.categoria || null,
       ...(formData.fecha_inicio ? { fecha_inicio: new Date(formData.fecha_inicio).toISOString() } : {}),
       ...(formData.fecha_fin ? { fecha_fin: new Date(formData.fecha_fin).toISOString() } : {})
     };
@@ -99,7 +101,6 @@ export default function NuevoExperimento() {
             />
           </div>
 
-          <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label htmlFor="funnel_step">Paso del Funnel que impacta</label>
               <select id="funnel_step" name="funnel_step" value={formData.funnel_step} onChange={handleChange}>
@@ -107,6 +108,18 @@ export default function NuevoExperimento() {
                 {FUNNEL_STEPS.map(step => (
                   <option key={step.key} value={step.key}>{step.label}</option>
                 ))}
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="categoria">Categoría</label>
+              <select id="categoria" name="categoria" value={formData.categoria} onChange={handleChange}>
+                <option value="">— Sin clasificar —</option>
+                <option value="UX">UX / Diseño</option>
+                <option value="Copy">Copywriting</option>
+                <option value="Pricing">Pricing / Oferta</option>
+                <option value="Producto">Producto / Features</option>
+                <option value="Marketing">Marketing / Canales</option>
+                <option value="Tech">Tech / Performance</option>
               </select>
             </div>
           </div>

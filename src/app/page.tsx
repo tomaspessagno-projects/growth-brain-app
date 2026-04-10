@@ -6,6 +6,7 @@ import { useReactToPrint } from 'react-to-print';
 import WeeklyReportPdf from '@/components/WeeklyReportPdf';
 import FunnelChart from '@/components/FunnelChart';
 import GrowthTrends from '@/components/GrowthTrends';
+import SlideMode from '@/components/SlideMode';
 import { FUNNEL_STEPS } from '@/config/funnel';
 import styles from "./page.module.css";
 
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportData, setReportData] = useState<any[]>([]);
   const [aiSummary, setAiSummary] = useState('');
+  const [isSlideOpen, setIsSlideOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
@@ -138,6 +140,9 @@ export default function Dashboard() {
           <p className={styles.subtitle}>Panel de control estratégico Medicus.</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={() => setIsSlideOpen(true)} className={styles.reportBtn}>
+            📽 Presentar
+          </button>
           <button onClick={handleGenerateReport} disabled={isGenerating} className={styles.reportBtn}>
             {isGenerating ? 'IA Generando...' : '📄 Reporte de Impacto'}
           </button>
@@ -146,6 +151,30 @@ export default function Dashboard() {
           </Link>
         </div>
       </header>
+
+      <SlideMode 
+        isOpen={isSlideOpen} 
+        onClose={() => setIsSlideOpen(false)} 
+        title="Medicus Growth Center"
+        subtitle="Análisis estratégico de conversión y velocidad de experimentación."
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '20px' }}>
+          <section className="glass-panel" style={{ padding: '40px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '32px' }}>Embudo de Conversión</h2>
+            <FunnelChart data={funnelData} />
+          </section>
+          <section className="glass-panel" style={{ padding: '40px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '32px' }}>Tendencia de Crecimiento</h2>
+            <GrowthTrends data={trendData} />
+          </section>
+        </div>
+        <div className="glass-panel" style={{ padding: '40px', borderLeft: '4px solid #fff' }}>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: '#888' }}>Insights Estratégicos (Gemini AI)</h2>
+          <p style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: 300 }}>
+            {aiSummary || "La velocidad de experimentación se mantiene estable. El mayor cuello de botella se encuentra entre la Visita y la Cotización. Se recomienda priorizar experimentos de UX en el onboarding."}
+          </p>
+        </div>
+      </SlideMode>
 
       <section className={styles.statsGrid}>
         <div className={`glass-panel ${styles.statCard}`}>

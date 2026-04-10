@@ -6,6 +6,8 @@ import { supabase } from '@/utils/supabase/client';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import ModalPortal from '@/components/ModalPortal';
 import FunnelChart from '@/components/FunnelChart';
+import SlideMode from '@/components/SlideMode';
+import CorrelationAnalysis from '@/components/CorrelationAnalysis';
 import { FUNNEL_STEPS } from '@/config/funnel';
 import styles from './detalle.module.css';
 
@@ -23,6 +25,7 @@ export default function ExperimentoDetalle() {
   const [showLearningModal, setShowLearningModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [isSlideOpen, setIsSlideOpen] = useState(false);
 
   // Edit metric state
   const [editingMetric, setEditingMetric] = useState<any>(null);
@@ -30,7 +33,7 @@ export default function ExperimentoDetalle() {
   // Forms
   const [newMetric, setNewMetric] = useState({ nombre_metrica: '', valor: '' });
   const [newLearning, setNewLearning] = useState({ hipotesis: '', resultado: '', insights: '', validado: false });
-  const [editForm, setEditForm] = useState({ nombre: '', descripcion: '', estado: '', funnel_step: '', fecha_inicio: '', fecha_fin: '' });
+  const [editForm, setEditForm] = useState({ nombre: '', descripcion: '', estado: '', funnel_step: '', fecha_inicio: '', fecha_fin: '', categoria: '' });
 
   useEffect(() => {
     if (id) loadExperimentData();
@@ -48,6 +51,7 @@ export default function ExperimentoDetalle() {
         funnel_step: exp.funnel_step || '',
         fecha_inicio: exp.fecha_inicio ? exp.fecha_inicio.split('T')[0] : '',
         fecha_fin: exp.fecha_fin ? exp.fecha_fin.split('T')[0] : '',
+        categoria: exp.categoria || '',
       });
     }
     const { data: met } = await supabase.from('metricas_snapshots').select('*').eq('experimento_id', id).order('fecha_registro', { ascending: false });
@@ -68,6 +72,7 @@ export default function ExperimentoDetalle() {
       funnel_step: editForm.funnel_step || null,
       fecha_inicio: editForm.fecha_inicio || null,
       fecha_fin: editForm.fecha_fin || null,
+      categoria: editForm.categoria || null,
     }).eq('id', id);
     setModalLoading(false);
     if (!error) {
@@ -204,6 +209,9 @@ export default function ExperimentoDetalle() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link href="/experimentos" className={styles.backLink}>← Volver a Experimentos</Link>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button className={styles.secondaryAction} onClick={() => setIsSlideOpen(true)}>
+            📽 Presentar
+          </button>
           <button className={styles.secondaryAction} onClick={() => setShowEditModal(true)}>
             ✏ Editar
           </button>
@@ -228,8 +236,61 @@ export default function ExperimentoDetalle() {
             <span>Fecha Fin Estimada:</span>
             <strong>{experiment.fecha_fin ? new Date(experiment.fecha_fin).toLocaleDateString('es-ES') : 'N/A'}</strong>
           </div>
+          <div className={styles.metaItem}>
+            <span>Categoría:</span>
+            <strong style={{ color: '#fff', textTransform: 'uppercase', fontSize: '0.75rem', border: '1px solid #333', padding: '2px 6px', borderRadius: '4px' }}>
+              {experiment.categoria || 'Sin clasificar'}
+            </strong>
+          </div>
         </div>
       </header>
+
+      <SlideMode 
+        isOpen={isSlideOpen} 
+        onClose={() => setIsSlideOpen(false)} 
+        title={experiment.nombre}
+        subtitle={experiment.descripcion}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '40px' }}>
+          <div className="glass-panel" style={{ padding: '32px' }}>
+            <h3 style={{ fontSize: '1rem', color: '#888', marginBottom: '24px', textTransform: 'uppercase' }}>Posición en el Funnel</h3>
+            <FunnelChart data={miniFunnelData} highlightStep={experiment.funnel_step} />
+          </div>
+          <div className="glass-panel" style={{ padding: '32px' }}>
+            <h3 style={{ fontSize: '1rem', color: '#888', marginBottom: '24px', textTransform: 'uppercase' }}>Evolución de Métricas</h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={[...metrics].reverse()}>
+                  <XAxis dataKey="fecha_registro" hide />
+                  <YAxis hide />
+                  <Line type="monotone" dataKey="valor" stroke="#ffffff" strokeWidth={4} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+          <div className="glass-panel" style={{ padding: '32px', borderLeft: '4px solid #fff' }}>
+            <h3 style={{ fontSize: '1rem', color: '#888', marginBottom: '16px' }}>Último Aprendizaje</h3>
+            {learnings[0] ? (
+              <>
+                <p style={{ fontSize: '1.4rem', fontWeight: 300, marginBottom: '16px' }}>&quot;{learnings[0].hipotesis}&quot;</p>
+                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', fontSize: '1rem' }}>
+                  {learnings[0].insights}
+                </div>
+              </>
+            ) : <p>Sin aprendizajes registrados aún.</p>}
+          </div>
+          <div className="glass-panel" style={{ padding: '32px' }}>
+            <h3 style={{ fontSize: '1rem', color: '#888', marginBottom: '16px' }}>Metadatos</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '1.1rem' }}>
+              <div>Estado: <strong>{experiment.estado}</strong></div>
+              <div>Iniciado: <strong>{new Date(experiment.fecha_inicio).toLocaleDateString()}</strong></div>
+              <div>Categoría: <strong style={{ textTransform: 'uppercase' }}>{experiment.categoria || 'N/A'}</strong></div>
+            </div>
+          </div>
+        </div>
+      </SlideMode>
 
       {/* ── MINI FUNNEL DEL EXPERIMENTO ── */}
       <section className={`glass-panel ${styles.section}`}>
@@ -308,6 +369,15 @@ export default function ExperimentoDetalle() {
           </div>
         </section>
 
+        {/* CORRELATION ANALYSIS (NEW PO FEATURE) */}
+        <section className={`stagger-2 ${styles.section}`}>
+          <CorrelationAnalysis 
+            categoria={experiment.categoria} 
+            funnelStep={experiment.funnel_step}
+            currentExperimentId={id as string}
+          />
+        </section>
+
         {/* LEARNINGS */}
         <section className={`glass-panel stagger-2 ${styles.section}`}>
           <div className={styles.sectionHeader}>
@@ -369,6 +439,18 @@ export default function ExperimentoDetalle() {
                 <option value="planeado" style={{ background: '#0a0a0a' }}>Planeado</option>
                 <option value="en curso" style={{ background: '#0a0a0a' }}>En Curso</option>
                 <option value="finalizado" style={{ background: '#0a0a0a' }}>Finalizado</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Categoría</label>
+              <select value={editForm.categoria} onChange={e => setEditForm({ ...editForm, categoria: e.target.value })} style={{ background: 'transparent', border: '1px solid #222', color: 'white', padding: '10px 14px', borderRadius: '6px', fontFamily: 'inherit', fontSize: '0.95rem', outline: 'none', width: '100%' }}>
+                <option value="" style={{ background: '#0a0a0a' }}>— Sin clasificar —</option>
+                <option value="UX" style={{ background: '#0a0a0a' }}>UX / Diseño</option>
+                <option value="Copy" style={{ background: '#0a0a0a' }}>Copywriting</option>
+                <option value="Pricing" style={{ background: '#0a0a0a' }}>Pricing / Oferta</option>
+                <option value="Producto" style={{ background: '#0a0a0a' }}>Producto / Features</option>
+                <option value="Marketing" style={{ background: '#0a0a0a' }}>Marketing / Canales</option>
+                <option value="Tech" style={{ background: '#0a0a0a' }}>Tech / Performance</option>
               </select>
             </div>
             <div className={styles.formGroup}>

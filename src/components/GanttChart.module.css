@@ -1,0 +1,96 @@
+.ganttContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.timelineHeader {
+  height: 30px;
+  position: relative;
+  border-bottom: 1px solid #1a1b1e;
+  margin-bottom: 16px;
+}
+
+.marker {
+  position: absolute;
+  top: 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.expLabel {
+  width: 180px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.expName {
+  font-size: 0.85rem;
+  color: #888;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: block;
+}
+
+.track {
+  flex-grow: 1;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  position: relative;
+}
+
+.bar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  min-width: 4px;
+  transition: all 0.3s ease;
+}
+
+.bar.active {
+  background: #ffffff;
+}
+
+.bar.planned {
+  background: transparent;
+  border: 1px solid #333;
+}
+
+.statusDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.row:hover .expName {
+  color: #fff;
+}
+
+.row:hover .bar.planned {
+  border-color: #fff;
+}
