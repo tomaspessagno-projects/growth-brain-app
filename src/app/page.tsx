@@ -158,17 +158,19 @@ export default function Dashboard() {
         title="Medicus Growth Center"
         subtitle="Análisis estratégico de conversión y velocidad de experimentación."
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '20px' }}>
-          <section className="glass-panel" style={{ padding: '40px' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '32px' }}>Embudo de Conversión</h2>
-            <FunnelChart data={funnelData} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '40px', width: '100%' }}>
+          <section className="glass-panel" style={{ padding: '20px', width: '100%' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '20px' }}>Embudo de Conversión</h2>
+            <div style={{ height: '200px', width: '100%' }}>
+              <FunnelChart data={funnelData} />
+            </div>
           </section>
           <section className="glass-panel" style={{ padding: '40px' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '32px' }}>Tendencia de Crecimiento</h2>
             <GrowthTrends data={trendData} />
           </section>
         </div>
-        <div className="glass-panel" style={{ padding: '40px', borderLeft: '4px solid #fff' }}>
+        <div className="glass-panel" style={{ padding: '40px', borderLeft: '4px solid #fff', marginTop: '24px' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: '#888' }}>Insights Estratégicos (Gemini AI)</h2>
           <p style={{ fontSize: '1.4rem', lineHeight: '1.6', fontWeight: 300 }}>
             {aiSummary || "La velocidad de experimentación se mantiene estable. El mayor cuello de botella se encuentra entre la Visita y la Cotización. Se recomienda priorizar experimentos de UX en el onboarding."}

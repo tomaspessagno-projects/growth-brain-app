@@ -95,15 +95,17 @@
 }
 
 .chartsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 32px;
+  width: 100%;
 }
 
 .chartSection {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
 }
 
 .chartSub {

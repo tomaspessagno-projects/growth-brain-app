@@ -132,13 +132,13 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
   }
 
   return (
-    <div style={{ width: '100%', minHeight: 450, marginTop: '20px' }}>
+    <div style={{ width: '100%', minHeight: 180, marginTop: '5px' }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart 
           data={chartData} 
           layout="vertical" 
-          barSize={24} 
-          margin={{ top: 20, right: 80, left: 40, bottom: 20 }}
+          barSize={10} 
+          margin={{ top: 0, right: 80, left: 40, bottom: 0 }}
         >
           <XAxis type="number" hide />
           <YAxis 
