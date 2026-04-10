@@ -234,7 +234,6 @@ export default function Dashboard() {
                 </span>
               </Link>
             ))}
-            )}
           </div>
         </div>
       </section>

@@ -7,15 +7,14 @@ import styles from './login.module.css';
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-    setSuccessMsg('');
 
     // --- "EL MEDICUS GUARD" ---
     if (!email.toLowerCase().endsWith('@medicus.com.ar')) {
@@ -24,19 +23,23 @@ export default function LoginPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: window.location.origin,
-      }
+      password,
     });
 
     if (error) {
-      setErrorMsg('Error al enviar el enlace: ' + error.message);
+      if (error.message === 'Invalid login credentials') {
+        setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña corporativa.');
+      } else {
+        setErrorMsg('Error al iniciar sesión: ' + error.message);
+      }
+      setLoading(false);
     } else {
-      setSuccessMsg('¡Listo! Revisa tu correo de Medicus. Te hemos enviado un enlace de acceso mágico.');
+      // Éxito: AuthWrapper detectará la sesión y redirigirá.
+      // Pero forzamos redirección para mejor UX instantánea
+      router.push('/');
     }
-    setLoading(false);
   };
 
   return (
@@ -47,40 +50,44 @@ export default function LoginPage() {
             <BrainIcon />
           </div>
           <h1>Growth Brain AI</h1>
-          <p>Acceso Seguro Medicus</p>
+          <p>Control de Acceso Medicus</p>
         </div>
 
         {errorMsg && <div className={styles.errorBox}>{errorMsg}</div>}
-        {successMsg && <div className={styles.successBox}>{successMsg}</div>}
 
-        {!successMsg ? (
-          <form onSubmit={handleMagicLink} className={styles.form}>
-            <div className={styles.formGroup}>
-              <label>Correo Electrónico Corporativo</label>
-              <input 
-                type="email" 
-                required 
-                placeholder="tu_nombre@medicus.com.ar" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-              />
-            </div>
-
-            <button type="submit" className={styles.submitBtn} disabled={loading}>
-              {loading ? 'Validando...' : 'Enviar Enlace de Acceso'}
-            </button>
-            <p className={styles.hint}>
-              Ingresa tu mail de Medicus para recibir un enlace de inicio de sesión único. Sin contraseñas.
-            </p>
-          </form>
-        ) : (
-          <div className={styles.confirmState}>
-            <p>Por favor, haz clic en el enlace que enviamos a <strong>{email}</strong> para entrar a la plataforma.</p>
-            <button className={styles.toggleBtn} onClick={() => setSuccessMsg('')}>
-              ← Intentar con otro mail
-            </button>
+        <form onSubmit={handleLogin} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label>Correo Electrónico Corporativo</label>
+            <input 
+              type="email" 
+              required 
+              placeholder="tu.nombre@medicus.com.ar" 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
+            />
           </div>
-        )}
+
+          <div className={styles.formGroup}>
+            <label>Contraseña</label>
+            <input 
+              type="password" 
+              required 
+              placeholder="••••••••" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+            />
+          </div>
+
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? 'Autenticando...' : 'Iniciar Sesión'}
+          </button>
+          
+          <div className={styles.authMeta}>
+            <p className={styles.hint}>
+              Ingresa tus credenciales autorizadas por el equipo de sistemas.
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );
