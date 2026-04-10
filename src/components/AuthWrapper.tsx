@@ -23,6 +23,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
           await supabase.auth.signOut();
           setDomainError(true);
           setIsAuthenticated(false);
+          setLoading(false); // Detener carga para mostrar error de dominio
+          return;
         } else {
           setIsAuthenticated(true);
         }
@@ -46,8 +48,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
           await supabase.auth.signOut();
           setDomainError(true);
           setIsAuthenticated(false);
+          setLoading(false);
           router.push('/login');
         } else {
+          setDomainError(false);
           setIsAuthenticated(true);
           if (pathname === '/login') router.push('/');
         }
