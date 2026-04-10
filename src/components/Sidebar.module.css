@@ -125,10 +125,10 @@
   align-items: center;
   gap: 12px;
   background: transparent;
-  border: 1px solid #222;
-  color: #ff4444;
+  border: 1px solid #333;
+  color: #888;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.85rem;
@@ -137,8 +137,9 @@
 }
 
 .logoutBtn:hover {
-  background: rgba(255, 68, 68, 0.1);
-  border-color: #ff4444;
+  background: white;
+  color: black;
+  border-color: white;
 }
 
 .tagLine {

@@ -123,22 +123,23 @@
 }
 
 .errorBox {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--danger-color);
-  color: var(--danger-color);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #333;
+  color: #888;
   padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
   text-align: center;
 }
 
 .successBox {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid var(--success-color);
-  color: var(--success-color);
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  color: #000000;
   padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
   text-align: center;
 }
 

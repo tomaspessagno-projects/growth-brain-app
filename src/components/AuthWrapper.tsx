@@ -68,12 +68,12 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   if (domainError) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#0b0c10', textAlign: 'center', padding: '20px' }}>
-        <h1 style={{ color: '#ff4444' }}>Acceso Restringido</h1>
-        <p>Solo se permite el acceso al personal de Medicus (@medicus.com.ar).</p>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#000', textAlign: 'center', padding: '20px' }}>
+        <h1 style={{ color: '#fff', fontSize: '2rem', marginBottom: '16px' }}>Acceso Restringido</h1>
+        <p style={{ color: '#888' }}>Solo se permite el acceso al personal de Medicus (@medicus.com.ar).</p>
         <button 
           onClick={() => { setDomainError(false); router.push('/login'); }}
-          style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'white', color: 'black', cursor: 'pointer' }}
+          style={{ marginTop: '32px', padding: '12px 24px', borderRadius: '4px', border: 'none', background: 'white', color: 'black', cursor: 'pointer', fontWeight: 'bold' }}
         >
           Volver al Login
         </button>
