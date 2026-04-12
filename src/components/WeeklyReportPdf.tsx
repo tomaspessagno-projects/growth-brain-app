@@ -13,7 +13,7 @@ const WeeklyReportPdf = forwardRef<HTMLDivElement, WeeklyReportPdfProps>(({ data
   const weekStartStr = weekStart.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
 
   return (
-    <div ref={ref} style={{ padding: '40px', fontFamily: 'Inter, system-ui, sans-serif', color: '#000', backgroundColor: '#fff', width: '210mm', minH: '297mm', boxSizing: 'border-box' }}>
+    <div ref={ref} style={{ padding: '40px', fontFamily: 'Inter, system-ui, sans-serif', color: '#000', backgroundColor: '#fff', width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
       
       {/* Header */}
       <div style={{ borderBottom: '3px solid #000', paddingBottom: '20px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
