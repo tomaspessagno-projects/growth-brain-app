@@ -8,25 +8,60 @@ interface GanttProps {
 
 export default function GanttChart({ experiments }: GanttProps) {
   const [viewDate, setViewDate] = useState(new Date());
-
-  // Sort experiments by start date
-  const sortedExps = [...experiments].sort((a, b) => {
-    const dateA = a.fecha_inicio ? new Date(a.fecha_inicio).getTime() : Infinity;
-    const dateB = b.fecha_inicio ? new Date(b.fecha_inicio).getTime() : Infinity;
-    return dateA - dateB;
+  const [filterRange, setFilterRange] = useState({
+    start: '',
+    end: ''
   });
 
-  // Calculate time range (last 30 days and next 30 days from viewDate)
-  const startDate = new Date(viewDate);
-  startDate.setDate(startDate.getDate() - 30);
-  const endDate = new Date(viewDate);
-  endDate.setDate(endDate.getDate() + 30);
+  // Filter and Sort experiments
+  const filteredExps = experiments
+    .filter(exp => {
+      // 1. Solo en curso o planeado
+      if (exp.estado !== 'en curso' && exp.estado !== 'planeado') return false;
+      
+      // 2. Solo HOY o futuro (si no hay filtro manual)
+      if (!filterRange.start) {
+        const start = exp.fecha_inicio ? new Date(exp.fecha_inicio) : null;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        // "En curso" siempre se muestra, "Planeado" solo si es hoy o futuro
+        if (exp.estado === 'planeado' && start && start < today) return false;
+      }
 
-  const totalDays = 60; // Fixed 60 day window
+      // 3. Filtro manual por rango (si existe)
+      if (filterRange.start && exp.fecha_inicio) {
+        const expStart = new Date(exp.fecha_inicio);
+        const fStart = new Date(filterRange.start);
+        if (expStart < fStart) return false;
+      }
+      if (filterRange.end && exp.fecha_inicio) {
+        const expStart = new Date(exp.fecha_inicio);
+        const fEnd = new Date(filterRange.end);
+        if (expStart > fEnd) return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const dateA = a.fecha_inicio ? new Date(a.fecha_inicio).getTime() : Infinity;
+      const dateB = b.fecha_inicio ? new Date(b.fecha_inicio).getTime() : Infinity;
+      return dateA - dateB;
+    });
+
+  // Calculate time range (from viewDate or filterRange)
+  const startDate = filterRange.start ? new Date(filterRange.start) : new Date(viewDate);
+  if (!filterRange.start) startDate.setDate(startDate.getDate() - 10); // Margen de 10 días al pasado si es hoy
+  
+  const endDate = filterRange.end ? new Date(filterRange.end) : new Date(startDate);
+  if (!filterRange.end) endDate.setDate(startDate.getDate() + 60);
+
+  const totalDiff = endDate.getTime() - startDate.getTime();
+  const totalDays = Math.max(totalDiff / (1000 * 60 * 60 * 24), 1);
 
   const getPosition = (dateStr: string) => {
     if (!dateStr) return null;
     const date = new Date(dateStr);
+    if (date < startDate || date > endDate) return null;
     const diff = date.getTime() - startDate.getTime();
     const day = diff / (1000 * 60 * 60 * 24);
     return (day / totalDays) * 100;
@@ -61,34 +96,54 @@ export default function GanttChart({ experiments }: GanttProps) {
     <div className={styles.ganttContainer}>
       <div className={styles.ganttHeader}>
         <div className={styles.navControls}>
-          <button className={styles.navBtn} onClick={() => handleNavigate(-15)}>← Ant.</button>
-          <button className={styles.navBtn} onClick={() => setViewDate(new Date())}>Hoy</button>
-          <button className={styles.navBtn} onClick={() => handleNavigate(15)}>Sig. →</button>
+          <div className={styles.filterGroup}>
+            <label>Scope:</label>
+            <input 
+              type="date" 
+              className={styles.dateInput} 
+              value={filterRange.start} 
+              onChange={(e) => setFilterRange(prev => ({ ...prev, start: e.target.value }))}
+            />
+            <span>a</span>
+            <input 
+              type="date" 
+              className={styles.dateInput} 
+              value={filterRange.end} 
+              onChange={(e) => setFilterRange(prev => ({ ...prev, end: e.target.value }))}
+            />
+            {(filterRange.start || filterRange.end) && (
+              <button className={styles.clearBtn} onClick={() => setFilterRange({ start: '', end: '' })}>Limpiar</button>
+            )}
+          </div>
+          <div className={styles.divider}></div>
+          <button className={styles.navBtn} onClick={() => handleNavigate(-15)}>←</button>
+          <button className={styles.navBtn} onClick={() => { setViewDate(new Date()); setFilterRange({ start: '', end: '' }); }}>Hoy</button>
+          <button className={styles.navBtn} onClick={() => handleNavigate(15)}>→</button>
         </div>
-        <div style={{ fontSize: '0.8rem', color: '#555', fontStyle: 'italic' }}>
-           Ventana: {startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} — {endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+        <div className={styles.rangeInfo}>
+           Visible: {startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} — {endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
         </div>
       </div>
 
       <div className={styles.timelineHeader}>
         <div className={styles.marker} style={{ left: '0%' }}>{startDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</div>
-        <div className={styles.marker} style={{ left: '25%' }}>-15d</div>
-        {todayPos !== null && todayPos >= 0 && todayPos <= 100 && (
-          <div className={styles.marker} style={{ left: `${todayPos}%`, color: '#fff', borderLeft: '1px dashed #555', height: '100%' }}>Hoy</div>
+        {todayPos !== null && (
+          <div className={styles.marker} style={{ left: `${todayPos}%`, color: '#fff', borderLeft: '1px dashed rgba(255,255,255,0.2)', height: '100px', zIndex: 10, top: '-10px' }}>
+            <span style={{ background: '#000', padding: '2px 4px', borderRadius: '2px' }}>Hoy</span>
+          </div>
         )}
-        <div className={styles.marker} style={{ left: '75%' }}>+15d</div>
         <div className={styles.marker} style={{ left: '100%' }}>{endDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</div>
       </div>
 
       <div className={styles.rows}>
-        {sortedExps.map((exp, idx) => {
+        {filteredExps.map((exp) => {
           const bar = getBarData(exp.fecha_inicio, exp.fecha_fin || exp.fecha_inicio);
           if (!bar) return null;
 
           return (
             <div key={exp.id} className={styles.row}>
               <div className={styles.expLabel}>
-                <span className={styles.expName}>{exp.nombre}</span>
+                <span className={styles.expName} title={exp.nombre}>{exp.nombre}</span>
               </div>
               <div className={styles.track}>
                 <div 
@@ -104,6 +159,9 @@ export default function GanttChart({ experiments }: GanttProps) {
             </div>
           );
         })}
+        {filteredExps.length === 0 && (
+          <div className={styles.emptyMsg}>No hay iniciativas activas o próximas en este rango.</div>
+        )}
       </div>
     </div>
   );

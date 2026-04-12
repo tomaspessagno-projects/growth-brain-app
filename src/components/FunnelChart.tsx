@@ -138,7 +138,7 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
           data={chartData} 
           layout="vertical" 
           barSize={10} 
-          margin={{ top: 0, right: 80, left: 40, bottom: 0 }}
+          margin={{ top: 0, right: 120, left: 40, bottom: 0 }}
         >
           <XAxis type="number" hide />
           <YAxis 
@@ -170,15 +170,28 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
             <LabelList 
               dataKey="value" 
               position="right" 
-              formatter={(val: any) => typeof val === 'number' && val > 0 ? val.toLocaleString('es-AR') : ''}
-              style={{ fill: '#fff', fontSize: '11px', fontWeight: 'bold' }} 
-              offset={10}
-            />
-            <LabelList 
-              dataKey="conversion" 
-              position="right" 
-              style={{ fill: '#666', fontSize: '10px', fontWeight: 'bold' }} 
-              offset={55}
+              content={(props: any) => {
+                const { x, y, width, value, index } = props;
+                const entry = chartData[index];
+                const percentage = entry.conversion ? ` (${entry.conversion})` : '';
+                const displayVal = typeof value === 'number' && value > 0 ? value.toLocaleString('es-AR') : '';
+                
+                return (
+                  <text 
+                    x={x + width + 10} 
+                    y={y + 11} 
+                    fill="#fff" 
+                    fontSize="11px" 
+                    fontWeight="bold"
+                    textAnchor="start"
+                  >
+                    {displayVal}
+                    <tspan fill="#666" fontWeight="normal" fontSize="10px">
+                      {percentage}
+                    </tspan>
+                  </text>
+                );
+              }}
             />
           </Bar>
         </BarChart>
