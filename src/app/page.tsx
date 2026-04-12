@@ -103,23 +103,44 @@ export default function Dashboard() {
     try {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
+      
       const { data: exps } = await supabase
         .from('experimentos')
         .select('*, aprendizajes(*), metricas_snapshots(*)')
         .or(`estado.eq.en curso,fecha_fin.gte.${weekAgo.toISOString()}`);
 
-      const allExps = (exps || []).filter((exp: any) => {
-        const est = exp.estado?.toLowerCase();
-        if (est === 'en curso') return true;
-        if (est === 'finalizado') return exp.fecha_fin && new Date(exp.fecha_fin) >= weekAgo;
-        return false;
-      });
-      setReportData(allExps);
+      const processedExps = (exps || [])
+        .filter((exp: any) => {
+          const est = exp.estado?.toLowerCase();
+          if (est === 'en curso') return true;
+          if (est === 'finalizado') return exp.fecha_fin && new Date(exp.fecha_fin) >= weekAgo;
+          return false;
+        })
+        .map((exp: any) => {
+          const snapshots = exp.metricas_snapshots || [];
+          // Ordenar por fecha para encontrar inicial y actual
+          const sorted = [...snapshots].sort((a, b) => new Date(a.fecha_registro).getTime() - new Date(b.fecha_registro).getTime());
+          
+          const initial = sorted.length > 0 ? sorted[0].valor : 0;
+          const current = sorted.length > 0 ? sorted[sorted.length - 1].valor : 0;
+          const delta = initial > 0 ? ((current - initial) / initial) * 100 : 0;
+
+          return {
+            ...exp,
+            metrica_inicial: initial,
+            metrica_actual: current,
+            delta_porcentaje: delta.toFixed(1),
+            es_exito: exp.aprendizajes?.some((a: any) => a.validado) || false,
+            conclusion: exp.aprendizajes?.[0]?.insights || 'Sin conclusión registrada aún.'
+          };
+        });
+
+      setReportData(processedExps);
 
       const aiResponse = await fetch('/api/weekly-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ experiments: allExps })
+        body: JSON.stringify({ experiments: processedExps })
       });
       const aiData = await aiResponse.json();
       setAiSummary(aiData.summary || 'Resumen no generado.');
@@ -127,7 +148,11 @@ export default function Dashboard() {
       setTimeout(async () => {
         handlePrint();
       }, 500);
-    } catch (e) { console.error(e); } finally { setIsGenerating(false); }
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setIsGenerating(false); 
+    }
   };
 
   if (loading) return <div className={styles.dashboard}>Sincronizando Medicus Brain...</div>;

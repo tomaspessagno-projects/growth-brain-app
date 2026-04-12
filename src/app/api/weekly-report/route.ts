@@ -17,20 +17,20 @@ export async function POST(req: Request) {
     }
 
     const experimentsText = experiments.map((exp: any) => 
-      `Experimento: ${exp.nombre} | Estado: ${exp.estado}
-       Hipótesis: ${exp.descripcion}
-       Métricas registradas esta semana: ${exp.metricas_snapshots?.length || 0}
-       Aprendizajes totales: ${exp.aprendizajes?.length || 0}`
+      `Experimento: ${exp.nombre}
+       Crecimiento esta semana: ${exp.delta_porcentaje}% (${exp.metrica_inicial} -> ${exp.metrica_actual})
+       Resultado: ${exp.es_exito ? 'Éxito (Validado)' : 'En curso / Iterando'}
+       Aprendizaje: ${exp.conclusion}`
     ).join('\n---\n');
 
     const prompt = `Actúa como un Consultor Estratégico de Crecimiento (Growth Consultant). 
-Aquí tienes un resumen en bruto de los experimentos realizados por el equipo en los últimos 7 días:
+Aquí tienes los resultados de la semana:
 
 ${experimentsText}
 
-TAREA: Redacta un "Resumen Ejecutivo" formal en idioma Español dirigido a Inversores o Nivel C (Gerentes).
-Debe tener máximo 3 párrafos. Destaca qué estuvimos testeando esta semana, cómo afectó en nuestras métricas y si logramos algún aprendizaje valioso. Sé profesional, directo y alentador. 
-No repitas nombres de variables técnicas. Simplemente redacta el texto sin símbolos raros ni markdown.`;
+TAREA: Redacta un "Resumen Ejecutivo" formal y EXTREMADAMENTE CONCISO (máximo 120 palabras). 
+Enfócate en la velocidad de experimentación ("Learning Velocity") y el impacto porcentual total en el funnel. 
+Sé directo. Usa un tono ejecutivo de alto nivel. Sin markdown.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
