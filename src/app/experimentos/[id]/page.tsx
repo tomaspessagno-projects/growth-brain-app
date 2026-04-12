@@ -238,7 +238,7 @@ export default function ExperimentoDetalle() {
           </div>
           <div className={styles.metaItem}>
             <span>Categoría:</span>
-            <strong style={{ color: '#fff', textTransform: 'uppercase', fontSize: '0.75rem', border: '1px solid #333', padding: '2px 6px', borderRadius: '4px' }}>
+            <strong style={{ color: 'var(--primary-color)', textTransform: 'uppercase', fontSize: '0.75rem', border: '1.5px solid #EBF0F5', background: '#F8F9FA', padding: '4px 10px', borderRadius: '40px' }}>
               {experiment.categoria || 'Sin clasificar'}
             </strong>
           </div>
@@ -263,14 +263,14 @@ export default function ExperimentoDetalle() {
                 <LineChart data={[...metrics].reverse()}>
                   <XAxis dataKey="fecha_registro" hide />
                   <YAxis hide />
-                  <Line type="monotone" dataKey="valor" stroke="#ffffff" strokeWidth={4} dot={false} />
+                  <Line type="monotone" dataKey="valor" stroke="var(--primary-color)" strokeWidth={4} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          <div className="glass-panel" style={{ padding: '32px', borderLeft: '4px solid #fff' }}>
+          <div className="glass-panel" style={{ padding: '32px', borderLeft: '4px solid var(--primary-color)' }}>
             <h3 style={{ fontSize: '1rem', color: '#888', marginBottom: '16px' }}>Último Aprendizaje</h3>
             {learnings[0] ? (
               <>
@@ -335,11 +335,11 @@ export default function ExperimentoDetalle() {
             <div style={{ width: '100%', height: 280, marginTop: '16px', marginBottom: '24px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={[...metrics].reverse()}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="fecha_registro" tickFormatter={(tick) => new Date(tick).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} stroke="#555" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#555" tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #333', borderRadius: '4px', fontSize: '12px' }} labelFormatter={(label) => new Date(label).toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })} />
-                  <Line type="monotone" dataKey="valor" stroke="#ffffff" strokeWidth={2} dot={{ r: 4, fill: '#ffffff' }} activeDot={{ r: 6 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F0F3F7" />
+                  <XAxis dataKey="fecha_registro" tickFormatter={(tick) => new Date(tick).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} stroke="#BDC5D0" tick={{ fontSize: 11, fontWeight: 700 }} />
+                  <YAxis stroke="#BDC5D0" tick={{ fontSize: 11, fontWeight: 700 }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #EBF0F5', borderRadius: '12px', fontSize: '12px', color: '#002D5F', boxShadow: '0 10px 30px rgba(0, 45, 95, 0.1)' }} labelFormatter={(label) => new Date(label).toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })} />
+                  <Line type="monotone" dataKey="valor" stroke="var(--primary-color)" strokeWidth={3} dot={{ r: 5, fill: 'var(--primary-color)', strokeWidth: 0 }} activeDot={{ r: 7, fill: 'var(--primary-color)' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

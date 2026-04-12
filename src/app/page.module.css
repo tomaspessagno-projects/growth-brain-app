@@ -55,6 +55,29 @@
   cursor: wait;
 }
 
+.primaryAction {
+  background: var(--primary-color);
+  color: white;
+  padding: 12px 28px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: var(--transition);
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 45, 95, 0.2);
+  font-size: 0.95rem;
+  letter-spacing: -0.2px;
+  text-decoration: none;
+}
+
+.primaryAction:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(0, 45, 95, 0.3);
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -89,8 +112,8 @@
 }
 
 .chartsGrid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 32px;
   width: 100%;
 }

@@ -1,42 +1,47 @@
 .container {
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #1a1b1e;
-  border-radius: 8px;
+  padding: 32px;
+  background: white;
+  border-radius: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  box-shadow: var(--shadow-soft);
+  border-top: 6px solid var(--primary-color);
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .categoryTag {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  background: #fff;
-  color: #000;
-  padding: 2px 8px;
-  border-radius: 3px;
+  letter-spacing: 1.5px;
+  background: #EBF0F5;
+  color: var(--primary-color);
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
 }
 
 .title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
 }
 
 .matrix {
   display: flex;
   align-items: center;
-  gap: 32px;
-  margin-bottom: 8px;
+  gap: 48px;
+  padding: 24px;
+  background: #F8F9FA;
+  border-radius: 16px;
 }
 
 .statBox {
@@ -45,46 +50,53 @@
 }
 
 .value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #fff;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
   line-height: 1;
+  letter-spacing: -1.5px;
 }
 
 .label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: #888;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 4px;
+  letter-spacing: 1.5px;
+  margin-top: 8px;
+  font-weight: 700;
 }
 
 .divider {
-  width: 1px;
-  height: 30px;
-  background: #222;
+  width: 2px;
+  height: 40px;
+  background: #EBF0F5;
 }
 
 .recommendation {
-  font-size: 0.85rem;
-  color: #888;
-  line-height: 1.5;
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
   margin: 0;
-  padding-top: 16px;
-  border-top: 1px solid #1a1b1e;
+  padding-top: 24px;
+  border-top: 2px solid #F8F9FA;
+  font-weight: 500;
 }
 
 .loading {
-  font-size: 0.8rem;
-  color: #444;
-  font-style: italic;
-  padding: 20px;
+  font-size: 0.95rem;
+  color: var(--primary-color);
+  font-weight: 700;
+  padding: 40px;
   text-align: center;
+  letter-spacing: 1px;
 }
 
 .empty {
-  font-size: 0.8rem;
-  color: #444;
-  font-style: italic;
-  padding: 12px;
+  font-size: 0.9rem;
+  color: #999;
+  font-weight: 600;
+  padding: 24px;
+  background: #F8F9FA;
+  border-radius: 16px;
+  text-align: center;
 }
