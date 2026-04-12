@@ -5,7 +5,7 @@
 }
 
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .ganttSection {
@@ -18,95 +18,118 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .sectionHeader h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
 }
 
 .legend {
   display: flex;
-  gap: 16px;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  gap: 20px;
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dotActive {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--primary-color);
+  box-shadow: 0 0 10px rgba(0, 45, 95, 0.2);
 }
 
 .dotPlanned {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 1px solid #555;
+  border: 2px solid var(--surface-border);
+  background: white;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 32px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .listSection {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .listSection h2 {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .listItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border: 1px solid #1a1b1e;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.01);
+  padding: 24px;
+  border: none;
+  background: white;
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
   transition: var(--transition);
 }
 
 .listItem:hover {
-  border-color: #333;
-  background: rgba(255, 255, 255, 0.03);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(0, 45, 95, 0.08);
 }
 
 .expName {
-  font-size: 0.9rem;
-  color: #ccc;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
 .expDate {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 500;
 }
 
 .empty {
-  color: #444;
-  font-size: 0.85rem;
+  color: #999;
+  font-size: 0.9rem;
   font-style: italic;
+  padding: 40px;
+  text-align: center;
+  background: white;
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
 }

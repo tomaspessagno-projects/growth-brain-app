@@ -41,43 +41,37 @@ const CustomTooltip = ({ active, payload }: any) => {
 
     return (
       <div style={{
-        backgroundColor: '#000',
-        border: '1px solid #333',
-        padding: '12px',
-        color: '#fff',
-        borderRadius: '4px',
-        fontSize: '11px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.8)'
+        backgroundColor: '#fff',
+        border: '1px solid #EBF0F5',
+        padding: '16px',
+        color: '#002D5F',
+        borderRadius: '12px',
+        fontSize: '12px',
+        boxShadow: '0 10px 30px rgba(0, 45, 95, 0.1)'
       }}>
-        <p style={{ fontWeight: 'bold', borderBottom: '1px solid #222', paddingBottom: '6px', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <p style={{ fontWeight: 800, borderBottom: '2px solid #F8F9FA', paddingBottom: '8px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
           {step?.label}
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px' }}>
-            <span>Registros:</span>
-            <span style={{ fontWeight: 'bold' }}>{data.value?.toLocaleString('es-AR')}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
+            <span style={{ color: '#888', fontWeight: 500 }}>Registros:</span>
+            <span style={{ fontWeight: 800 }}>{data.value?.toLocaleString('es-AR')}</span>
           </div>
           {data.conversion && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', color: '#888' }}>
-              <span>Conv. vs Anterior:</span>
-              <span style={{ fontWeight: 'bold', color: '#fff' }}>{data.conversion}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
+              <span style={{ color: '#888', fontWeight: 500 }}>Conversión:</span>
+              <span style={{ fontWeight: 800, color: '#6B9EF2' }}>{data.conversion}</span>
             </div>
           )}
           {exps && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '20px', marginTop: '4px', borderTop: '0.5px solid #222', paddingTop: '4px' }}>
-                <span>Experimentos:</span>
-                <span style={{ color: '#fff' }}>[{exps.total}]</span>
+            <div style={{ marginTop: '4px', borderTop: '2px solid #F8F9FA', paddingTop: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ color: '#888', fontWeight: 500 }}>Iniciativas:</span>
+                <span style={{ fontWeight: 700 }}>{exps.total}</span>
               </div>
-              <div style={{ paddingLeft: '8px', color: '#666' }}>
-                <div>• En curso: {exps.en_curso}</div>
-                <div>• Finalizados: {exps.finalizado}</div>
+              <div style={{ fontSize: '11px', color: '#666' }}>
+                • Activas: {exps.en_curso} | Finalizadas: {exps.finalizado}
               </div>
-            </>
-          )}
-          {data.learnings?.total > 0 && (
-            <div style={{ borderTop: '1px solid #222', marginTop: '6px', paddingTop: '6px' }}>
-              <span>Aprendizajes: {data.learnings.total}</span>
             </div>
           )}
         </div>
@@ -88,11 +82,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 export default function FunnelChart({ data, highlightStep, compact = false }: FunnelChartProps) {
-  // Solo los 7 pasos principales
   const chartData = FUNNEL_STEPS.map((step, idx) => {
     const stepData = data.find(d => d.key === step.key);
     
-    // Calcular conversión
     let conversion = '';
     if (idx > 0) {
       const prevData = data.find(d => d.key === FUNNEL_STEPS[idx - 1].key);
@@ -121,7 +113,7 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
               {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.key === highlightStep ? '#FFFFFF' : '#222222'} 
+                  fill={entry.key === highlightStep ? '#002D5F' : '#EBF0F5'} 
                 />
               ))}
             </Bar>
@@ -132,13 +124,13 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
   }
 
   return (
-    <div style={{ width: '100%', minHeight: 180, marginTop: '5px' }}>
+    <div style={{ width: '100%', minHeight: 220, marginTop: '10px' }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart 
           data={chartData} 
           layout="vertical" 
-          barSize={10} 
-          margin={{ top: 0, right: 120, left: 40, bottom: 0 }}
+          barSize={14} 
+          margin={{ top: 0, right: 140, left: 40, bottom: 0 }}
         >
           <XAxis type="number" hide />
           <YAxis 
@@ -146,25 +138,24 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            fontSize={10} 
-            stroke="#666"
-            width={70}
+            fontSize={11} 
+            fontWeight={700}
+            stroke="#002D5F"
+            width={85}
           />
           <Tooltip 
             content={<CustomTooltip />} 
-            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+            cursor={{ fill: 'rgba(0, 45, 95, 0.02)' }}
           />
           <Bar 
             dataKey="value" 
-            radius={[0, 4, 4, 0]}
+            radius={[0, 7, 7, 0]}
             animationDuration={1500}
           >
             {chartData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={index === 0 ? '#FFFFFF' : '#111111'}
-                stroke={index === 0 ? 'none' : '#333'}
-                strokeWidth={1}
+                fill={index === 0 ? '#002D5F' : `rgba(0, 45, 95, ${1 - index * 0.1})`}
               />
             ))}
             <LabelList 
@@ -179,14 +170,14 @@ export default function FunnelChart({ data, highlightStep, compact = false }: Fu
                 return (
                   <text 
                     x={x + width + 10} 
-                    y={y + 11} 
-                    fill="#fff" 
+                    y={y + 12} 
+                    fill="#002D5F" 
                     fontSize="11px" 
-                    fontWeight="bold"
+                    fontWeight="800"
                     textAnchor="start"
                   >
                     {displayVal}
-                    <tspan fill="#666" fontWeight="normal" fontSize="10px">
+                    <tspan fill="#6B9EF2" fontWeight="700" fontSize="10px">
                       {percentage}
                     </tspan>
                   </text>

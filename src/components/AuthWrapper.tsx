@@ -68,12 +68,12 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   if (domainError) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#000', textAlign: 'center', padding: '20px' }}>
-        <h1 style={{ color: '#fff', fontSize: '2rem', marginBottom: '16px' }}>Acceso Restringido</h1>
-        <p style={{ color: '#888' }}>Solo se permite el acceso al personal de Medicus (@medicus.com.ar).</p>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#002D5F', background: '#F8F9FA', textAlign: 'center', padding: '20px', fontFamily: 'Montserrat, sans-serif' }}>
+        <h1 style={{ color: '#002D5F', fontSize: '2.5rem', marginBottom: '16px', fontWeight: 800 }}>Acceso Restringido</h1>
+        <p style={{ color: '#555', fontSize: '1.1rem' }}>Solo se permite el acceso al personal autorizado de Medicus (@medicus.com.ar).</p>
         <button 
           onClick={() => { setDomainError(false); router.push('/login'); }}
-          style={{ marginTop: '32px', padding: '12px 24px', borderRadius: '4px', border: 'none', background: 'white', color: 'black', cursor: 'pointer', fontWeight: 'bold' }}
+          style={{ marginTop: '32px', padding: '14px 32px', borderRadius: '999px', border: 'none', background: '#002D5F', color: 'white', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 8px 20px rgba(0, 45, 95, 0.2)' }}
         >
           Volver al Login
         </button>
@@ -82,7 +82,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   }
 
   if (loading) {
-    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#0b0c10' }}>Iniciando entorno seguro...</div>;
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#002D5F', background: '#F8F9FA', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Sincronizando Medicus Brain...</div>;
   }
 
   // Si no está auth y estamos en /login, devuelve directamente la página sin layout

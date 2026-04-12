@@ -4,12 +4,16 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
+  background-color: var(--bg-color);
 }
 
 .loginBox {
   width: 100%;
   max-width: 440px;
-  padding: 48px;
+  padding: 56px;
+  background: white;
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -24,52 +28,59 @@
 }
 
 .logoBox {
-  width: 64px;
-  height: 64px;
-  border-radius: 6px;
-  background: #ffffff;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000000;
+  color: white;
   margin-bottom: 8px;
+  box-shadow: 0 8px 20px rgba(0, 45, 95, 0.2);
 }
 
 .brand h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: white;
-  letter-spacing: -0.5px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  text-transform: uppercase;
 }
 
 .brand p {
-  color: var(--text-secondary);
+  color: #888;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .formGroup label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding-left: 12px;
 }
 
 .formGroup input {
-  background: transparent;
-  border: 1px solid var(--surface-border);
-  color: white;
-  padding: 14px 16px;
-  border-radius: 6px;
+  background: #F8F9FA;
+  border: 2px solid transparent;
+  color: var(--text-primary);
+  padding: 16px 20px;
+  border-radius: var(--radius-pill);
   font-family: inherit;
   font-size: 1rem;
   outline: none;
@@ -77,25 +88,29 @@
 }
 
 .formGroup input:focus {
-  border-color: #555555;
+  border-color: var(--accent-color);
+  background: white;
+  box-shadow: 0 0 0 4px rgba(107, 158, 242, 0.1);
 }
 
 .submitBtn {
-  background: #ffffff;
-  color: #000000;
-  padding: 14px;
-  border-radius: 6px;
-  font-weight: 500;
+  background: var(--primary-color);
+  color: white;
+  padding: 18px;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
   font-size: 1rem;
-  border: 1px solid #ffffff;
+  border: none;
   cursor: pointer;
   transition: var(--transition);
   margin-top: 12px;
+  box-shadow: 0 8px 25px rgba(0, 45, 95, 0.2);
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #000000;
-  color: #ffffff;
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 45, 95, 0.3);
 }
 
 .submitBtn:disabled {
@@ -103,91 +118,23 @@
   cursor: wait;
 }
 
-.toggleWrapper {
-  text-align: center;
-}
-
-.toggleBtn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 400;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: underline;
-}
-
-.toggleBtn:hover {
-  color: var(--text-primary);
-}
-
 .errorBox {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid #333;
-  color: #888;
-  padding: 12px;
-  border-radius: 6px;
+  background: #FFF5F5;
+  border: 2px solid #FED7D7;
+  color: #C53030;
+  padding: 16px;
+  border-radius: 12px;
   font-size: 0.85rem;
   text-align: center;
-}
-
-.successBox {
-  background: #ffffff;
-  border: 1px solid #ffffff;
-  color: #000000;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  margin: 10px 0;
-}
-
-.divider::before, .divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.divider::before {
-  margin-right: 15px;
-}
-
-.divider::after {
-  margin-left: 15px;
-}
-
-.socialAuth {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.socialBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: transparent;
-  border: 1px solid var(--surface-border);
-  color: white;
-  padding: 12px;
-  border-radius: 6px;
   font-weight: 500;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: var(--transition);
 }
 
-.socialBtn:hover {
-  background: #111111;
+.authMeta {
+  text-align: center;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #999;
+  line-height: 1.5;
 }

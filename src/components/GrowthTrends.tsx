@@ -29,38 +29,44 @@ export default function GrowthTrends({ data }: GrowthTrendsProps) {
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.1}/>
-              <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#002D5F" stopOpacity={0.15}/>
+              <stop offset="95%" stopColor="#002D5F" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <XAxis 
             dataKey="date" 
-            stroke="#444" 
-            fontSize={10} 
+            stroke="#BDC5D0" 
+            fontSize={11} 
+            fontWeight={600}
             tickLine={false} 
             axisLine={false} 
+            dy={10}
           />
           <YAxis 
-            stroke="#444" 
-            fontSize={10} 
+            stroke="#BDC5D0" 
+            fontSize={11} 
+            fontWeight={600}
             tickLine={false} 
             axisLine={false} 
+            dx={-10}
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: '#000', 
-              border: '1px solid #333',
-              borderRadius: '4px',
+              backgroundColor: '#fff', 
+              border: '1px solid #EBF0F5',
+              borderRadius: '12px',
               fontSize: '12px',
-              color: '#fff'
+              color: '#002D5F',
+              boxShadow: '0 10px 30px rgba(0, 45, 95, 0.1)',
+              padding: '12px'
             }}
-            itemStyle={{ color: '#fff' }}
+            itemStyle={{ color: '#002D5F', fontWeight: 700 }}
           />
           <Area 
             type="monotone" 
             dataKey="experiments" 
-            stroke="#FFFFFF" 
-            strokeWidth={2}
+            stroke="#002D5F" 
+            strokeWidth={3}
             fillOpacity={1} 
             fill="url(#colorExp)" 
             name="Experimentos"
@@ -68,10 +74,10 @@ export default function GrowthTrends({ data }: GrowthTrendsProps) {
           <Area 
             type="monotone" 
             dataKey="learning" 
-            stroke="#888888" 
-            strokeDasharray="5 5"
+            stroke="#6B9EF2" 
+            strokeDasharray="6 6"
             fillOpacity={0} 
-            strokeWidth={1}
+            strokeWidth={2}
             name="Aprendizajes"
           />
         </AreaChart>

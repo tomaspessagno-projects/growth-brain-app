@@ -2,162 +2,176 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  animation: fadeIn 0.8s ease-out;
 }
 
 .title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text-primary);
   margin: 0;
+  text-transform: uppercase;
 }
 
 .subtitle {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
+  color: #888;
+  font-size: 1rem;
   margin-top: 4px;
 }
 
 .header {
-  margin-bottom: 40px;
+  margin-bottom: 24px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
 }
 
 .reportBtn {
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--surface-border);
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-weight: 500;
+  background: white;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-pill);
+  padding: 10px 24px;
+  font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
   transition: var(--transition);
 }
 
 .reportBtn:hover:not(:disabled) {
-  color: var(--text-primary);
-  border-color: #444;
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 45, 95, 0.2);
 }
 
 .reportBtn:disabled {
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: wait;
-}
-
-.primaryAction {
-  background: #ffffff;
-  color: #000000;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: var(--transition);
-  border: 1px solid #ffffff;
-}
-
-.primaryAction:hover {
-  background: #000000;
-  color: #ffffff;
 }
 
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .statCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 24px !important;
+  gap: 4px;
+  padding: 32px !important;
+  border: none !important;
+  background: white !important;
+  box-shadow: var(--shadow-soft) !important;
 }
 
 .statLabel {
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  font-weight: 600;
+  color: #888;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
 }
 
 .statNumber {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #fff;
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1;
+  letter-spacing: -1.5px;
 }
 
 .chartsGrid {
-  display: flex !important;
-  flex-direction: column !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   gap: 32px;
   width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .chartsGrid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 .chartSection {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
 }
 
+.chartLabel {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+}
+
 .chartSub {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 2px;
 }
 
 .recentSection {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .sectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 24px;
 }
 
 .sectionHeader h2 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
 }
 
 .viewAll {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
+  color: var(--accent-color);
+  font-size: 0.9rem;
+  font-weight: 700;
   transition: var(--transition);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
 }
 
 .viewAll:hover {
-  color: #fff;
+  text-decoration: underline;
+  transform: translateX(4px);
 }
 
 .table {
   width: 100%;
+  background: white;
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
 }
 
 .tableHead {
   display: grid;
-  grid-template-columns: 2fr 120px 100px;
-  padding: 0 0 12px 0;
+  grid-template-columns: 2fr 150px 120px;
+  padding: 12px 24px;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #888;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--surface-border);
+  letter-spacing: 1.5px;
+  border-bottom: 2px solid var(--bg-color);
 }
 
 .tableBody {
@@ -167,40 +181,43 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 120px 100px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--surface-border);
+  grid-template-columns: 2fr 150px 120px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--bg-color);
   transition: var(--transition);
-  color: #ccc;
+  color: var(--text-secondary);
+  align-items: center;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
 }
 
 .tableRow:hover {
-  color: #fff;
+  background: var(--bg-color);
+  color: var(--text-primary);
 }
 
 .expTitle {
-  font-weight: 400;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .monochromeBadge {
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid #333;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: #888;
-}
-
-.tableRow:hover .monochromeBadge {
-  border-color: #fff;
-  color: #fff;
+  letter-spacing: 1px;
+  background: #EBF0F5;
+  color: var(--primary-color);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
 }
 
 .expDate {
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  color: #999;
+  font-weight: 500;
 }
 
 .loading {
@@ -208,7 +225,13 @@
   height: 60vh;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  font-weight: 700;
   letter-spacing: 1px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
