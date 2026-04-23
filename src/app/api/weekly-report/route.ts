@@ -33,7 +33,7 @@ Enfócate en la velocidad de experimentación ("Learning Velocity") y el impacto
 Sé directo. Usa un tono ejecutivo de alto nivel. Sin markdown.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: prompt,
     });
 
@@ -44,7 +44,7 @@ Sé directo. Usa un tono ejecutivo de alto nivel. Sin markdown.`;
   } catch (error: any) {
     console.error("Gemini Weekly Error:", error);
     return NextResponse.json(
-      { error: 'Error procesando la solicitud a la IA', details: error.message },
+      { error: `Error en IA (Reporte): ${error.message || 'Error desconocido'}`, details: error },
       { status: 500 }
     );
   }

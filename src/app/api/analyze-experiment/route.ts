@@ -50,9 +50,10 @@ Por favor, devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructu
 No devuelvas Markdown (\`\`\`json) ni texto fuera del JSON, solo el objeto parseable directo.
 `;
 
-    // Realizar la llamada a Gemini 2.5 Pro usando el nuevo SDK @google/genai
+    // Realizar la llamada a Gemini 1.5 Flash usando el SDK @google/genai
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', // Flash es increíblemente rápido y suficiente para análisis básicos, se puede cambiar a gemini-2.5-pro
+      model: 'gemini-1.5-flash', 
+// Flash es increíblemente rápido y suficiente para análisis básicos, se puede cambiar a gemini-2.5-pro
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -78,7 +79,7 @@ No devuelvas Markdown (\`\`\`json) ni texto fuera del JSON, solo el objeto parse
   } catch (error: any) {
     console.error("Gemini AI Error:", error);
     return NextResponse.json(
-      { error: 'Error procesando la solicitud a la IA', details: error.message },
+      { error: `Error en IA: ${error.message || 'Error desconocido'}`, details: error },
       { status: 500 }
     );
   }
