@@ -34,7 +34,7 @@ Variables de entorno: ver [`.env.example`](.env.example). En prod se cargan en *
 - `src/app/*` — las páginas del loop.
 
 ## Estado del proyecto y tareas para el equipo
-1. **Migrar el estado a Supabase (PRIORIDAD).** Hoy vive en `localStorage` (por navegador): `gb_experiments`, `gb_rec_status`, `gb_pelg_history`. Para que sea una tool de equipo hay que persistirlo en Supabase. Las tablas ya existen parcialmente (`experimentos`, `aprendizajes`, `metricas_snapshots`).
+1. **Migrar el estado a Supabase (PRIORIDAD).** Hoy vive en `localStorage` (por navegador): `gb_experiments`, `gb_rec_status`, `gb_pelg_history`. Para que sea una tool de equipo hay que persistirlo en Supabase. **El schema y la guía de migración están en [`SUPABASE.md`](SUPABASE.md) + [`supabase/schema.sql`](supabase/schema.sql)** (correr el SQL en el dashboard, después swapear los helpers de localStorage).
 2. **Cerrar el cruce visita→cápita.** Hoy está bloqueado por identidad fragmentada — ver el brief: [`BRIEF-cruce-prospecto-id.md`](BRIEF-cruce-prospecto-id.md). Es trabajo **upstream** (estampar `prospecto_id` en el alta de socio). Cuando se haga, la página `/loop` se pone verde sola.
 3. **Auth en prod.** `NEXT_PUBLIC_DEV_BYPASS_AUTH=true` solo va en local. En prod el login de Supabase queda activo (no setear esa var).
 4. **Hardening de rate limit** en las llamadas a Mixpanel (ya hay cache + retry; revisar bajo carga).
