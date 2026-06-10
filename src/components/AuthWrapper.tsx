@@ -17,6 +17,14 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   const isMedicus = (email?: string) => email?.toLowerCase().endsWith('@medicus.com.ar');
 
+  // Sincroniza el access_token a una cookie same-origin para que el middleware gatee /api/*.
+  const setAuthCookie = (token: string | null) => {
+    if (typeof document === 'undefined') return;
+    document.cookie = token
+      ? `sb-access-token=${token}; path=/; max-age=3600; SameSite=Lax`
+      : 'sb-access-token=; path=/; max-age=0; SameSite=Lax';
+  };
+
   useEffect(() => {
     if (DEV_BYPASS) {
       setIsAuthenticated(true);
@@ -30,13 +38,17 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       if (session) {
         if (!isMedicus(session.user.email)) {
           await supabase.auth.signOut();
+          setAuthCookie(null);
           setDomainError(true);
           setIsAuthenticated(false);
           setLoading(false); // Detener carga para mostrar error de dominio
           return;
         } else {
+          setAuthCookie(session.access_token);
           setIsAuthenticated(true);
         }
+      } else {
+        setAuthCookie(null);
       }
 
       if (!session && pathname !== '/login') {
@@ -55,16 +67,19 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       if (session) {
         if (!isMedicus(session.user.email)) {
           await supabase.auth.signOut();
+          setAuthCookie(null);
           setDomainError(true);
           setIsAuthenticated(false);
           setLoading(false);
           router.push('/login');
         } else {
+          setAuthCookie(session.access_token);
           setDomainError(false);
           setIsAuthenticated(true);
           if (pathname === '/login') router.push('/');
         }
       } else {
+        setAuthCookie(null);
         setIsAuthenticated(false);
         if (pathname !== '/login') router.push('/login');
       }
