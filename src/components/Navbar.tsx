@@ -15,7 +15,7 @@ const NAV = [
 
 function activeKey(pathname: string): string {
   if (pathname === '/') return '/';
-  if (pathname.startsWith('/oportunidades') || pathname.startsWith('/recomendaciones')) return '/oportunidades';
+  if (pathname.startsWith('/oportunidades')) return '/oportunidades';
   if (pathname.startsWith('/experimentos')) return '/experimentos';
   if (pathname.startsWith('/playbook')) return '/playbook';
   if (pathname.startsWith('/segmentos')) return '/segmentos';

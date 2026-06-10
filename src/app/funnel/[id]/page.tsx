@@ -26,7 +26,7 @@ export default function FunnelDetail() {
   if (!data) return <div className={styles.container}>Error cargando datos.</div>;
 
   const f = data.funnels.find((x) => x.id === id);
-  if (!f) return <div className={styles.container}>Funnel “{id}” no encontrado. <Link href="/funnels" className={styles.moreLink}>Volver a Funnels</Link></div>;
+  if (!f) return <div className={styles.container}>Funnel “{id}” no encontrado. <Link href="/explorador" className={styles.moreLink}>Volver al Explorador</Link></div>;
 
   const maxCh = f.channels && f.channels.length ? Math.max(...f.channels.map((c) => c.visits)) : 0;
   const convDecimals = f.overallConversion != null && f.overallConversion < 0.1 ? 2 : 0;
@@ -35,7 +35,7 @@ export default function FunnelDetail() {
     <div className={`animate-fade-in ${styles.container}`}>
       <header className={styles.header}>
         <div>
-          <Link href="/funnels" className={styles.moreLink} style={{ display: 'inline-block', marginBottom: 8 }}>← Funnels</Link>
+          <Link href="/explorador" className={styles.moreLink} style={{ display: 'inline-block', marginBottom: 8 }}>← Explorador</Link>
           <h1 className="page-title">{f.name}</h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>{f.description}</p>
         </div>
