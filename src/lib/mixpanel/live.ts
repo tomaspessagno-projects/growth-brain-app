@@ -30,8 +30,11 @@ function creds() {
 }
 
 function range(days: number) {
-  const to = new Date();
-  const from = new Date(to.getTime() - days * 86400000);
+  // Ventana anclada a días COMPLETOS: termina AYER, no hoy. El día actual (y los últimos)
+  // Mixpanel los sigue ingiriendo/deduplicando, así que incluirlos hace variar el número en
+  // cada recarga. Terminando ayer, dentro del mismo día la consulta es idéntica y estable.
+  const to = new Date(Date.now() - 86400000); // ayer
+  const from = new Date(to.getTime() - (days - 1) * 86400000);
   const fmt = (d: Date) => d.toISOString().slice(0, 10);
   return { from: fmt(from), to: fmt(to) };
 }
