@@ -7,6 +7,7 @@ import type { Analytics } from '@/lib/mixpanel/analytics';
 import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import { PLAYBOOK_RULES, STATUS_META } from '@/lib/mixpanel/playbook';
 import { rollup, health, WINRATE_TARGET, HEALTH_META, type Health } from '@/lib/mixpanel/benchmarks';
+import { loadExperiments } from '@/lib/store/experiments';
 
 type Resp = Analytics & { recommendations: Recommendation[] };
 
@@ -22,10 +23,7 @@ export default function Resumen() {
     const load = () => fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
     load();
     const id = setInterval(load, 60000);
-    try {
-      const raw = localStorage.getItem('gb_experiments');
-      if (raw) setExpsEnCurso(JSON.parse(raw).filter((e: { estado: string }) => e.estado === 'en_curso').length);
-    } catch { /* noop */ }
+    loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
     return () => clearInterval(id);
   }, []);
 

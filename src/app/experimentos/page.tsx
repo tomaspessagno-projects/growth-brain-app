@@ -4,37 +4,12 @@ import styles from '../funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
 import type { Analytics } from '@/lib/mixpanel/analytics';
 import type { ExperimentMeasurement } from '@/lib/triangulation/measure';
+import {
+  loadExperiments, upsertExperiment, deleteExperiment,
+  type Experimento, type BaseStep, type Estado, type Veredicto,
+} from '@/lib/store/experiments';
 
-type Estado = 'planeado' | 'en_curso' | 'cerrado';
-type Veredicto = 'validado' | 'refutado' | 'inconcluso';
 type Clase = 'intencional' | 'ripple' | 'guardrail' | 'contexto';
-
-interface BaseStep { key: string; label: string; value: number }
-interface Experimento {
-  id: string;
-  hipotesis: string;
-  funnelId: string;
-  funnelName: string;
-  targetStepKey: string;
-  targetStepLabel: string;
-  estado: Estado;
-  baseline: BaseStep[];
-  resultado?: Record<string, number>;
-  veredicto?: Veredicto;
-  aprendizaje?: string;
-  mixpanelFunnel?: string;
-  fechaInicio?: string;
-  targetStepEvent?: string;
-  autoMeasured?: boolean;
-  beforeRange?: string;
-  afterRange?: string;
-  measurement?: ExperimentMeasurement; // veredicto triangulado del motor
-  fromOpportunity?: string; // rec.id de la oportunidad de origen (#3)
-  fromOpportunityTitle?: string;
-  createdAt: string;
-}
-
-const STORE_KEY = 'gb_experiments';
 const ESTADO_LABEL: Record<Estado, string> = { planeado: 'Planeado', en_curso: 'En curso', cerrado: 'Cerrado' };
 const VEREDICTO_LABEL: Record<Veredicto, string> = { validado: '✅ Validado', refutado: '❌ Refutado', inconcluso: '🤔 Inconcluso' };
 const CLASE_LABEL: Record<Clase, string> = { intencional: '🎯 intencional', ripple: '🌊 ripple', guardrail: '🛡️ guardrail', contexto: 'contexto' };
@@ -132,12 +107,19 @@ export default function ExperimentosPage() {
 
   useEffect(() => {
     fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
-    try { const raw = localStorage.getItem(STORE_KEY); if (raw) setExps(JSON.parse(raw)); } catch { /* noop */ }
+    loadExperiments().then(setExps).catch(() => {});
   }, []);
 
-  const persist = (next: Experimento[]) => { setExps(next); try { localStorage.setItem(STORE_KEY, JSON.stringify(next)); } catch { /* noop */ } };
-  const update = (id: string, patch: Partial<Experimento>) => persist(exps.map((e) => (e.id === id ? { ...e, ...patch } : e)));
-  const remove = (id: string) => persist(exps.filter((e) => e.id !== id));
+  const update = (id: string, patch: Partial<Experimento>) => {
+    const next = exps.map((e) => (e.id === id ? { ...e, ...patch } : e));
+    setExps(next);
+    const changed = next.find((e) => e.id === id);
+    if (changed) upsertExperiment(changed).catch(() => {});
+  };
+  const remove = (id: string) => {
+    setExps(exps.filter((e) => e.id !== id));
+    deleteExperiment(id).catch(() => {});
+  };
 
   const parseFunnelId = (s: string): number | null => {
     const m = s.match(/view\/(\d+)/) || s.match(/(\d{6,})/);
@@ -198,7 +180,8 @@ export default function ExperimentosPage() {
       fechaInicio: form.fechaInicio || undefined,
       createdAt: new Date().toISOString().slice(0, 10),
     };
-    persist([e, ...exps]);
+    setExps([e, ...exps]);
+    upsertExperiment(e).catch(() => {});
     setForm({ hipotesis: '', funnelId: '', targetStepKey: '', mixpanelFunnel: '', fechaInicio: '' });
     setShowForm(false);
   };

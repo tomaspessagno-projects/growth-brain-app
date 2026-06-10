@@ -54,26 +54,5 @@ export function buildExperimentFromOpp(
   };
 }
 
-// Persiste el experimento en localStorage (prepend). Devuelve true si pudo.
-export function pushExperimentLS(exp: OppExperiment): boolean {
-  try {
-    const raw = localStorage.getItem('gb_experiments');
-    const list = raw ? JSON.parse(raw) : [];
-    localStorage.setItem('gb_experiments', JSON.stringify([exp, ...list]));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ¿Ya existe un experimento creado desde esta oportunidad?
-export function experimentExistsForOpp(recId: string): boolean {
-  try {
-    const raw = localStorage.getItem('gb_experiments');
-    if (!raw) return false;
-    const list = JSON.parse(raw) as OppExperiment[];
-    return list.some((e) => e.fromOpportunity === recId);
-  } catch {
-    return false;
-  }
-}
+// La persistencia ahora vive en el store híbrido: ver upsertExperiment / experimentExistsForOpp
+// en src/lib/store/experiments.ts (Supabase si hay sesión, localStorage si no).

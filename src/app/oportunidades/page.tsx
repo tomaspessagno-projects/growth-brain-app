@@ -6,7 +6,9 @@ import PageSkeleton from '@/components/PageSkeleton';
 import type { Analytics } from '@/lib/mixpanel/analytics';
 import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import type { TriScore } from '@/lib/triangulation/score';
-import { mapOppToFunnel, buildExperimentFromOpp, pushExperimentLS } from '@/lib/experiments/fromOpportunity';
+import { mapOppToFunnel, buildExperimentFromOpp } from '@/lib/experiments/fromOpportunity';
+import { upsertExperiment } from '@/lib/store/experiments';
+import { loadStatuses, setOppStatus } from '@/lib/store/oppStatus';
 
 type Resp = Analytics & { recommendations: Recommendation[] };
 
@@ -63,7 +65,6 @@ function TriBlock({ tri }: { tri: TriScore }) {
 }
 type Status = 'pendiente' | 'en_progreso' | 'hecha' | 'descartada';
 
-const STORE_KEY = 'gb_rec_status';
 const DISC_LABEL: Record<string, string> = { diseno: 'Diseño', producto: 'Producto', desarrollo: 'Desarrollo', datos: 'Datos' };
 const STATUS_LABEL: Record<string, string> = { en_progreso: 'En progreso', hecha: 'Hecha', descartada: 'Descartada' };
 const FILTERS = [
@@ -90,10 +91,7 @@ export default function OportunidadesPage() {
   const [takenMsg, setTakenMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) setStatuses(JSON.parse(raw));
-    } catch { /* noop */ }
+    loadStatuses().then(setStatuses).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -108,9 +106,9 @@ export default function OportunidadesPage() {
       const next = { ...prev };
       if (s === 'pendiente') delete next[id];
       else next[id] = s;
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(next)); } catch { /* noop */ }
       return next;
     });
+    setOppStatus(id, s).catch(() => {});
   };
 
   const today = new Date().toISOString().slice(0, 10);
@@ -124,7 +122,7 @@ export default function OportunidadesPage() {
     const f = data?.funnels.find((x) => x.id === takeForm.funnelId);
     if (!f) return;
     const exp = buildExperimentFromOpp(r, f, takeForm, today);
-    pushExperimentLS(exp);
+    upsertExperiment(exp).catch(() => {});
     setStatus(r.id, 'en_progreso');
     setTakingId(null);
     setTakenMsg(r.id);

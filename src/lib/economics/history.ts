@@ -1,8 +1,10 @@
-// Histórico mensual del PELG (#4): cada 1° del mes se carga un snapshot y se ve la TENDENCIA.
-// El valor no es parsear el PDF (es de imágenes, frágil) sino la serie temporal: ¿subió el CAC?,
-// ¿cambió el mix de canales?, ¿un experimento movió la economía? Hoy en localStorage; prod → Supabase.
+// Histórico mensual del PELG (#4) — híbrido Supabase / localStorage.
+// Si hay sesión → tabla `pelg_history` (compartido); si no → localStorage (dev local).
+// El valor es la serie temporal: ¿subió el CAC?, ¿cambió el mix?, ¿un experimento movió la economía?
 
 import { MARKETING } from '../marketing/unitEconomics';
+import { supabase } from '@/utils/supabase/client';
+import { hasSession } from '../store/session';
 
 export interface PelgChannelSnap {
   label: string;
@@ -11,18 +13,19 @@ export interface PelgChannelSnap {
 
 export interface PelgMonth {
   month: string; // 'YYYY-MM'
-  label: string; // 'Mayo 2026'
-  totalSpendArs: number; // inversión lead-gen
+  label: string;
+  totalSpendArs: number;
   totalLeads: number;
-  blendedCacArs: number; // = totalSpend / leads
+  blendedCacArs: number;
   channels: PelgChannelSnap[];
-  pdfName?: string; // PDF subido de referencia
+  pdfName?: string;
   source: 'seed' | 'manual';
 }
 
-const KEY = 'gb_pelg_history';
+const LS = 'gb_pelg_history';
+const TABLE = 'pelg_history';
 
-// El primer punto de la serie = el PELG de Mayo que ya teníamos.
+// El primer punto de la serie = el PELG de Mayo que ya teníamos (no se persiste, se muestra).
 export function seedMonth(): PelgMonth {
   return {
     month: '2026-05',
@@ -35,33 +38,55 @@ export function seedMonth(): PelgMonth {
   };
 }
 
-export function loadHistory(): PelgMonth[] {
+type Row = Record<string, unknown>;
+function toRow(m: PelgMonth): Row {
+  return {
+    month: m.month, label: m.label, total_spend_ars: m.totalSpendArs, total_leads: m.totalLeads,
+    blended_cac_ars: m.blendedCacArs, channels: m.channels, pdf_name: m.pdfName ?? null, source: m.source,
+  };
+}
+function fromRow(r: Row): PelgMonth {
+  return {
+    month: String(r.month), label: String(r.label ?? r.month), totalSpendArs: Number(r.total_spend_ars ?? 0),
+    totalLeads: Number(r.total_leads ?? 0), blendedCacArs: Number(r.blended_cac_ars ?? 0),
+    channels: (r.channels as PelgChannelSnap[]) ?? [], pdfName: r.pdf_name ? String(r.pdf_name) : undefined,
+    source: (r.source as 'seed' | 'manual') ?? 'manual',
+  };
+}
+
+function withSeed(list: PelgMonth[]): PelgMonth[] {
+  const out = list.some((m) => m.month === '2026-05') ? [...list] : [...list, seedMonth()];
+  return out.sort((a, b) => a.month.localeCompare(b.month));
+}
+
+function lsLoad(): PelgMonth[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(LS);
     const list: PelgMonth[] = raw ? JSON.parse(raw) : [];
-    if (!list.length) return [seedMonth()];
-    if (!list.some((m) => m.month === '2026-05')) list.push(seedMonth());
-    return list.sort((a, b) => a.month.localeCompare(b.month));
+    return withSeed(list);
   } catch {
     return [seedMonth()];
   }
 }
 
-export function saveHistory(list: PelgMonth[]): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  } catch {
-    /* noop */
+export async function loadHistory(): Promise<PelgMonth[]> {
+  if (await hasSession()) {
+    const { data, error } = await supabase.from(TABLE).select('*').order('month');
+    if (!error && data) return withSeed((data as Row[]).map(fromRow));
   }
+  return lsLoad();
 }
 
 // Agrega (o reemplaza) un mes y devuelve la serie ordenada.
-export function addMonth(m: PelgMonth): PelgMonth[] {
-  const list = loadHistory().filter((x) => x.month !== m.month);
+export async function addMonth(m: PelgMonth): Promise<PelgMonth[]> {
+  if (await hasSession()) {
+    await supabase.from(TABLE).upsert(toRow(m));
+    return loadHistory();
+  }
+  const list = lsLoad().filter((x) => x.month !== m.month && x.source !== 'seed');
   list.push(m);
-  list.sort((a, b) => a.month.localeCompare(b.month));
-  saveHistory(list);
-  return list;
+  try { localStorage.setItem(LS, JSON.stringify(list)); } catch { /* noop */ }
+  return withSeed(list);
 }
 
 export interface MonthDelta {
@@ -82,7 +107,6 @@ export function deltaVsPrev(list: PelgMonth[], idx: number): MonthDelta | null {
   };
 }
 
-// Mes 'YYYY-MM' → etiqueta 'Mayo 2026'.
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 export function monthLabel(month: string): string {
   const [y, m] = month.split('-').map(Number);

@@ -42,7 +42,7 @@ export default function EconomiaPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ month: '', totalSpendArs: '', totalLeads: '', channels: ['', '', '', ''], pdfName: '' });
 
-  useEffect(() => { setHistory(loadHistory()); }, []);
+  useEffect(() => { loadHistory().then(setHistory).catch(() => {}); }, []);
 
   const latestIdx = history.length - 1;
   const latest = history[latestIdx];
@@ -68,7 +68,7 @@ export default function EconomiaPage() {
       pdfName: form.pdfName || undefined,
       source: 'manual',
     };
-    setHistory(addMonth(m));
+    addMonth(m).then(setHistory).catch(() => {});
     setForm({ month: '', totalSpendArs: '', totalLeads: '', channels: ['', '', '', ''], pdfName: '' });
     setShowForm(false);
   };
