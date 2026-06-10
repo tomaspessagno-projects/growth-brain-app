@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
-import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -11,9 +11,18 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
 
+  // Bypass de autenticación SOLO para desarrollo local (NEXT_PUBLIC_DEV_BYPASS_AUTH=true).
+  // Permite ver la herramienta en localhost sin login de Supabase. Desactivar en prod.
+  const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
+
   const isMedicus = (email?: string) => email?.toLowerCase().endsWith('@medicus.com.ar');
 
   useEffect(() => {
+    if (DEV_BYPASS) {
+      setIsAuthenticated(true);
+      setLoading(false);
+      return;
+    }
     // Revisión inmediata al montar la app
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -66,6 +75,15 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     };
   }, [pathname, router]);
 
+  if (DEV_BYPASS) {
+    return (
+      <div className="app-shell">
+        <Navbar />
+        <main className="main-content">{children}</main>
+      </div>
+    );
+  }
+
   if (domainError) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#002D5F', background: '#F8F9FA', textAlign: 'center', padding: '20px', fontFamily: 'Montserrat, sans-serif' }}>
@@ -82,7 +100,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   }
 
   if (loading) {
-    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#002D5F', background: '#F8F9FA', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Sincronizando Medicus Brain...</div>;
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: '#002D5F', background: '#F8F9FA', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>Sincronizando SysData…</div>;
   }
 
   // Si no está auth y estamos en /login, devuelve directamente la página sin layout
@@ -92,8 +110,8 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   // Layout normal de la app para usuarios logueados
   return (
-    <div className="app-layout">
-      <Sidebar />
+    <div className="app-shell">
+      <Navbar />
       <main className="main-content">
         {children}
       </main>

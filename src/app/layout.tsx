@@ -5,8 +5,8 @@ import Sidebar from "@/components/Sidebar";
 import AuthWrapper from "@/components/AuthWrapper";
 
 export const metadata: Metadata = {
-  title: "Growth Brain AI",
-  description: "Plataforma Premium para Gestión de Experimentos y Aprendizajes",
+  title: "SysData",
+  description: "Motor de experimentación y analítica de funnel — Medicus / armatuplan",
 };
 
 export default function RootLayout({

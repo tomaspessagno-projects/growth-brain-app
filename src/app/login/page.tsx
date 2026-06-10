@@ -49,7 +49,7 @@ export default function LoginPage() {
           <div className={styles.logoBox}>
             <BrainIcon />
           </div>
-          <h1>Growth Brain AI</h1>
+          <h1>SysData</h1>
           <p>Control de Acceso Medicus</p>
         </div>
 

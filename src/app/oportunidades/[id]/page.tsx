@@ -1,0 +1,171 @@
+"use client";
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import styles from '../../funnel/funnel.module.css';
+import PageSkeleton from '@/components/PageSkeleton';
+import type { Analytics } from '@/lib/mixpanel/analytics';
+import type { Recommendation } from '@/lib/mixpanel/recommendations';
+import type { SrcTag } from '@/lib/triangulation/score';
+import { ECON_ASSUMPTIONS } from '@/lib/economics/model';
+
+type Resp = Analytics & { recommendations: Recommendation[] };
+const DISC_LABEL: Record<string, string> = { diseno: 'Diseño', producto: 'Producto', desarrollo: 'Desarrollo', datos: 'Datos' };
+
+const SRC_COLOR: Record<SrcTag, string> = {
+  Mixpanel: '#7b3fe4', HubSpot: '#ff7a59', PELG: '#1689C4', Supuesto: '#9a6a00', Playbook: '#15803d',
+};
+function fmtArsShort(n: number): string {
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)} mil M`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
+  return `$${Math.round(n)}`;
+}
+function SrcTagChip({ src }: { src: SrcTag }) {
+  return <span style={{ fontSize: 10, fontWeight: 700, color: SRC_COLOR[src], background: '#fff', border: `1px solid ${SRC_COLOR[src]}33`, borderRadius: 5, padding: '1px 6px' }}>{src}</span>;
+}
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginTop: 18 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: '#8696a7', marginBottom: 8 }}>{title}</div>
+      {children}
+    </section>
+  );
+}
+
+export default function OportunidadDetallePage() {
+  const params = useParams();
+  const id = decodeURIComponent(String(params.id));
+  const [data, setData] = useState<Resp | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <PageSkeleton />;
+  const rec = data?.recommendations.find((r) => r.id === id);
+  if (!rec) {
+    return (
+      <div className={styles.container}>
+        <Link href="/oportunidades" className={styles.recFunnel}>← Oportunidades</Link>
+        <div className={styles.emptyState} style={{ marginTop: 20 }}>No encontré esa oportunidad. Puede que el ranking haya cambiado con los datos nuevos.</div>
+      </div>
+    );
+  }
+  const tri = rec.tri;
+  const moneyRec = tri?.marginAtStakeArs != null;
+
+  return (
+    <div className={`animate-fade-in ${styles.container}`}>
+      <Link href="/oportunidades" className={styles.recFunnel} style={{ display: 'inline-block', marginBottom: 14 }}>← Volver a Oportunidades</Link>
+
+      <header className={styles.header} style={{ alignItems: 'flex-start' }}>
+        <div>
+          <div className={styles.recTop} style={{ marginBottom: 8 }}>
+            <span className={`${styles.disc} ${styles['disc_' + rec.discipline]}`}>{DISC_LABEL[rec.discipline]}</span>
+            {rec.funnel && <span className={styles.recFunnel}>· {rec.funnel}</span>}
+            <span className={`${styles.recPrio} ${styles['prio_' + rec.priority]}`}>{rec.priority}</span>
+          </div>
+          <h1 className="page-title" style={{ marginBottom: 6 }}>{rec.title}</h1>
+          <p className="page-subtitle" style={{ marginBottom: 0, maxWidth: 680 }}>{rec.detail}</p>
+        </div>
+      </header>
+
+      {/* Headline $ */}
+      {tri && (
+        <div className="glass-panel" style={{ marginTop: 14, padding: '16px 18px', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          {moneyRec ? (
+            <>
+              <span style={{ fontSize: 34, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, var(--font-satoshi), sans-serif' }}>{fmtArsShort(tri.marginAtStakeArs!)}</span>
+              <span style={{ fontSize: 14, color: '#5b6b7f' }}>en juego {tri.cadence === 'acumulado' ? '· acumulado (stock)' : '/ mes'}{tri.reach != null && ` · alcance ${tri.reach.toLocaleString('es-AR')}`}</span>
+            </>
+          ) : (
+            <span style={{ fontSize: 18, fontWeight: 600, color: '#5b6b7f' }}>Habilitador — sin $ directo, desbloquea medir el resto</span>
+          )}
+        </div>
+      )}
+
+      {tri && (
+        <>
+          {/* Cómo se calcula */}
+          <Section title="Cómo se calcula">
+            <div style={{ fontSize: 13, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>{tri.formula}</div>
+            <div className="glass-panel" style={{ padding: '4px 0', overflow: 'hidden' }}>
+              {tri.breakdown.map((row, i) => {
+                const isTotal = i === tri.breakdown.length - 1;
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderTop: i ? '1px solid rgba(0,45,95,0.06)' : 'none', background: isTotal ? 'rgba(22,137,196,0.06)' : 'transparent' }}>
+                    <span style={{ flex: 1, fontSize: 12.5, color: '#3a4a5c', fontWeight: isTotal ? 700 : 400 }}>{row.label}</span>
+                    <span style={{ fontSize: 12.5, color: isTotal ? '#002D5F' : '#3a4a5c', fontWeight: isTotal ? 700 : 500, fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                    {row.src && <SrcTagChip src={row.src} />}
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+
+          {/* De dónde sale cada número */}
+          <Section title="De dónde sale cada número (las 3 fuentes)">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {tri.basis.mixpanel && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="Mixpanel" /> {tri.basis.mixpanel}</div>}
+              {tri.basis.hubspot && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="HubSpot" /> {tri.basis.hubspot}</div>}
+              {tri.basis.pelg && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="PELG" /> {tri.basis.pelg}</div>}
+            </div>
+          </Section>
+
+          {/* Supuestos */}
+          {moneyRec && (
+            <Section title="Supuestos detrás del número (no medidos)">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {Object.values(ECON_ASSUMPTIONS).map((as) => (
+                  <div key={as.key} style={{ fontSize: 12, color: '#3a4a5c', padding: '7px 10px', background: 'rgba(154,106,0,0.06)', borderRadius: 7, border: '1px solid rgba(154,106,0,0.14)' }}>
+                    <b>{as.label}: {as.unit === '%' ? `${(as.value * 100).toFixed(0)}%` : `${as.value} ${as.unit}`}</b> — {as.note}
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Cómo se prioriza */}
+          <Section title="Cómo se prioriza (score)">
+            <div style={{ fontSize: 12.5, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>score = margen × confianza × urgencia ÷ esfuerzo (lo acumulado se prorratea a mensual)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              <div className="glass-panel" style={{ padding: '10px 12px' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, sans-serif' }}>{Math.round(tri.confidence * 100)}%</div>
+                <div style={{ fontSize: 11, color: '#8696a7', marginBottom: 4 }}>Confianza</div>
+                <div style={{ fontSize: 11, color: '#5b6b7f', lineHeight: 1.4 }}>{tri.confidenceReason}</div>
+              </div>
+              <div className="glass-panel" style={{ padding: '10px 12px' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, sans-serif' }}>{tri.effort}/3</div>
+                <div style={{ fontSize: 11, color: '#8696a7', marginBottom: 4 }}>Esfuerzo</div>
+                <div style={{ fontSize: 11, color: '#5b6b7f', lineHeight: 1.4 }}>{tri.effortReason}</div>
+              </div>
+              <div className="glass-panel" style={{ padding: '10px 12px' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, sans-serif' }}>×{tri.urgency}</div>
+                <div style={{ fontSize: 11, color: '#8696a7', marginBottom: 4 }}>Urgencia</div>
+                <div style={{ fontSize: 11, color: '#5b6b7f', lineHeight: 1.4 }}>{tri.urgencyReason}</div>
+              </div>
+            </div>
+          </Section>
+
+          {/* Playbook */}
+          {rec.backedBy && (
+            <Section title="Respaldo del Playbook (prior aprendido)">
+              <div style={{ fontSize: 12.5, color: '#3a4a5c', padding: '10px 12px', background: 'rgba(21,128,61,0.06)', borderRadius: 8, border: '1px solid rgba(21,128,61,0.16)' }}>
+                📖 {rec.backedBy.statement}
+              </div>
+            </Section>
+          )}
+
+          {/* Honestidad */}
+          <Section title="Lo que el número NO cuenta">
+            {tri.honesty.map((hn, i) => (
+              <div key={i} style={{ fontSize: 12, color: '#9a6a00', marginTop: 5, display: 'flex', gap: 6 }}><span>⚠</span><span>{hn}</span></div>
+            ))}
+          </Section>
+        </>
+      )}
+    </div>
+  );
+}
