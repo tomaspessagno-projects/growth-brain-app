@@ -95,16 +95,19 @@ export interface Analytics {
   hubspot: HubspotSummary | null;
   marketing: typeof MARKETING;
   deadEvents: string[];
+  window: { from: string; to: string } | null; // rango efectivo de la data Mixpanel
 }
 
 function isCounted(s: StepSnap) {
   return s.status === 'live';
 }
 
-function computeFunnel(f: FunnelSnap, live?: Record<string, number>): ComputedFunnel {
+function computeFunnel(f: FunnelSnap, live: Record<string, number> | undefined, isLive: boolean): ComputedFunnel {
   const effVal = (s: StepSnap): number | null => {
     if (!isCounted(s)) return null;
-    if (live && s.event && live[s.event] != null) return live[s.event];
+    // Modo live (hay credenciales): el conteo del rango, o null si ese funnel falló — NUNCA el baked,
+    // que es de 30 días y mentiría para rangos chicos. Modo snapshot (sin creds): el valor baked.
+    if (isLive) return s.event && live && live[s.event] != null ? live[s.event] : null;
     return s.value ?? null;
   };
   const liveValues = f.steps.map(effVal).filter((v): v is number => v != null);
@@ -185,9 +188,10 @@ function buildChannels(): ChannelRow[] {
   });
 }
 
-export async function getAnalytics(): Promise<Analytics> {
-  const live = await getLiveCounts();
-  const funnels = FUNNELS.map((f) => computeFunnel(f, live?.counts[f.id]));
+export async function getAnalytics(from?: string, to?: string): Promise<Analytics> {
+  const live = await getLiveCounts(from, to);
+  const isLive = live != null;
+  const funnels = FUNNELS.map((f) => computeFunnel(f, live?.counts[f.id], isLive));
 
   const cotizador = funnels.find((f) => f.id === 'cotizador')!;
   const waInd = funnels.find((f) => f.id === 'wa-individual');
@@ -257,5 +261,6 @@ export async function getAnalytics(): Promise<Analytics> {
     hubspot,
     marketing: MARKETING,
     deadEvents: DEAD_EVENTS,
+    window: live ? { from: live.from, to: live.asOf } : null,
   };
 }

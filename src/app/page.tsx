@@ -8,6 +8,7 @@ import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import { PLAYBOOK_RULES, STATUS_META } from '@/lib/mixpanel/playbook';
 import { rollup, health, WINRATE_TARGET, HEALTH_META, type Health } from '@/lib/mixpanel/benchmarks';
 import { loadExperiments } from '@/lib/store/experiments';
+import DateRangePicker, { computePreset, type DateRange } from '@/components/DateRangePicker';
 
 type Resp = Analytics & { recommendations: Recommendation[] };
 
@@ -17,14 +18,24 @@ const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n 
 export default function Resumen() {
   const [data, setData] = useState<Resp | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [expsEnCurso, setExpsEnCurso] = useState(0);
+  const [range, setRange] = useState<DateRange>(() => computePreset('30d'));
 
   useEffect(() => {
-    const load = () => fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+    const load = () => {
+      setBusy(true);
+      fetch(`/api/mixpanel/analytics?from=${range.from}&to=${range.to}`)
+        .then((r) => r.json()).then(setData)
+        .finally(() => { setLoading(false); setBusy(false); });
+    };
     load();
     const id = setInterval(load, 60000);
-    loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
     return () => clearInterval(id);
+  }, [range]);
+
+  useEffect(() => {
+    loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
   }, []);
 
   if (loading) return <PageSkeleton />;
@@ -78,9 +89,14 @@ export default function Resumen() {
           <span className={`${styles.badge} ${data.source === 'live' ? styles.badgeLive : styles.badgeSnap}`}>
             {data.source === 'live' ? '● En vivo' : `Snapshot · ${data.meta.asOf}`}
           </span>
-          <span className={styles.badgeMeta}>Últimos {data.meta.rangeDays}d</span>
+          <span className={styles.badgeMeta}>{data.window ? `${data.window.from} → ${data.window.to}` : `Últimos ${data.meta.rangeDays}d`}{busy ? ' · actualizando…' : ''}</span>
         </div>
       </header>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#8696a7', paddingTop: 6 }}>Período (embudos):</span>
+        <DateRangePicker value={range} onChange={setRange} />
+      </div>
 
       {/* NORTE */}
       <section className={styles.kpis}>
