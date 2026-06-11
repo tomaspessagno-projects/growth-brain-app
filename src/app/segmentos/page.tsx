@@ -4,7 +4,7 @@ import Link from 'next/link';
 import styles from '../funnel/funnel.module.css';
 import { SEGMENTS_AUDIT as A, type Bucket } from '@/lib/segments/data';
 import type { Voice } from '@/lib/voice/verbatims';
-import type { Analytics } from '@/lib/mixpanel/analytics';
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('es-AR');
 const pctOf = (n: number, total: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
@@ -40,11 +40,10 @@ function Bars({ rows, highlight }: { rows: Bucket[]; highlight?: string }) {
 }
 
 export default function SegmentosPage() {
+  const { data: analytics } = useAnalytics();
   const [voice, setVoice] = useState<Voice | null>(null);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   useEffect(() => {
-    fetch('/api/voice').then((r) => r.json()).then(setVoice).catch(() => {});
-    fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setAnalytics).catch(() => {});
+    fetch('/api/voice').then((r) => (r.ok ? r.json() : null)).then(setVoice).catch(() => {});
   }, []);
   const npsTotalConteo = A.nps.promoters + A.nps.passives + A.nps.detractors;
 

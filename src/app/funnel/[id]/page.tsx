@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from '../funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(n).toLocaleString('es-AR'));
 const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n * 100).toFixed(d)}%`);
@@ -12,15 +12,7 @@ const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n 
 export default function FunnelDetail() {
   const params = useParams();
   const id = (params?.id as string) ?? '';
-  const [data, setData] = useState<Analytics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = () => fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
-    load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
-  }, []);
+  const { data, loading } = useAnalytics();
 
   if (loading) return <PageSkeleton />;
   if (!data) return <div className={styles.container}>Error cargando datos.</div>;

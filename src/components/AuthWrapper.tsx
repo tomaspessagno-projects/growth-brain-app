@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Navbar from "@/components/Navbar";
+import AnalyticsProvider from "@/components/AnalyticsProvider";
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -108,10 +109,12 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   if (DEV_BYPASS) {
     return (
-      <div className="app-shell">
-        <Navbar />
-        <main className="main-content">{children}</main>
-      </div>
+      <AnalyticsProvider>
+        <div className="app-shell">
+          <Navbar />
+          <main className="main-content">{children}</main>
+        </div>
+      </AnalyticsProvider>
     );
   }
 
@@ -141,11 +144,13 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   // Layout normal de la app para usuarios logueados
   return (
-    <div className="app-shell">
-      <Navbar />
-      <main className="main-content">
-        {children}
-      </main>
-    </div>
+    <AnalyticsProvider>
+      <div className="app-shell">
+        <Navbar />
+        <main className="main-content">
+          {children}
+        </main>
+      </div>
+    </AnalyticsProvider>
   );
 }

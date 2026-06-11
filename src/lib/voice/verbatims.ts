@@ -95,7 +95,7 @@ export async function getVoice(): Promise<Voice> {
   try {
     const rows: Row[] = [];
     let after: string | undefined;
-    for (let pg = 0; pg < 9; pg++) {
+    for (let pg = 0; pg < 5; pg++) {
       const body = {
         filterGroups: [{ filters: [{ propertyName: 'nps_mensaje', operator: 'HAS_PROPERTY' }] }],
         properties: ['nps_mensaje', 'nps', 'canal'],

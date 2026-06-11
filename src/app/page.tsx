@@ -3,37 +3,17 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
-import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import { PLAYBOOK_RULES, STATUS_META } from '@/lib/mixpanel/playbook';
 import { rollup, health, WINRATE_TARGET, HEALTH_META, type Health } from '@/lib/mixpanel/benchmarks';
 import { loadExperiments } from '@/lib/store/experiments';
-import DateRangePicker, { computePreset, type DateRange } from '@/components/DateRangePicker';
-
-type Resp = Analytics & { recommendations: Recommendation[] };
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(n).toLocaleString('es-AR'));
 const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n * 100).toFixed(d)}%`);
 
 export default function Resumen() {
-  const [data, setData] = useState<Resp | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const { data, loading, busy } = useAnalytics();
   const [expsEnCurso, setExpsEnCurso] = useState(0);
-  const [range, setRange] = useState<DateRange>(() => computePreset('30d'));
-
-  useEffect(() => {
-    const load = () => {
-      setBusy(true);
-      fetch(`/api/mixpanel/analytics?from=${range.from}&to=${range.to}`)
-        .then((r) => (r.ok ? r.json() : null)).then(setData)
-        .catch(() => {})
-        .finally(() => { setLoading(false); setBusy(false); });
-    };
-    load();
-    const id = setInterval(load, 60000);
-    return () => clearInterval(id);
-  }, [range]);
 
   useEffect(() => {
     loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
@@ -69,6 +49,9 @@ export default function Resumen() {
   const topOpps = data.recommendations.slice(0, 4);
   const topLearnings = PLAYBOOK_RULES.slice(0, 3);
 
+  // Mixpanel en vivo pero sin datos = Query API rate-limited (429). Mostramos el porqué, no un "0" mudo.
+  const mixpanelVacio = data.source === 'live' && s.totalEntradas === 0;
+
   const byId = (id: string) => data.funnels.find((f) => f.id === id);
   const areas: { name: string; sub: string; h: Health; metric: string; link: string }[] = [
     { name: 'Adquisición', sub: 'Cotizador', h: byId('cotizador')?.health ?? 'atencion', metric: `Conv. ${pct(byId('cotizador')?.overallConversion, 1)} · meta ${pct(byId('cotizador')?.target, 0)}`, link: '/funnel/cotizador' },
@@ -94,10 +77,16 @@ export default function Resumen() {
         </div>
       </header>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#8696a7', paddingTop: 6 }}>Período (embudos):</span>
-        <DateRangePicker value={range} onChange={setRange} />
-      </div>
+      {mixpanelVacio && (
+        <Link href="/status" style={{
+          display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none',
+          background: 'rgba(211, 138, 24, 0.08)', border: '1px solid rgba(211, 138, 24, 0.28)',
+          borderRadius: 12, padding: '11px 14px', marginBottom: 20, color: '#8a5a10', fontSize: 13,
+        }}>
+          <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#D38A18', flexShrink: 0, animation: 'sd-pulse 1.6s ease-in-out infinite' }} />
+          <span><strong>Mixpanel está rate-limited ahora mismo</strong> — los números en vivo se completan solos cuando la Query API se libera (suele ser dentro de la hora). HubSpot sigue OK. Ver detalle en <strong>Status →</strong></span>
+        </Link>
+      )}
 
       {/* NORTE */}
       <section className={styles.kpis}>

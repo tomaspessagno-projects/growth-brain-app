@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import styles from '../funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
+import { useAnalytics } from '@/components/AnalyticsProvider';
 import type { ExperimentMeasurement } from '@/lib/triangulation/measure';
 import {
   loadExperiments, upsertExperiment, deleteExperiment,
@@ -95,8 +95,7 @@ function MeasurementPanel({ m }: { m: ExperimentMeasurement }) {
 }
 
 export default function ExperimentosPage() {
-  const [data, setData] = useState<Analytics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading } = useAnalytics();
   const [exps, setExps] = useState<Experimento[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ hipotesis: '', funnelId: '', targetStepKey: '', mixpanelFunnel: '', fechaInicio: '' });
@@ -106,7 +105,6 @@ export default function ExperimentosPage() {
   const [autoErr, setAutoErr] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
     loadExperiments().then(setExps).catch(() => {});
   }, []);
 

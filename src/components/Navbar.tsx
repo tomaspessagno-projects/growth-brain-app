@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
+import NavRangePicker from '@/components/NavRangePicker';
 
 const NAV = [
   { name: 'Resumen', path: '/' },
@@ -11,6 +12,7 @@ const NAV = [
   { name: 'Aprendizajes', path: '/playbook' },
   { name: 'Segmentos', path: '/segmentos' },
   { name: 'Explorador', path: '/explorador' },
+  { name: 'Status', path: '/status' },
 ];
 
 function activeKey(pathname: string): string {
@@ -19,6 +21,7 @@ function activeKey(pathname: string): string {
   if (pathname.startsWith('/experimentos')) return '/experimentos';
   if (pathname.startsWith('/playbook')) return '/playbook';
   if (pathname.startsWith('/segmentos')) return '/segmentos';
+  if (pathname.startsWith('/status')) return '/status';
   if (pathname.startsWith('/explorador') || pathname.startsWith('/funnel') || pathname.startsWith('/crm') || pathname.startsWith('/economia')) return '/explorador';
   return '';
 }
@@ -44,7 +47,7 @@ export default function Navbar() {
         </nav>
 
         <div className={styles.right}>
-          <span className={styles.tag}>Medicus · armatuplan</span>
+          <NavRangePicker />
         </div>
       </div>
     </header>

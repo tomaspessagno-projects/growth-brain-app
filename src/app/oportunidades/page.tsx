@@ -3,14 +3,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from '../funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
 import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import type { TriScore } from '@/lib/triangulation/score';
 import { mapOppToFunnel, buildExperimentFromOpp } from '@/lib/experiments/fromOpportunity';
 import { upsertExperiment } from '@/lib/store/experiments';
 import { loadStatuses, setOppStatus } from '@/lib/store/oppStatus';
-
-type Resp = Analytics & { recommendations: Recommendation[] };
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
 function fmtArsShort(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)} mil M`;
@@ -81,8 +79,7 @@ const VIEWS = [
 ];
 
 export default function OportunidadesPage() {
-  const [data, setData] = useState<Resp | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading } = useAnalytics();
   const [filter, setFilter] = useState('todas');
   const [view, setView] = useState('activas');
   const [statuses, setStatuses] = useState<Record<string, Status>>({});
@@ -92,13 +89,6 @@ export default function OportunidadesPage() {
 
   useEffect(() => {
     loadStatuses().then(setStatuses).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    const load = () => fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
-    load();
-    const t = setInterval(load, 60000);
-    return () => clearInterval(t);
   }, []);
 
   const setStatus = (id: string, s: Status) => {

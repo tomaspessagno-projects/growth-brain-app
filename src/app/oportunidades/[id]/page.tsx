@@ -1,15 +1,13 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import styles from '../../funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
-import type { Recommendation } from '@/lib/mixpanel/recommendations';
 import type { SrcTag } from '@/lib/triangulation/score';
 import { ECON_ASSUMPTIONS } from '@/lib/economics/model';
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
-type Resp = Analytics & { recommendations: Recommendation[] };
 const DISC_LABEL: Record<string, string> = { diseno: 'Diseño', producto: 'Producto', desarrollo: 'Desarrollo', datos: 'Datos' };
 
 const SRC_COLOR: Record<SrcTag, string> = {
@@ -36,12 +34,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function OportunidadDetallePage() {
   const params = useParams();
   const id = decodeURIComponent(String(params.id));
-  const [data, setData] = useState<Resp | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const { data, loading } = useAnalytics();
 
   if (loading) return <PageSkeleton />;
   const rec = data?.recommendations.find((r) => r.id === id);

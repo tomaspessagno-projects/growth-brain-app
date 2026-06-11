@@ -3,19 +3,14 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from '../funnel/funnel.module.css';
 import PageSkeleton from '@/components/PageSkeleton';
-import type { Analytics } from '@/lib/mixpanel/analytics';
+import { useAnalytics } from '@/components/AnalyticsProvider';
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(n).toLocaleString('es-AR'));
 const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n * 100).toFixed(d)}%`);
 const fmtArsM = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${Math.round(n).toLocaleString('es-AR')}`);
 
 export default function ExploradorPage() {
-  const [data, setData] = useState<Analytics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const { data, loading } = useAnalytics();
 
   if (loading) return <PageSkeleton />;
   if (!data) return <div className={styles.container}>Error cargando datos.</div>;

@@ -189,7 +189,8 @@ function buildChannels(): ChannelRow[] {
 }
 
 export async function getAnalytics(from?: string, to?: string): Promise<Analytics> {
-  const live = await getLiveCounts(from, to);
+  // Mixpanel y HubSpot EN PARALELO (antes era secuencial → sumaba tiempos).
+  const [live, pipe] = await Promise.all([getLiveCounts(from, to), getRetailPipeline()]);
   const isLive = live != null;
   const funnels = FUNNELS.map((f) => computeFunnel(f, live?.counts[f.id], isLive));
 
@@ -223,8 +224,7 @@ export async function getAnalytics(from?: string, to?: string): Promise<Analytic
     .filter((f) => f.leakDropPct != null)
     .sort((a, b) => (b.leakDropCount ?? 0) - (a.leakDropCount ?? 0))[0];
 
-  // HubSpot — parte comercial del flujo (cacheado 5 min, resiliente: si falla no rompe el resto).
-  const pipe = await getRetailPipeline();
+  // HubSpot — `pipe` ya se trajo en paralelo arriba (cacheado 5 min, resiliente).
   const stageCount = (needle: string) =>
     pipe.stages.find((s) => s.label.toLowerCase().includes(needle))?.count ?? 0;
   const openStages = pipe.stages.filter((s) => !s.isClosed);

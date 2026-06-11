@@ -16,88 +16,66 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg('');
 
-    // --- "EL MEDICUS GUARD" ---
     if (!email.toLowerCase().endsWith('@medicus.com.ar')) {
-      setErrorMsg('Solo se permite el acceso con correos electrónicos de @medicus.com.ar');
+      setErrorMsg('Solo se permite el acceso con correos @medicus.com.ar');
       setLoading(false);
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      if (error.message === 'Invalid login credentials') {
-        setErrorMsg('Credenciales inválidas. Verifica tu correo y contraseña corporativa.');
-      } else {
-        setErrorMsg('Error al iniciar sesión: ' + error.message);
-      }
+      setErrorMsg(error.message === 'Invalid login credentials'
+        ? 'Credenciales inválidas. Revisá tu correo y contraseña.'
+        : 'Error al iniciar sesión: ' + error.message);
       setLoading(false);
     } else {
-      // Éxito: AuthWrapper detectará la sesión y redirigirá.
-      // Pero forzamos redirección para mejor UX instantánea
       router.push('/');
     }
   };
 
   return (
-    <div className={`animate-fade-in ${styles.loginPage}`}>
-      <div className={`glass-panel ${styles.loginBox}`}>
+    <div className={styles.page}>
+      <div className={styles.glow} />
+      <div className={`${styles.card} animate-fade-in`}>
         <div className={styles.brand}>
-          <div className={styles.logoBox}>
-            <BrainIcon />
+          <span className={styles.logo}><DataIcon /></span>
+          <div>
+            <h1 className={styles.title}>SysData</h1>
+            <p className={styles.tagline}>Motor de mejora continua · Medicus</p>
           </div>
-          <h1>SysData</h1>
-          <p>Control de Acceso Medicus</p>
         </div>
 
-        {errorMsg && <div className={styles.errorBox}>{errorMsg}</div>}
-
         <form onSubmit={handleLogin} className={styles.form}>
-          <div className={styles.formGroup}>
-            <label>Correo Electrónico Corporativo</label>
-            <input 
-              type="email" 
-              required 
-              placeholder="tu.nombre@medicus.com.ar" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-            />
-          </div>
+          <label className={styles.label}>
+            Correo corporativo
+            <input type="email" required placeholder="tu.nombre@medicus.com.ar" value={email} onChange={(e) => setEmail(e.target.value)} className={styles.input} autoFocus />
+          </label>
+          <label className={styles.label}>
+            Contraseña
+            <input type="password" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className={styles.input} />
+          </label>
 
-          <div className={styles.formGroup}>
-            <label>Contraseña</label>
-            <input 
-              type="password" 
-              required 
-              placeholder="••••••••" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-            />
-          </div>
+          {errorMsg && <div className={styles.error}>{errorMsg}</div>}
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? 'Autenticando...' : 'Iniciar Sesión'}
+          <button type="submit" className={styles.submit} disabled={loading}>
+            {loading ? 'Ingresando…' : 'Ingresar'}
           </button>
-          
-          <div className={styles.authMeta}>
-            <p className={styles.hint}>
-              Ingresa tus credenciales autorizadas por el equipo de sistemas.
-            </p>
-          </div>
         </form>
+
+        <div className={styles.footer}>
+          <span className={styles.lock}>🔒</span> Acceso restringido al equipo de Medicus
+        </div>
       </div>
     </div>
   );
 }
 
-function BrainIcon() {
+function DataIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
-      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="20" x2="6" y2="13" />
+      <line x1="12" y1="20" x2="12" y2="8" />
+      <line x1="18" y1="20" x2="18" y2="4" />
     </svg>
   );
 }

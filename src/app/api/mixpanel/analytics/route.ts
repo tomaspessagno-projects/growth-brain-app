@@ -9,8 +9,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const from = searchParams.get('from') || undefined;
   const to = searchParams.get('to') || undefined;
-  const analytics = await getAnalytics(from, to);
-  const voice = await getVoice();
+  const [analytics, voice] = await Promise.all([getAnalytics(from, to), getVoice()]);
   const recommendations = generateRecommendations(analytics, voice);
   return NextResponse.json({ ...analytics, recommendations });
 }

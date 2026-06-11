@@ -53,10 +53,10 @@ async function fetchFunnel(auth: string, funnelId: number, from: string, to: str
   const url = `${BASE}/funnels?project_id=${PID}&funnel_id=${funnelId}&from_date=${from}&to_date=${to}&unit=month`;
   // Retry con backoff ante 429 (rate limit de la Query API): evita caer al snapshot por un pico transitorio.
   let res: Response | null = null;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 2; i++) {
     res = await fetch(url, { headers: { Authorization: `Basic ${auth}` }, cache: 'no-store' });
     if (res.status !== 429) break;
-    await new Promise((r) => setTimeout(r, 900 * (i + 1)));
+    await new Promise((r) => setTimeout(r, 500));
   }
   if (!res || !res.ok) throw new Error(`funnel ${funnelId}: ${res?.status ?? 'sin respuesta'}`);
   const j = await res.json();
@@ -73,20 +73,20 @@ async function fetchFunnel(auth: string, funnelId: number, from: string, to: str
 // que no tiene saved funnel funcional. Mismo type=unique + unit=month que los funnels → consistente.
 async function fetchEventCounts(auth: string, events: string[], from: string, to: string): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
-  for (const ev of events) {
+  // Los 4 eventos del cotizador EN PARALELO (antes secuencial → era el cuello cuando había rate limit).
+  await Promise.all(events.map(async (ev) => {
     const url = `${BASE}/segmentation?project_id=${PID}&event=${encodeURIComponent(ev)}&from_date=${from}&to_date=${to}&unit=month&type=unique`;
     let res: Response | null = null;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 2; i++) {
       res = await fetch(url, { headers: { Authorization: `Basic ${auth}` }, cache: 'no-store' });
       if (res.status !== 429) break;
-      await new Promise((r) => setTimeout(r, 900 * (i + 1)));
+      await new Promise((r) => setTimeout(r, 500));
     }
     if (!res || !res.ok) throw new Error(`segmentation ${ev}: ${res?.status ?? 'sin respuesta'}`);
     const j = await res.json();
     const series: Record<string, number> = j.data?.values?.[ev] || {};
     counts[ev] = Object.values(series).reduce((a, b) => a + (b || 0), 0);
-    await new Promise((r) => setTimeout(r, 120));
-  }
+  }));
   return counts;
 }
 
@@ -104,10 +104,10 @@ export async function fetchSavedFunnel(funnelId: number, from: string, to: strin
   const url = `${BASE}/funnels?project_id=${PID}&funnel_id=${funnelId}&from_date=${from}&to_date=${to}&unit=month`;
   // Retry con backoff ante 429 (rate limit de la Query API): el motor de medición no puede fallar por esto.
   let res: Response | null = null;
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     res = await fetch(url, { headers: { Authorization: `Basic ${auth}` }, cache: 'no-store' });
     if (res.status !== 429) break;
-    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    await new Promise((r) => setTimeout(r, 700));
   }
   if (!res || !res.ok) throw new Error(`Mixpanel funnel ${funnelId}: ${res?.status ?? 'sin respuesta'}`);
   const j = await res.json();
@@ -142,18 +142,20 @@ export async function getLiveCounts(from?: string, to?: string): Promise<LiveDat
     const auth = Buffer.from(`${c.u}:${c.s}`).toString('base64');
     const counts: Record<string, Record<string, number>> = {};
     let failed = 0;
-    // Secuencial para respetar el rate limit de la Query API.
-    for (const [fid, mpId] of Object.entries(FUNNEL_MIXPANEL_IDS)) {
-      try {
-        counts[fid] = fid === 'cotizador'
-          ? await fetchEventCounts(auth, COTIZADOR_EVENTS, r.from, r.to)
-          : await fetchFunnel(auth, mpId, r.from, r.to);
-      } catch (e) {
-        failed++;
-        console.warn('[mixpanel live] funnel', fid, 'falló:', e);
-      }
-      await new Promise((res) => setTimeout(res, 120));
-    }
+    // PARALELO: los 6 funnels a la vez (el cotizador arma sus eventos internamente). Cae de ~19s a ~3s.
+    // El retry corto (500ms) maneja los 429s ocasionales por concurrencia.
+    await Promise.all(
+      Object.entries(FUNNEL_MIXPANEL_IDS).map(async ([fid, mpId]) => {
+        try {
+          counts[fid] = fid === 'cotizador'
+            ? await fetchEventCounts(auth, COTIZADOR_EVENTS, r.from, r.to)
+            : await fetchFunnel(auth, mpId, r.from, r.to);
+        } catch (e) {
+          failed++;
+          console.warn('[mixpanel live] funnel', fid, 'falló:', e);
+        }
+      }),
+    );
     const data: LiveData = { asOf: r.to, from: r.from, counts };
     // Solo cachear si TODOS los funnels respondieron. Si alguno falló (rate limit transitorio),
     // no se cachea → la próxima carga (o el auto-refresh de 60s) lo reintenta y se completa.
