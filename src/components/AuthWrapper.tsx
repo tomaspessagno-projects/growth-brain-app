@@ -90,6 +90,22 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     };
   }, [pathname, router]);
 
+  // Mantener la cookie sb-access-token siempre fresca. El access_token se auto-refresca (~1h);
+  // re-sincronizamos cada 60s para que el middleware de /api NUNCA reciba un token vencido
+  // (eso devolvía 401 → la página crasheaba). Belt & suspenders sobre el sync por evento.
+  useEffect(() => {
+    if (DEV_BYPASS) return;
+    const sync = async () => {
+      const { data } = await supabase.auth.getSession();
+      const s = data.session;
+      setAuthCookie(s && isMedicus(s.user.email) ? s.access_token : null);
+    };
+    sync();
+    const id = setInterval(sync, 60000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (DEV_BYPASS) {
     return (
       <div className="app-shell">

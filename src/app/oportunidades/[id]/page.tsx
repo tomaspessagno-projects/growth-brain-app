@@ -40,7 +40,7 @@ export default function OportunidadDetallePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+    fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <PageSkeleton />;

@@ -95,7 +95,7 @@ export default function OportunidadesPage() {
   }, []);
 
   useEffect(() => {
-    const load = () => fetch('/api/mixpanel/analytics').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+    const load = () => fetch('/api/mixpanel/analytics').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
     load();
     const t = setInterval(load, 60000);
     return () => clearInterval(t);

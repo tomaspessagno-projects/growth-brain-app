@@ -26,7 +26,8 @@ export default function Resumen() {
     const load = () => {
       setBusy(true);
       fetch(`/api/mixpanel/analytics?from=${range.from}&to=${range.to}`)
-        .then((r) => r.json()).then(setData)
+        .then((r) => (r.ok ? r.json() : null)).then(setData)
+        .catch(() => {})
         .finally(() => { setLoading(false); setBusy(false); });
     };
     load();
@@ -39,7 +40,7 @@ export default function Resumen() {
   }, []);
 
   if (loading) return <PageSkeleton />;
-  if (!data) return <div className={styles.container}>Error cargando datos.</div>;
+  if (!data || !data.summary) return <div className={styles.container}>Error cargando datos. Reintentá en un momento.</div>;
 
   const s = data.summary;
 

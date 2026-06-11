@@ -12,7 +12,7 @@ export default function LoopPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/loop').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+    fetch('/api/loop').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <PageSkeleton />;

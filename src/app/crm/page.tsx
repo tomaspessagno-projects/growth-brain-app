@@ -12,7 +12,7 @@ export default function CrmPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = () => fetch('/api/hubspot/pipeline').then((r) => r.json()).then(setData).finally(() => setLoading(false));
+    const load = () => fetch('/api/hubspot/pipeline').then((r) => (r.ok ? r.json() : null)).then(setData).catch(() => {}).finally(() => setLoading(false));
     load();
     const t = setInterval(load, 120000); // refresca cada 2 min (con cache de 5 min server-side)
     return () => clearInterval(t);
