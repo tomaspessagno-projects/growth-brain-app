@@ -2,6 +2,7 @@ import type { Analytics } from './analytics';
 import type { Voice } from '../voice/verbatims';
 import { PLAYBOOK_RULES } from './playbook';
 import { scoreRecommendation, type TriScore } from '../triangulation/score';
+import { simulateMargin } from '../triangulation/montecarlo';
 import type { PriorMap } from '../triangulation/priors';
 
 export type RecPriority = 'alta' | 'media' | 'baja';
@@ -286,6 +287,12 @@ export function generateRecommendations(a: Analytics, voice?: Voice, priors?: Pr
   });
 
   // Score triangulado (Mixpanel × HubSpot × PELG) y ranking por plata en juego, no por prioridad.
-  const scored = withPriors.map((r) => ({ ...r, tri: scoreRecommendation(r, a, priors) }));
+  // Capa 3: además del puntual, se adjunta la banda probabilística P10–P90 (Monte Carlo).
+  const scored = withPriors.map((r) => {
+    const tri = scoreRecommendation(r, a, priors);
+    const band = simulateMargin(r, a, priors);
+    if (band) tri.band = band;
+    return { ...r, tri };
+  });
   return scored.sort((x, y) => (y.tri?.score ?? 0) - (x.tri?.score ?? 0));
 }

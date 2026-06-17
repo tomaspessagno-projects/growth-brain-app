@@ -53,6 +53,12 @@ function TriBlock({ tri }: { tri: TriScore }) {
       <div style={{ fontSize: 11, color: '#8696a7', marginTop: 6 }}>
         confianza {Math.round(tri.confidence * 100)}% · esfuerzo {tri.effort}/3 · urgencia ×{tri.urgency}
       </div>
+      {tri.band && (
+        <div style={{ fontSize: 11.5, color: '#3a4a5c', marginTop: 6 }}>
+          🎲 Rango P10–P90: <b>{fmtArsShort(tri.band.p10)} – {fmtArsShort(tri.band.p90)}</b>
+          {tri.band.robust ? ' · robusto a los supuestos' : ` · sensible sobre todo a "${tri.band.dominantDriver}"`}
+        </div>
+      )}
       {tri.honesty.map((h, i) => (
         <div key={i} style={{ fontSize: 11, color: '#9a6a00', marginTop: 4, display: 'flex', gap: 5 }}>
           <span>⚠</span><span>{h}</span>

@@ -142,6 +142,28 @@ export default function OportunidadDetallePage() {
             </div>
           </Section>
 
+          {/* Rango probabilístico (Monte Carlo) */}
+          {tri.band && (
+            <Section title="Rango probabilístico (Monte Carlo · Capa 3)">
+              <div style={{ fontSize: 12.5, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>
+                Los supuestos son inciertos: se muestrean {tri.band.n.toLocaleString('es-AR')} escenarios → la cifra puntual es el medio de un rango, no una certeza.
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                {([['P10 · conservador', tri.band.p10], ['P50 · mediana', tri.band.p50], ['P90 · optimista', tri.band.p90]] as [string, number][]).map(([lbl, val]) => (
+                  <div key={lbl} className="glass-panel" style={{ padding: '10px 12px' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, sans-serif' }}>{fmtArsShort(val)}</div>
+                    <div style={{ fontSize: 11, color: '#8696a7' }}>{lbl}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: tri.band.robust ? '#15803d' : '#9a6a00', marginTop: 10 }}>
+                {tri.band.robust
+                  ? '✓ Robusto: el rango es angosto — el ranking casi no depende de los supuestos.'
+                  : `⚠ Sensible sobre todo a "${tri.band.dominantDriver}": es el supuesto que más mueve la cifra. Medirlo es lo que más reduce la incertidumbre.`}
+              </div>
+            </Section>
+          )}
+
           {/* Playbook */}
           {rec.backedBy && (
             <Section title="Respaldo del Playbook (prior aprendido)">

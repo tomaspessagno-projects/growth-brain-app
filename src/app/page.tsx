@@ -14,9 +14,19 @@ const pct = (n: number | null | undefined, d = 0) => (n == null ? '—' : `${(n 
 export default function Resumen() {
   const { data, loading, busy } = useAnalytics();
   const [expsEnCurso, setExpsEnCurso] = useState(0);
+  const [signals, setSignals] = useState<{ kind: string; direction: string; headline: string; detail: string }[]>([]);
+  const [signalDays, setSignalDays] = useState(0);
 
   useEffect(() => {
     loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
+  }, []);
+
+  // Señales del motor (Capa 2): detección de quiebres + pace vs meta sobre la serie diaria.
+  useEffect(() => {
+    fetch('/api/signals')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) { setSignals(j.signals ?? []); setSignalDays(j.days ?? 0); } })
+      .catch(() => {});
   }, []);
 
   if (loading) return <PageSkeleton />;
@@ -152,6 +162,28 @@ export default function Resumen() {
           ))}
         </section>
       </div>
+
+      {/* SEÑALES DEL MOTOR (Capa 2) */}
+      <h3 className={styles.sectionTitle}>Señales del motor · detección automática</h3>
+      <section className={`glass-panel ${styles.card}`}>
+        {signals.length === 0 ? (
+          <div className={styles.signalSub}>
+            {signalDays < 8
+              ? `El motor está acumulando historia (${signalDays}/8 días) para detectar quiebres y proyectar el ritmo vs meta. El barrido diario la va llenando.`
+              : 'Sin señales: nada se salió de rango ni viene bajo meta este período. 🟢'}
+          </div>
+        ) : (
+          signals.map((sg, i) => (
+            <div key={i} className={styles.signalRow}>
+              <div>
+                <div className={styles.signalLabel}>{sg.kind === 'quiebre' ? '⚡' : '📉'} {sg.headline}</div>
+                <div className={styles.signalSub}>{sg.detail}</div>
+              </div>
+              <span className={sg.direction === 'up' ? styles.signalUp : styles.signalDown}>{sg.kind === 'quiebre' ? (sg.direction === 'up' ? '↑' : '↓') : '●'}</span>
+            </div>
+          ))
+        )}
+      </section>
 
       {/* OPORTUNIDADES */}
       <h3 className={styles.sectionTitle}>Qué hay que mejorar</h3>

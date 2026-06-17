@@ -9,6 +9,7 @@ import type { Recommendation } from '../mixpanel/recommendations';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
 import { ltvArs, marginFromRecoveredEvents, ECON_ASSUMPTIONS } from '../economics/model';
 import { recFamily, priorConfidenceBoost, FAMILY_LABEL, type PriorMap } from './priors';
+import type { MarginBand } from './montecarlo';
 
 export type SrcTag = 'Mixpanel' | 'HubSpot' | 'PELG' | 'Supuesto' | 'Playbook';
 
@@ -34,6 +35,7 @@ export interface TriScore {
   confidenceReason: string;
   urgencyReason: string;
   effortReason: string;
+  band?: MarginBand; // Capa 3: rango probabilístico P10–P90 (Monte Carlo sobre los supuestos)
 }
 
 const RECOVERY = ECON_ASSUMPTIONS.recoveryFraction.value;
