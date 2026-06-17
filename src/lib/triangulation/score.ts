@@ -8,6 +8,7 @@ import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
 import { ltvArs, marginFromRecoveredEvents, ECON_ASSUMPTIONS } from '../economics/model';
+import { recFamily, priorConfidenceBoost, FAMILY_LABEL, type PriorMap } from './priors';
 
 export type SrcTag = 'Mixpanel' | 'HubSpot' | 'PELG' | 'Supuesto' | 'Playbook';
 
@@ -52,22 +53,30 @@ const EFFORT_REASON: Record<string, string> = {
   desarrollo: 'Disciplina desarrollo: requiere ingeniería, esfuerzo alto.',
 };
 
-function confidenceFor(rec: Recommendation): { c: number; reason: string } {
+function confidenceFor(rec: Recommendation, priors?: PriorMap): { c: number; reason: string } {
   let c = 0.5;
   let reason = 'Base 50% (regla determinista sobre los datos).';
   if (rec.backedBy) {
     c += 0.2;
     reason = 'Base 50% + 20% por estar respaldada por una regla del Playbook (prior aprendido).';
   }
-  return { c: Math.max(0.3, Math.min(0.9, c)), reason };
+  // Capa 4: confianza extra por experimentos de la misma familia que ya validaron esta clase de mejora.
+  const prior = priors?.[recFamily(rec)];
+  const boost = priorConfidenceBoost(prior);
+  if (boost > 0 && prior) {
+    c += boost;
+    const total = prior.validated + prior.refuted + prior.inconclusive;
+    reason += ` + ${Math.round(boost * 100)}% aprendido: ${prior.validated}/${total} experimentos de "${FAMILY_LABEL[prior.family]}" la respaldan.`;
+  }
+  return { c: Math.max(0.3, Math.min(0.95, c)), reason };
 }
 
-export function scoreRecommendation(rec: Recommendation, a: Analytics): TriScore {
+export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: PriorMap): TriScore {
   const cot = a.funnels.find((f) => f.id === 'cotizador');
   const h = a.hubspot;
   const effort = EFFORT[rec.discipline] ?? 2;
   const effortReason = EFFORT_REASON[rec.discipline] ?? 'Esfuerzo medio (estimado).';
-  const { c: confidence, reason: confidenceReason } = confidenceFor(rec);
+  const { c: confidence, reason: confidenceReason } = confidenceFor(rec, priors);
   let marginAtStakeArs: number | null = null;
   let cadence: TriScore['cadence'] = null;
   let reach: number | null = null;
@@ -123,7 +132,12 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics): TriScore
     case 'imp-cot-design':
     case 'imp-cot-product': {
       const leak = cot?.leakDropCount ?? 0;
-      const recFrac = rec.id === 'imp-cot-design' ? RECOVERY : RECOVERY * 0.6;
+      // Capa 4: la fracción recuperable la APRENDE el motor por familia (empirical-Bayes);
+      // si todavía no hay experimentos, cae al supuesto declarado (25%).
+      const fam = recFamily(rec);
+      const learned = priors?.[fam];
+      const baseRecovery = learned?.recoveryMean ?? RECOVERY;
+      const recFrac = rec.id === 'imp-cot-design' ? baseRecovery : baseRecovery * 0.6;
       if (leak > 0) {
         const recovered = leak * recFrac;
         const capitas = recovered * DATO_CAPITA;
@@ -139,12 +153,16 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics): TriScore
         formula = 'Fuga del paso × recuperable × dato→cápita × LTV de contribución';
         breakdown = [
           { label: `Fuga en ${cot?.leakTransition}`, value: `${num(leak)} usuarios/mes`, src: 'Mixpanel' },
-          { label: 'Recuperable con la mejora', value: `× ${pc(recFrac)} = ${num(recovered)} datos`, src: 'Supuesto' },
+          { label: 'Recuperable con la mejora', value: `× ${pc(recFrac)} = ${num(recovered)} datos`, src: learned && learned.n > 0 ? 'Playbook' : 'Supuesto' },
           { label: 'Dato → cápita', value: `× ${pc(DATO_CAPITA)} = ${num(capitas)} cápitas`, src: 'Supuesto' },
           { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
           { label: '= Margen en juego', value: `${fmtArsShort(marginAtStakeArs)}/mes` },
         ];
-        honesty.push(`Recuperable ${pc(recFrac)} y dato→cápita ${pc(DATO_CAPITA)} son supuestos.`);
+        honesty.push(
+          learned && learned.n > 0
+            ? `Recuperable ${pc(recFrac)} APRENDIDO de ${learned.n} experimento(s) de "${FAMILY_LABEL[fam]}" (antes era 25% supuesto). dato→cápita ${pc(DATO_CAPITA)} sigue supuesto (falta el cruce prospecto_id).`
+            : `Recuperable ${pc(recFrac)} y dato→cápita ${pc(DATO_CAPITA)} son supuestos.`,
+        );
       }
       break;
     }

@@ -12,6 +12,9 @@ const unauthorized = (msg: string, status = 401) => NextResponse.json({ error: m
 export async function middleware(req: NextRequest) {
   if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') return NextResponse.next();
 
+  // El cron diario se autentica con CRON_SECRET en su propia ruta (no con la cookie de Supabase).
+  if (req.nextUrl.pathname.startsWith('/api/cron')) return NextResponse.next();
+
   const token = req.cookies.get('sb-access-token')?.value;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../funnel/funnel.module.css';
 import {
   PLAYBOOK_RULES,
@@ -9,10 +9,30 @@ import {
   playbookToMarkdown,
 } from '@/lib/mixpanel/playbook';
 
+interface PriorView {
+  family: string;
+  label: string;
+  recoveryMean: number;
+  n: number;
+  validated: number;
+  refuted: number;
+  inconclusive: number;
+  updatedAt: string;
+}
+
 export default function PlaybookPage() {
   const [copied, setCopied] = useState(false);
   const [showMd, setShowMd] = useState(false);
+  const [priors, setPriors] = useState<PriorView[]>([]);
   const md = playbookToMarkdown(PLAYBOOK_RULES);
+
+  // Priors numéricos aprendidos (Capa 4) — el Playbook que deja de ser solo texto.
+  useEffect(() => {
+    fetch('/api/priors')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.priors) setPriors(j.priors); })
+      .catch(() => {});
+  }, []);
 
   const counts = {
     validado: PLAYBOOK_RULES.filter((r) => r.status === 'validado').length,
@@ -55,6 +75,34 @@ export default function PlaybookPage() {
       </div>
 
       {showMd && <pre className={styles.mdBlock}>{md}</pre>}
+
+      <section>
+        <h3 className={styles.sectionTitle}>Priors aprendidos · el motor se afina con cada experimento</h3>
+        {priors.length === 0 ? (
+          <div className={`glass-panel ${styles.card}`}>
+            <div className={styles.emptyState} style={{ padding: 20 }}>
+              Todavía sin priors numéricos. Se aprenden solos: cada experimento cerrado y <strong>significativo</strong> actualiza
+              cuánto de una fuga se recupera <em>de verdad</em>, por familia de intervención. Hasta entonces, el motor usa el supuesto base (25%).
+            </div>
+          </div>
+        ) : (
+          <div className={styles.recsGrid}>
+            {priors.map((p) => (
+              <div key={p.family} className={`glass-panel ${styles.rec}`}>
+                <div className={styles.recTop}>
+                  <span className={styles.recFunnel}>{p.label}</span>
+                  <span className={styles.recOwner} style={{ marginLeft: 'auto' }}>{p.n} exp. medidos</span>
+                </div>
+                <div className={styles.recTitle}>Recuperable aprendido: {(p.recoveryMean * 100).toFixed(0)}%</div>
+                <div className={styles.recDetail}>
+                  ✅ {p.validated} validados · ❌ {p.refuted} refutados · 🤔 {p.inconclusive} inconclusos
+                  {p.updatedAt ? ` · actualizado ${p.updatedAt.slice(0, 10)}` : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {RULE_CATEGORIES.map((cat) => {
         const rules = PLAYBOOK_RULES.filter((r) => r.category === cat);

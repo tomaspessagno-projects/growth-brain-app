@@ -2,6 +2,7 @@ import type { Analytics } from './analytics';
 import type { Voice } from '../voice/verbatims';
 import { PLAYBOOK_RULES } from './playbook';
 import { scoreRecommendation, type TriScore } from '../triangulation/score';
+import type { PriorMap } from '../triangulation/priors';
 
 export type RecPriority = 'alta' | 'media' | 'baja';
 export type Discipline = 'diseno' | 'producto' | 'desarrollo' | 'datos';
@@ -187,7 +188,8 @@ function funnelImprovements(a: Analytics): Recommendation[] {
 }
 
 // Motor de recomendaciones v1: reglas deterministas sobre TODA la analítica.
-export function generateRecommendations(a: Analytics, voice?: Voice): Recommendation[] {
+// `priors` (Capa 4): lo aprendido de experimentos, que afina recovery + confianza del score.
+export function generateRecommendations(a: Analytics, voice?: Voice, priors?: PriorMap): Recommendation[] {
   const recs: Recommendation[] = [];
   const cotizador = a.funnels.find((f) => f.id === 'cotizador');
 
@@ -284,6 +286,6 @@ export function generateRecommendations(a: Analytics, voice?: Voice): Recommenda
   });
 
   // Score triangulado (Mixpanel × HubSpot × PELG) y ranking por plata en juego, no por prioridad.
-  const scored = withPriors.map((r) => ({ ...r, tri: scoreRecommendation(r, a) }));
+  const scored = withPriors.map((r) => ({ ...r, tri: scoreRecommendation(r, a, priors) }));
   return scored.sort((x, y) => (y.tri?.score ?? 0) - (x.tri?.score ?? 0));
 }
