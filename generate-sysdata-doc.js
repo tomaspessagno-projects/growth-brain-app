@@ -1,62 +1,74 @@
 // Genera SysData-Documentacion.docx — documento completo de producto + arquitectura para PO y LT.
+// Tablas con bordes + anchos fijos (twips) + layout FIXED → Word las renderiza prolijas.
 const fs = require('fs');
 const {
   Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
   Table, TableRow, TableCell, WidthType, BorderStyle, PageBreak, ShadingType,
+  TableLayoutType, VerticalAlign,
 } = require('docx');
 
 const NAVY = '0E2E52';
 const ACCENT = '1689C4';
 const GREY = '5B6B7F';
+const LINE = 'BFC9D4';
+const ZEBRA = 'F2F5F8';
 
-// ---- helpers ----
-const h1 = (t) => new Paragraph({ text: t, heading: HeadingLevel.HEADING_1, spacing: { before: 260, after: 120 } });
+// Ancho útil de la página (Letter, márgenes de 1") = 12240 - 2*1440 = 9360 twips. Usamos 9300.
+const TW = 9300;
+const B = { style: BorderStyle.SINGLE, size: 4, color: LINE };
+const TABLE_BORDERS = { top: B, bottom: B, left: B, right: B, insideHorizontal: B, insideVertical: B };
+
+// ---- helpers de texto ----
+const h1 = (t) => new Paragraph({ text: t, heading: HeadingLevel.HEADING_1, spacing: { before: 280, after: 120 } });
 const h2 = (t) => new Paragraph({ text: t, heading: HeadingLevel.HEADING_2, spacing: { before: 180, after: 80 } });
 const p = (t) => new Paragraph({ children: [new TextRun(t)], spacing: { after: 120 }, alignment: AlignmentType.JUSTIFIED });
 const lead = (b, rest) => new Paragraph({ spacing: { after: 120 }, alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: b, bold: true }), new TextRun(rest)] });
 const bullet = (t) => new Paragraph({ text: t, bullet: { level: 0 }, spacing: { after: 60 } });
 const bulletLead = (b, rest) => new Paragraph({ bullet: { level: 0 }, spacing: { after: 60 }, children: [new TextRun({ text: b, bold: true }), new TextRun(rest)] });
-const spacer = () => new Paragraph({ text: '' });
 const quoteBox = (t) => new Paragraph({
   spacing: { before: 80, after: 160 }, indent: { left: 360 },
   border: { left: { style: BorderStyle.SINGLE, size: 18, color: ACCENT, space: 12 } },
   children: [new TextRun({ text: t, italics: true, color: NAVY })],
 });
 
-const cellText = (text, { bold = false, color, fill, width } = {}) =>
+// ---- helpers de tabla (bordes + anchos fijos) ----
+const colsFromPct = (pcts) => {
+  const w = pcts.map((x) => Math.round((TW * x) / 100));
+  w[w.length - 1] = TW - w.slice(0, -1).reduce((a, b) => a + b, 0); // ajuste para sumar exacto
+  return w;
+};
+const cell = (text, widthTw, { bold = false, color, fill } = {}) =>
   new TableCell({
-    width: width ? { size: width, type: WidthType.PERCENTAGE } : undefined,
-    shading: fill ? { type: ShadingType.SOLID, color: fill, fill } : undefined,
-    margins: { top: 60, bottom: 60, left: 100, right: 100 },
-    children: [new Paragraph({ children: [new TextRun({ text, bold, color: color || undefined })] })],
+    width: { size: widthTw, type: WidthType.DXA },
+    verticalAlign: VerticalAlign.CENTER,
+    shading: fill ? { type: ShadingType.CLEAR, color: 'auto', fill } : undefined,
+    margins: { top: 80, bottom: 80, left: 130, right: 130 },
+    children: [new Paragraph({ spacing: { after: 0 }, children: [new TextRun({ text, bold, color: color || undefined, size: 20 })] })],
   });
 
-const twoColTable = (headA, headB, rows, wA = 34) =>
-  new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
+const tablePct = (heads, rows, pcts, { boldFirstCol = true } = {}) => {
+  const widths = colsFromPct(pcts);
+  return new Table({
+    width: { size: TW, type: WidthType.DXA },
+    columnWidths: widths,
+    layout: TableLayoutType.FIXED,
+    borders: TABLE_BORDERS,
     rows: [
       new TableRow({
         tableHeader: true,
-        children: [
-          cellText(headA, { bold: true, color: 'FFFFFF', fill: NAVY, width: wA }),
-          cellText(headB, { bold: true, color: 'FFFFFF', fill: NAVY, width: 100 - wA }),
-        ],
+        cantSplit: true,
+        children: heads.map((hh, i) => cell(hh, widths[i], { bold: true, color: 'FFFFFF', fill: NAVY })),
       }),
-      ...rows.map((r) => new TableRow({ children: [cellText(r[0], { bold: true, width: wA }), cellText(r[1], { width: 100 - wA })] })),
+      ...rows.map((r, ri) =>
+        new TableRow({
+          cantSplit: true,
+          children: r.map((c, i) => cell(c, widths[i], { bold: i === 0 && boldFirstCol, fill: ri % 2 ? ZEBRA : undefined })),
+        }),
+      ),
     ],
   });
-
-const threeColTable = (heads, rows, widths = [22, 39, 39]) =>
-  new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [
-      new TableRow({
-        tableHeader: true,
-        children: heads.map((hh, i) => cellText(hh, { bold: true, color: 'FFFFFF', fill: NAVY, width: widths[i] })),
-      }),
-      ...rows.map((r) => new TableRow({ children: r.map((c, i) => cellText(c, { bold: i === 0, width: widths[i] })) })),
-    ],
-  });
+};
+const afterTable = () => new Paragraph({ text: '', spacing: { after: 80 } });
 
 // ---- contenido ----
 const children = [];
@@ -71,7 +83,7 @@ push(
   new Paragraph({ text: '', spacing: { before: 500 } }),
   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'armatuplan · Medicus', bold: true, color: NAVY })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Audiencia: Product Owner y Líder Técnica', color: GREY })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 1.0 · 19 de junio de 2026', color: GREY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 1.1 · 19 de junio de 2026', color: GREY })] }),
   new Paragraph({ children: [new PageBreak()] }),
 );
 
@@ -157,35 +169,37 @@ push(
   p('Cada recomendación es, en el fondo, una frase: “acá hay un eslabón de esta cadena dejando plata sobre la mesa, y esto es cuánto”. Esto permite comparar peras con peras: una mejora chica en un paso de mucho volumen puede valer más que una grande en uno de poco.'),
   h2('El score (cómo se ordenan las oportunidades)'),
   quoteBox('score = margen en juego × confianza × urgencia ÷ esfuerzo   (lo acumulado se prorratea a mensual)'),
-  p('Ejemplo real con los datos del cotizador: de ~41.500 visitas, ~36.300 se caen antes de avanzar. Si una mejora recupera ~25% de esa fuga (supuesto), son ~9.000 datos extra/mes; a una tasa dato→cápita de 6% (supuesto) y un LTV de contribución de ~$388.800, eso son del orden de $200M/mes en juego. Ese número —no el porcentaje de caída— es lo que pone a esa oportunidad arriba del ranking.'),
+  p('Ejemplo real con los datos del cotizador: de ~41.500 visitas, ~36.300 se caen antes de avanzar. Si una mejora recupera ~25% de esa fuga (supuesto), son ~9.000 datos extra por mes; a una tasa dato→cápita de 6% (supuesto) y un LTV de contribución de ~$388.800, eso son del orden de $200M por mes en juego. Ese número —no el porcentaje de caída— es lo que pone a esa oportunidad arriba del ranking.'),
 );
 
 // 7. Decisiones de producto
 push(
   h1('7. Decisiones de producto y su porqué'),
   p('SysData está lleno de decisiones deliberadas. Las principales, con su fundamento:'),
-  twoColTable('Decisión', 'Por qué', [
+  tablePct(['Decisión', 'Por qué'], [
     ['Priorizar por plata, no por % de fuga', 'La fuga más grande no siempre es la más valiosa: una caída enorme sobre tráfico que no convierte vale poco. Ordenar por margen evita gastar esfuerzo donde no mueve el negocio.'],
-    ['Honestidad radical: medido vs supuesto', 'Si el motor disfraza supuestos de datos, el equipo deja de confiar la primera vez que falla. Cada número muestra su origen y marca explícitamente lo que es estimación.'],
-    ['Ser la capa de decisión, no otro dashboard', 'Ya hay dashboards (Mixpanel, Metabase). El valor que faltaba no era “ver datos”, era “decidir qué hacer con ellos”, cruzando las tres fuentes.'],
-    ['Solo lectura sobre Mixpanel y HubSpot', 'Son sistemas productivos. El riesgo de escribir (romper eventos, deals, propiedades) es inaceptable frente al beneficio. SysData nunca escribe ahí.'],
-    ['Motor determinista + aprendizaje, no “IA caja negra”', 'A la escala de armatuplan, el rigor estadístico y reglas transparentes le ganan a un modelo opaco. La IA se reserva para redactar y agrupar, nunca para inventar números.'],
+    ['Honestidad: medido vs supuesto', 'Si el motor disfraza supuestos de datos, el equipo deja de confiar la primera vez que falla. Cada número muestra su origen y marca explícitamente lo que es estimación.'],
+    ['Ser la capa de decisión, no otro dashboard', 'Ya hay dashboards (Mixpanel, Metabase). Lo que faltaba no era “ver datos”, sino “decidir qué hacer con ellos”, cruzando las tres fuentes.'],
+    ['Solo lectura sobre Mixpanel y HubSpot', 'Son sistemas productivos. El riesgo de escribir (romper eventos, deals, propiedades) es inaceptable. SysData nunca escribe ahí.'],
+    ['Motor determinista + aprendizaje, no IA caja negra', 'A nuestra escala, el rigor estadístico y las reglas transparentes le ganan a un modelo opaco. La IA se reserva para redactar y agrupar, nunca para inventar números.'],
     ['Estado compartido (Supabase), no Excel personal', 'Para que sea una herramienta de equipo, los experimentos, estados y aprendizajes tienen que ser de todos y persistentes, no de un navegador.'],
-    ['Experimentos con significancia + guardrails', 'Un “subió 5%” sin significancia es ruido. Y una mejora que rompe un paso de más abajo no es una victoria. El motor exige las dos cosas antes de cantar un resultado.'],
+    ['Experimentos con significancia + guardrails', 'Un “subió 5%” sin significancia es ruido. Y una mejora que rompe un paso de más abajo no es victoria. El motor exige las dos cosas antes de cantar un resultado.'],
     ['Score como rango (P10–P90), no número puntual', 'Como varios inputs son supuestos, mostrar una cifra exacta es falsa precisión. El rango comunica la incertidumbre y de qué supuesto depende.'],
-  ]),
+  ], [33, 67]),
+  afterTable(),
 );
 
 // 8. Las 4 capas
 push(
   h1('8. Arquitectura del motor: las 4 capas'),
-  p('El “cerebro” de SysData está organizado en cuatro capas que se encadenan: la memoria habilita la detección, la detección y la economía alimentan la decisión, y los resultados de los experimentos vuelven como aprendizaje que afina todo.'),
-  threeColTable(['Capa', 'Qué hace', 'Por qué importa'], [
+  p('El “cerebro” de SysData está organizado en cuatro capas encadenadas: la memoria habilita la detección; la detección y la economía alimentan la decisión; y los resultados de los experimentos vuelven como aprendizaje que afina todo.'),
+  tablePct(['Capa', 'Qué hace', 'Por qué importa'], [
     ['1 · Memoria', 'Un proceso diario (cron) barre los datos y guarda la foto del día.', 'Sin serie histórica propia no hay detección, ni forecast, ni aprendizaje. La historia consultable es nuestra o no existe.'],
-    ['2 · Detección', 'Sobre esa serie, distingue un quiebre real del ruido y proyecta si llegamos a la meta.', 'Responde el “dónde y cuándo” solo: avisa cuando algo se rompió, antes de que alguien lo note a mano.'],
+    ['2 · Detección', 'Distingue un quiebre real del ruido y proyecta si llegamos a la meta.', 'Responde el “dónde y cuándo” solo: avisa cuando algo se rompió, antes de notarlo a mano.'],
     ['3 · Decisión', 'Puntúa cada oportunidad por plata y la muestra como un rango (conservador → optimista).', 'Convierte la incertidumbre en una apuesta cuantificada, en vez de un número falso-exacto.'],
-    ['4 · Aprendizaje', 'Los resultados de los experimentos se vuelven parámetros numéricos que afinan el motor.', 'Es lo que hace al motor “cada vez más inteligente”: aprende la realidad de nuestro producto, no supuestos genéricos.'],
-  ], [20, 40, 40]),
+    ['4 · Aprendizaje', 'Los resultados de los experimentos se vuelven parámetros que afinan el motor.', 'Es lo que lo hace “cada vez más inteligente”: aprende la realidad de nuestro producto, no supuestos genéricos.'],
+  ], [18, 41, 41]),
+  afterTable(),
 );
 
 // 9. Rigor
@@ -195,7 +209,7 @@ push(
   bulletLead('Significancia estadística', ' — test de dos proporciones (antes vs después). Si el movimiento no supera el ruido (p < 0,05), no se declara resultado: es “inconcluso”.'),
   bulletLead('Guardrails', ' — chequea que la mejora no haya roto un paso de más abajo (comportamiento), ni el win rate (comercial), ni el margen (económico).'),
   bulletLead('Ripple', ' — verifica si el efecto se propagó aguas abajo o se quedó en un paso intermedio (un lift que no llega a socio cerrado es hueco).'),
-  bulletLead('Confounds declarados', ' — el motor dice qué no controla (es antes/después, no A/B; campañas, estacionalidad), para que el resultado se lea con la cautela justa.'),
+  bulletLead('Confounds declarados', ' — el motor dice qué no controla (es antes/después, no A/B; campañas, estacionalidad), para leer el resultado con la cautela justa.'),
 );
 
 // 10. Stack
@@ -215,7 +229,7 @@ push(
   p('Para medir de punta a punta “qué visita termina siendo socio” falta un dato de plomería: estampar el mismo identificador (prospecto_id) en el momento del alta de socio.'),
   lead('La evidencia (medida en solo lectura): ', 'en Mixpanel, los perfiles de lead (que traen hubspot_id, edad, etc.) y los de socio (que traen la vigencia) son hoy conjuntos disjuntos — no comparten ningún id en común. Las llaves para unirlos existen, pero no quedan estampadas en el registro del resultado.'),
   lead('Qué significa para el negocio: ', 'mientras esto no se cierre, la conversión visita→cápita es modelada (supuesta, hoy 6%), no medida. Por eso el motor lo declara como supuesto y no publica una tasa que sería engañosa.'),
-  lead('De quién depende: ', 'NO es trabajo de SysData. Es instrumentación upstream (Data / Dev). Hay tres caminos, complementarios: (A) estampar el prospecto_id en el alta de socio; (B) cruzar en el data warehouse; (C) en HubSpot, asociar el deal ganado al contacto de origen.'),
+  lead('De quién depende: ', 'NO es trabajo de SysData. Es instrumentación upstream (Data / Dev). Hay tres caminos complementarios: (A) estampar el prospecto_id en el alta de socio; (B) cruzar en el data warehouse; (C) en HubSpot, asociar el deal ganado al contacto de origen.'),
   lead('El payoff de cerrarlo: ', 'tasa lead→cápita real por canal y segmento, ripple a cápita medido en cada experimento, y priorización por margen real en vez de estimado. SysData ya detecta solo cuándo queda resuelto.'),
 );
 
@@ -246,30 +260,36 @@ push(
 // 14. Glosario
 push(
   h1('14. Glosario'),
-  twoColTable('Término', 'Qué significa', [
+  tablePct(['Término', 'Qué significa'], [
     ['Cápita', 'Un socio activo. Es el resultado final del negocio que SysData busca aumentar.'],
     ['Dato', 'Un lead que dejó sus datos en el cotizador (paso clave del funnel de adquisición).'],
-    ['Funnel / embudo', 'La secuencia de pasos que recorre un usuario (ej. visita → datos → cotización → alta).'],
+    ['Funnel / embudo', 'La secuencia de pasos que recorre un usuario (visita → datos → cotización → alta).'],
     ['Fuga (leak)', 'El paso donde más gente se cae. SysData la mide en personas y en plata.'],
     ['Win rate', 'Porcentaje de deals comerciales que se cierran (ganados / decididos), en HubSpot.'],
     ['LTV', 'Valor de contribución de una cápita a lo largo de su permanencia (ARPU × meses × margen).'],
     ['CAC', 'Costo de adquirir una cápita.'],
     ['ARPU', 'Ingreso promedio mensual por socio.'],
     ['prospecto_id', 'El identificador que permitiría unir el comportamiento (Mixpanel) con la cápita (HubSpot).'],
-    ['Prior', 'Lo aprendido de experimentos pasados, que el motor usa para estimar mejor (ej. cuánto de una fuga se recupera de verdad).'],
+    ['Prior', 'Lo aprendido de experimentos pasados; el motor lo usa para estimar mejor (ej. cuánto de una fuga se recupera de verdad).'],
     ['Snapshot', 'La foto diaria de los datos que guarda la capa de Memoria.'],
     ['Guardrail', 'Un chequeo de seguridad: que una mejora no rompa otra métrica.'],
     ['Significancia', 'Que un resultado supere el ruido estadístico; sin ella, no es un resultado.'],
-  ], 24),
+  ], [24, 76]),
 );
 
 const doc = new Document({
   creator: 'SysData',
   title: 'SysData — Documentación de producto y arquitectura',
-  styles: {
-    default: { document: { run: { font: 'Calibri', size: 22 } } },
-  },
-  sections: [{ properties: {}, children }],
+  styles: { default: { document: { run: { font: 'Calibri', size: 22 } } } },
+  sections: [{
+    properties: {
+      page: {
+        size: { width: 12240, height: 15840 }, // Letter
+        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+      },
+    },
+    children,
+  }],
 });
 
 Packer.toBuffer(doc).then((buffer) => {
