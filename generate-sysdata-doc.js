@@ -1,0 +1,278 @@
+// Genera SysData-Documentacion.docx — documento completo de producto + arquitectura para PO y LT.
+const fs = require('fs');
+const {
+  Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
+  Table, TableRow, TableCell, WidthType, BorderStyle, PageBreak, ShadingType,
+} = require('docx');
+
+const NAVY = '0E2E52';
+const ACCENT = '1689C4';
+const GREY = '5B6B7F';
+
+// ---- helpers ----
+const h1 = (t) => new Paragraph({ text: t, heading: HeadingLevel.HEADING_1, spacing: { before: 260, after: 120 } });
+const h2 = (t) => new Paragraph({ text: t, heading: HeadingLevel.HEADING_2, spacing: { before: 180, after: 80 } });
+const p = (t) => new Paragraph({ children: [new TextRun(t)], spacing: { after: 120 }, alignment: AlignmentType.JUSTIFIED });
+const lead = (b, rest) => new Paragraph({ spacing: { after: 120 }, alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: b, bold: true }), new TextRun(rest)] });
+const bullet = (t) => new Paragraph({ text: t, bullet: { level: 0 }, spacing: { after: 60 } });
+const bulletLead = (b, rest) => new Paragraph({ bullet: { level: 0 }, spacing: { after: 60 }, children: [new TextRun({ text: b, bold: true }), new TextRun(rest)] });
+const spacer = () => new Paragraph({ text: '' });
+const quoteBox = (t) => new Paragraph({
+  spacing: { before: 80, after: 160 }, indent: { left: 360 },
+  border: { left: { style: BorderStyle.SINGLE, size: 18, color: ACCENT, space: 12 } },
+  children: [new TextRun({ text: t, italics: true, color: NAVY })],
+});
+
+const cellText = (text, { bold = false, color, fill, width } = {}) =>
+  new TableCell({
+    width: width ? { size: width, type: WidthType.PERCENTAGE } : undefined,
+    shading: fill ? { type: ShadingType.SOLID, color: fill, fill } : undefined,
+    margins: { top: 60, bottom: 60, left: 100, right: 100 },
+    children: [new Paragraph({ children: [new TextRun({ text, bold, color: color || undefined })] })],
+  });
+
+const twoColTable = (headA, headB, rows, wA = 34) =>
+  new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          cellText(headA, { bold: true, color: 'FFFFFF', fill: NAVY, width: wA }),
+          cellText(headB, { bold: true, color: 'FFFFFF', fill: NAVY, width: 100 - wA }),
+        ],
+      }),
+      ...rows.map((r) => new TableRow({ children: [cellText(r[0], { bold: true, width: wA }), cellText(r[1], { width: 100 - wA })] })),
+    ],
+  });
+
+const threeColTable = (heads, rows, widths = [22, 39, 39]) =>
+  new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        tableHeader: true,
+        children: heads.map((hh, i) => cellText(hh, { bold: true, color: 'FFFFFF', fill: NAVY, width: widths[i] })),
+      }),
+      ...rows.map((r) => new TableRow({ children: r.map((c, i) => cellText(c, { bold: i === 0, width: widths[i] })) })),
+    ],
+  });
+
+// ---- contenido ----
+const children = [];
+const push = (...xs) => children.push(...xs);
+
+// Portada
+push(
+  new Paragraph({ text: '', spacing: { before: 1400 } }),
+  new Paragraph({ text: 'SysData', heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 120 }, children: [new TextRun({ text: 'Motor de mejora continua de growth', bold: true, size: 30, color: NAVY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Documentación de producto y arquitectura', size: 26, color: GREY })] }),
+  new Paragraph({ text: '', spacing: { before: 500 } }),
+  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'armatuplan · Medicus', bold: true, color: NAVY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Audiencia: Product Owner y Líder Técnica', color: GREY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 1.0 · 19 de junio de 2026', color: GREY })] }),
+  new Paragraph({ children: [new PageBreak()] }),
+);
+
+// Contenido
+push(
+  h1('Contenido'),
+  ...[
+    '1. Resumen ejecutivo',
+    '2. El problema: por qué existe SysData',
+    '3. Qué es SysData (y qué no es)',
+    '4. El objetivo',
+    '5. Cómo se usa: el loop',
+    '6. Cómo decide: la lógica',
+    '7. Decisiones de producto y su porqué',
+    '8. Arquitectura del motor: las 4 capas',
+    '9. Rigor de medición de experimentos',
+    '10. Stack técnico',
+    '11. La dependencia clave: el cruce visita → cápita',
+    '12. Estado actual y roadmap',
+    '13. Principios, seguridad y restricciones',
+    '14. Glosario',
+  ].map((t) => new Paragraph({ text: t, spacing: { after: 40 } })),
+  new Paragraph({ children: [new PageBreak()] }),
+);
+
+// 1. Resumen ejecutivo
+push(
+  h1('1. Resumen ejecutivo'),
+  p('SysData es una herramienta interna de growth: la capa de decisión que se para arriba de los datos que Medicus ya tiene —comportamiento (Mixpanel), comercial (HubSpot) y unit economics (PELG)— y los cruza para responder una sola pregunta: qué conviene mejorar, dónde, cuándo, y cuánta plata hay en juego.'),
+  p('No reemplaza a Mixpanel, HubSpot ni Metabase. Los une y los traduce en decisiones priorizadas por impacto en el negocio (cápitas y margen), separando siempre lo que es dato medido de lo que es supuesto. Cada experimento que el equipo cierra alimenta al motor y lo vuelve más certero: es un sistema de mejora continua, no un dashboard estático.'),
+  quoteBox('En una línea: convertir datos dispersos en decisiones de growth priorizadas por plata, con la evidencia y la honestidad a la vista.'),
+);
+
+// 2. El problema
+push(
+  h1('2. El problema: por qué existe SysData'),
+  p('Hoy los datos que importan para crecer viven en tres sistemas que no se hablan entre sí: el comportamiento del usuario en Mixpanel, el pipeline comercial en HubSpot, y los unit economics (CAC, LTV, margen) en el PELG. Cada uno, mirado por separado, cuenta solo una parte de la historia.'),
+  lead('La consecuencia: ', 'se prioriza por opinión y por urgencia del momento, no por impacto. Se discute “qué fuga arreglar” mirando porcentajes, sin saber cuál mueve la aguja del negocio. Y cuando algo se prueba, muchas veces no se puede afirmar si funcionó de verdad o fue ruido.'),
+  lead('Lo que faltaba: ', 'una capa que junte las tres fuentes y diga, con un número de plata atrás, qué mover para subir la conversión y las cápitas — y que sea honesta sobre qué tan sólido es ese número.'),
+);
+
+// 3. Qué es / qué no es
+push(
+  h1('3. Qué es SysData (y qué no es)'),
+  h2('Qué es'),
+  bulletLead('La capa de decisión', ' del stack de growth: “¿qué hacemos al respecto?”, arriba de los datos.'),
+  bulletLead('Un traductor', ' de comportamiento + comercial + economía a oportunidades priorizadas por margen.'),
+  bulletLead('Un motor que aprende', ': cada experimento ajusta sus parámetros y mejora la próxima recomendación.'),
+  h2('Qué NO es'),
+  bulletLead('No es un CRM', ' ni reemplaza a HubSpot.'),
+  bulletLead('No reemplaza a Mixpanel ni a Metabase', ': no es la fuente de los datos, es la capa que los interpreta.'),
+  bulletLead('No escribe en los sistemas productivos', ': es estrictamente solo lectura sobre Mixpanel y HubSpot.'),
+);
+
+// 4. Objetivo
+push(
+  h1('4. El objetivo'),
+  p('Que el equipo abra SysData y en minutos sepa:'),
+  bulletLead('Qué está bien y qué está mal', ' — la salud por área del negocio, de un vistazo.'),
+  bulletLead('Qué conviene mejorar primero', ' — priorizado por plata en juego, no por el % de fuga más grande ni por intuición.'),
+  bulletLead('Por qué lo dice', ' — la evidencia de cada fuente, y qué parte del número es dato medido vs supuesto.'),
+  bulletLead('Qué estamos probando y si funcionó', ' — experimentos medidos con rigor estadístico.'),
+  bulletLead('Qué aprendimos', ' — que queda como memoria del equipo y hace al motor más preciso con el tiempo.'),
+);
+
+// 5. El loop
+push(
+  h1('5. Cómo se usa: el loop'),
+  p('La navegación de SysData es un ciclo de mejora continua:'),
+  bulletLead('Resumen', ' — cómo viene Medicus: qué está bien, qué está mal, y las señales que el motor detecta solo.'),
+  bulletLead('Oportunidades', ' — qué mejorar, priorizado por plata, con la lógica y la evidencia detrás de cada una.'),
+  bulletLead('Experimentos', ' — qué estamos probando, medido automáticamente (antes vs después) con significancia y guardrails.'),
+  bulletLead('Aprendizajes (Playbook)', ' — qué validamos o refutamos; la memoria que el motor usa como prior.'),
+  bulletLead('Segmentos', ' — discovery: entender al usuario cruzando lo cuanti y lo cuali.'),
+  bulletLead('Explorador', ' — el detalle: funnels, CRM, economía y el estado del cruce de datos.'),
+);
+
+// 6. Cómo decide
+push(
+  h1('6. Cómo decide: la lógica'),
+  p('Toda la priorización se ancla en una cadena simple, “la ecuación de la cápita”:'),
+  quoteBox('visitas → conversión por paso → datos → (% que se vuelve socio) → cápitas → margen ($)   ·   (y por el lado comercial: deals → win rate → cápitas)'),
+  p('Cada recomendación es, en el fondo, una frase: “acá hay un eslabón de esta cadena dejando plata sobre la mesa, y esto es cuánto”. Esto permite comparar peras con peras: una mejora chica en un paso de mucho volumen puede valer más que una grande en uno de poco.'),
+  h2('El score (cómo se ordenan las oportunidades)'),
+  quoteBox('score = margen en juego × confianza × urgencia ÷ esfuerzo   (lo acumulado se prorratea a mensual)'),
+  p('Ejemplo real con los datos del cotizador: de ~41.500 visitas, ~36.300 se caen antes de avanzar. Si una mejora recupera ~25% de esa fuga (supuesto), son ~9.000 datos extra/mes; a una tasa dato→cápita de 6% (supuesto) y un LTV de contribución de ~$388.800, eso son del orden de $200M/mes en juego. Ese número —no el porcentaje de caída— es lo que pone a esa oportunidad arriba del ranking.'),
+);
+
+// 7. Decisiones de producto
+push(
+  h1('7. Decisiones de producto y su porqué'),
+  p('SysData está lleno de decisiones deliberadas. Las principales, con su fundamento:'),
+  twoColTable('Decisión', 'Por qué', [
+    ['Priorizar por plata, no por % de fuga', 'La fuga más grande no siempre es la más valiosa: una caída enorme sobre tráfico que no convierte vale poco. Ordenar por margen evita gastar esfuerzo donde no mueve el negocio.'],
+    ['Honestidad radical: medido vs supuesto', 'Si el motor disfraza supuestos de datos, el equipo deja de confiar la primera vez que falla. Cada número muestra su origen y marca explícitamente lo que es estimación.'],
+    ['Ser la capa de decisión, no otro dashboard', 'Ya hay dashboards (Mixpanel, Metabase). El valor que faltaba no era “ver datos”, era “decidir qué hacer con ellos”, cruzando las tres fuentes.'],
+    ['Solo lectura sobre Mixpanel y HubSpot', 'Son sistemas productivos. El riesgo de escribir (romper eventos, deals, propiedades) es inaceptable frente al beneficio. SysData nunca escribe ahí.'],
+    ['Motor determinista + aprendizaje, no “IA caja negra”', 'A la escala de armatuplan, el rigor estadístico y reglas transparentes le ganan a un modelo opaco. La IA se reserva para redactar y agrupar, nunca para inventar números.'],
+    ['Estado compartido (Supabase), no Excel personal', 'Para que sea una herramienta de equipo, los experimentos, estados y aprendizajes tienen que ser de todos y persistentes, no de un navegador.'],
+    ['Experimentos con significancia + guardrails', 'Un “subió 5%” sin significancia es ruido. Y una mejora que rompe un paso de más abajo no es una victoria. El motor exige las dos cosas antes de cantar un resultado.'],
+    ['Score como rango (P10–P90), no número puntual', 'Como varios inputs son supuestos, mostrar una cifra exacta es falsa precisión. El rango comunica la incertidumbre y de qué supuesto depende.'],
+  ]),
+);
+
+// 8. Las 4 capas
+push(
+  h1('8. Arquitectura del motor: las 4 capas'),
+  p('El “cerebro” de SysData está organizado en cuatro capas que se encadenan: la memoria habilita la detección, la detección y la economía alimentan la decisión, y los resultados de los experimentos vuelven como aprendizaje que afina todo.'),
+  threeColTable(['Capa', 'Qué hace', 'Por qué importa'], [
+    ['1 · Memoria', 'Un proceso diario (cron) barre los datos y guarda la foto del día.', 'Sin serie histórica propia no hay detección, ni forecast, ni aprendizaje. La historia consultable es nuestra o no existe.'],
+    ['2 · Detección', 'Sobre esa serie, distingue un quiebre real del ruido y proyecta si llegamos a la meta.', 'Responde el “dónde y cuándo” solo: avisa cuando algo se rompió, antes de que alguien lo note a mano.'],
+    ['3 · Decisión', 'Puntúa cada oportunidad por plata y la muestra como un rango (conservador → optimista).', 'Convierte la incertidumbre en una apuesta cuantificada, en vez de un número falso-exacto.'],
+    ['4 · Aprendizaje', 'Los resultados de los experimentos se vuelven parámetros numéricos que afinan el motor.', 'Es lo que hace al motor “cada vez más inteligente”: aprende la realidad de nuestro producto, no supuestos genéricos.'],
+  ], [20, 40, 40]),
+);
+
+// 9. Rigor
+push(
+  h1('9. Rigor de medición de experimentos'),
+  p('Cuando se cierra un experimento, el motor lo mide de forma triangulada y honesta:'),
+  bulletLead('Significancia estadística', ' — test de dos proporciones (antes vs después). Si el movimiento no supera el ruido (p < 0,05), no se declara resultado: es “inconcluso”.'),
+  bulletLead('Guardrails', ' — chequea que la mejora no haya roto un paso de más abajo (comportamiento), ni el win rate (comercial), ni el margen (económico).'),
+  bulletLead('Ripple', ' — verifica si el efecto se propagó aguas abajo o se quedó en un paso intermedio (un lift que no llega a socio cerrado es hueco).'),
+  bulletLead('Confounds declarados', ' — el motor dice qué no controla (es antes/después, no A/B; campañas, estacionalidad), para que el resultado se lea con la cautela justa.'),
+);
+
+// 10. Stack
+push(
+  h1('10. Stack técnico'),
+  bulletLead('Frontend / app', ': Next.js 16 (App Router) + React 19 + TypeScript + CSS Modules.'),
+  bulletLead('Datos del equipo', ': Supabase (login + estado compartido: experimentos, estados, aprendizajes, snapshots, priors), con Row Level Security.'),
+  bulletLead('Hosting', ': Vercel. El barrido diario corre como Vercel Cron.'),
+  bulletLead('Fuentes (solo lectura)', ': Mixpanel (Query/Engage API) para comportamiento; HubSpot (CRM v3) para comercial y voz del cliente (NPS); PELG para unit economics.'),
+  bulletLead('IA (acotada)', ': Gemini, reservada para tareas de lenguaje (redactar, agrupar), nunca para producir números.'),
+  bulletLead('Seguridad', ': los tokens van server-side (nunca expuestos al cliente); las rutas /api están detrás de login (dominio @medicus.com.ar).'),
+);
+
+// 11. La dependencia clave
+push(
+  h1('11. La dependencia clave: el cruce visita → cápita'),
+  p('Para medir de punta a punta “qué visita termina siendo socio” falta un dato de plomería: estampar el mismo identificador (prospecto_id) en el momento del alta de socio.'),
+  lead('La evidencia (medida en solo lectura): ', 'en Mixpanel, los perfiles de lead (que traen hubspot_id, edad, etc.) y los de socio (que traen la vigencia) son hoy conjuntos disjuntos — no comparten ningún id en común. Las llaves para unirlos existen, pero no quedan estampadas en el registro del resultado.'),
+  lead('Qué significa para el negocio: ', 'mientras esto no se cierre, la conversión visita→cápita es modelada (supuesta, hoy 6%), no medida. Por eso el motor lo declara como supuesto y no publica una tasa que sería engañosa.'),
+  lead('De quién depende: ', 'NO es trabajo de SysData. Es instrumentación upstream (Data / Dev). Hay tres caminos, complementarios: (A) estampar el prospecto_id en el alta de socio; (B) cruzar en el data warehouse; (C) en HubSpot, asociar el deal ganado al contacto de origen.'),
+  lead('El payoff de cerrarlo: ', 'tasa lead→cápita real por canal y segmento, ripple a cápita medido en cada experimento, y priorización por margen real en vez de estimado. SysData ya detecta solo cuándo queda resuelto.'),
+);
+
+// 12. Estado y roadmap
+push(
+  h1('12. Estado actual y roadmap'),
+  h2('Funcionando hoy'),
+  bullet('El loop completo (Resumen, Oportunidades priorizadas, Experimentos medidos, Aprendizajes) con datos en vivo de Mixpanel + HubSpot.'),
+  bullet('Las 4 capas del motor: memoria diaria, detección de quiebres + pace vs meta, score con rango (Monte Carlo) y priors que se afinan con cada experimento.'),
+  h2('Pendiente de activación'),
+  bullet('Encender el proceso diario en producción (variables de entorno en Vercel + correr la migración en Supabase).'),
+  bullet('Cerrar el cruce prospecto_id (trabajo upstream de Data / Dev).'),
+  h2('Próximos incrementos (ideas)'),
+  bullet('Brief automático del “Lunes de growth” (resumen redactado y enviado solo).'),
+  bullet('“Value of Information”: ponerle precio en pesos a cerrar cada supuesto (ej. cuánto vale cerrar el cruce).'),
+  bullet('Tarjeta de impacto multi-moneda (plata, tiempo, confianza, reputación) y optimizador de sprint.'),
+);
+
+// 13. Principios
+push(
+  h1('13. Principios, seguridad y restricciones'),
+  bulletLead('Solo lectura', ' sobre sistemas productivos (Mixpanel / HubSpot). Nunca crear, editar ni borrar nada.'),
+  bulletLead('Honestidad', ': medido vs supuesto siempre explícito; cada número muestra su fuente.'),
+  bulletLead('Herramienta de equipo', ': estado compartido y persistente, no un archivo personal.'),
+  bulletLead('Seguridad', ': tokens server-side, acceso por login de dominio Medicus, secretos fuera del repositorio.'),
+);
+
+// 14. Glosario
+push(
+  h1('14. Glosario'),
+  twoColTable('Término', 'Qué significa', [
+    ['Cápita', 'Un socio activo. Es el resultado final del negocio que SysData busca aumentar.'],
+    ['Dato', 'Un lead que dejó sus datos en el cotizador (paso clave del funnel de adquisición).'],
+    ['Funnel / embudo', 'La secuencia de pasos que recorre un usuario (ej. visita → datos → cotización → alta).'],
+    ['Fuga (leak)', 'El paso donde más gente se cae. SysData la mide en personas y en plata.'],
+    ['Win rate', 'Porcentaje de deals comerciales que se cierran (ganados / decididos), en HubSpot.'],
+    ['LTV', 'Valor de contribución de una cápita a lo largo de su permanencia (ARPU × meses × margen).'],
+    ['CAC', 'Costo de adquirir una cápita.'],
+    ['ARPU', 'Ingreso promedio mensual por socio.'],
+    ['prospecto_id', 'El identificador que permitiría unir el comportamiento (Mixpanel) con la cápita (HubSpot).'],
+    ['Prior', 'Lo aprendido de experimentos pasados, que el motor usa para estimar mejor (ej. cuánto de una fuga se recupera de verdad).'],
+    ['Snapshot', 'La foto diaria de los datos que guarda la capa de Memoria.'],
+    ['Guardrail', 'Un chequeo de seguridad: que una mejora no rompa otra métrica.'],
+    ['Significancia', 'Que un resultado supere el ruido estadístico; sin ella, no es un resultado.'],
+  ], 24),
+);
+
+const doc = new Document({
+  creator: 'SysData',
+  title: 'SysData — Documentación de producto y arquitectura',
+  styles: {
+    default: { document: { run: { font: 'Calibri', size: 22 } } },
+  },
+  sections: [{ properties: {}, children }],
+});
+
+Packer.toBuffer(doc).then((buffer) => {
+  fs.writeFileSync('SysData-Documentacion.docx', buffer);
+  console.log('OK: SysData-Documentacion.docx (' + buffer.length + ' bytes)');
+});
