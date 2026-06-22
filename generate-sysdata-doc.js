@@ -65,7 +65,7 @@ push(
   new Paragraph({ text: '', spacing: { before: 460 } }),
   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'armatuplan · Medicus', bold: true, color: NAVY })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Audiencia: Product Owner y Líder Técnica', color: GREY })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 2.1 · 22 de junio de 2026', color: GREY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 2.3 · 22 de junio de 2026', color: GREY })] }),
   new Paragraph({ children: [new PageBreak()] }),
 );
 
@@ -79,13 +79,14 @@ push(
     '4. El flujo de trabajo en la webapp',
     '5. Las fuentes de datos (y cómo entra Binary)',
     '6. Cómo decide: ecuaciones y lógica',
-    '7. Decisiones de producto y su porqué',
-    '8. Arquitectura del motor: las 4 capas',
-    '9. Rigor de medición de experimentos',
-    '10. La dependencia clave: el cruce visita → cápita',
-    '11. Estado actual y roadmap',
-    '12. Principios y restricciones',
-    '13. Glosario',
+    '7. Qué ya nos dijo el motor (ejemplos reales)',
+    '8. Decisiones de producto y su porqué',
+    '9. Arquitectura del motor: las 4 capas',
+    '10. Rigor de medición de experimentos',
+    '11. La dependencia clave: el cruce visita → cápita',
+    '12. Estado actual y roadmap',
+    '13. Principios y restricciones',
+    '14. Glosario',
   ].map((t) => new Paragraph({ text: t, spacing: { after: 36 } })),
   new Paragraph({ children: [new PageBreak()] }),
 );
@@ -152,6 +153,7 @@ push(
   afterTable(),
   lead('Un beneficio inmediato de cruzar las fuentes: ', 'hoy muchos contactos de HubSpot están a medias porque el asesor carga los datos en prospectos o en Binary. Reconciliando al mismo socio entre las fuentes, SysData completa esos contactos con lo que ya existe → un % mucho mayor de datos utilizables para segmentar y analizar.'),
   quoteBox('Dato clave de venta: con los datos completos y cruzados podemos segmentar al usuario objetivo de verdad —a quién apuntar, con qué plan y en qué momento—. Deja de ser intuición y pasa a ser un insumo accionable para el equipo comercial.'),
+  lead('¿De dónde sale el “cuándo”? ', 'del cruce de tres señales: la intención en el comportamiento (Mixpanel), el ciclo de vida del socio en Binary (altas, vencimientos, renovaciones) y la detección de quiebres del motor. No es solo a quién apuntar, sino en qué momento está más receptivo o en riesgo.'),
   lead('¿Esto es un data warehouse? No. ', 'Un data warehouse (ej. BigQuery/Snowflake) copia y consolida datos crudos de muchas fuentes para análisis a escala. SysData solo guarda métricas derivadas (la foto diaria de KPIs y recos) como su memoria. Un DWH real —donde convivan Mixpanel, HubSpot y Binary— sería del equipo de Data, y SysData lo consumiría (es la base de la “Opción B” del cruce).'),
 );
 
@@ -176,9 +178,18 @@ push(
   lead('Ejemplo (cotizador): ', 'de ~41.500 visitas, ~36.300 se caen en el primer paso. Recuperando ~25% (supuesto), son ~9.000 datos/mes; a 6% dato→cápita (supuesto) y LTV ~$388.800, da del orden de $200M/mes en juego. Ese número —no el % de caída— la pone arriba del ranking.'),
 );
 
-// 7. Decisiones de producto
+// 7. Ejemplos reales
 push(
-  h1('7. Decisiones de producto y su porqué'),
+  h1('7. Qué ya nos dijo el motor (ejemplos reales)'),
+  p('El motor ya corre sobre datos reales. Tres ejemplos de lo que salió, para hacerlo tangible:'),
+  bulletLead('Un canal que quema plata', ': “display” trae ~23% del tráfico del cotizador y convierte ~0% a datos — inversión de programática casi sin retorno. Candidato claro a pausar o reasignar.'),
+  bulletLead('El #1 de la insatisfacción es el seguimiento', ': el motivo más repetido entre los detractores del NPS es el asesor que no responde o responde tarde, y es sistémico (aparece en todos los canales). Explica los deals frenados en “Propuesta Enviada”: es un problema de proceso comercial (un SLA de respuesta), no de producto.'),
+  bulletLead('Win rate con margen de mejora', ': el pipeline cierra ~38% vs una meta de 45%. Cerrar ese gap es palanca directa de cápitas, y el motor lo dimensiona en plata.'),
+);
+
+// 8. Decisiones de producto
+push(
+  h1('8. Decisiones de producto y su porqué'),
   tablePct(['Decisión', 'Por qué'], [
     ['Priorizar por plata, no por % de fuga', 'La fuga más grande no siempre es la más valiosa: una caída enorme sobre tráfico que no convierte vale poco.'],
     ['Honestidad: medido vs supuesto', 'Si el motor disfraza supuestos de datos, el equipo deja de confiar la primera vez que falla. Cada número muestra su origen.'],
@@ -194,7 +205,7 @@ push(
 
 // 8. Las 4 capas
 push(
-  h1('8. Arquitectura del motor: las 4 capas'),
+  h1('9. Arquitectura del motor: las 4 capas'),
   p('El “cerebro” se organiza en cuatro capas encadenadas: la memoria habilita la detección; la detección y la economía alimentan la decisión; los experimentos vuelven como aprendizaje que afina todo.'),
   tablePct(['Capa', 'Qué hace', 'Por qué importa'], [
     ['1 · Memoria', 'Un barrido diario de los datos guarda la foto del día.', 'Sin serie histórica propia no hay detección, forecast ni aprendizaje.'],
@@ -207,7 +218,7 @@ push(
 
 // 9. Rigor
 push(
-  h1('9. Rigor de medición de experimentos'),
+  h1('10. Rigor de medición de experimentos'),
   p('Al cerrar un experimento, el motor lo mide de forma triangulada y honesta:'),
   bulletLead('Significancia', ' — test de dos proporciones (antes vs después). Si p ≥ 0,05, es “inconcluso”, no resultado.'),
   bulletLead('Guardrails', ' — que la mejora no haya roto un paso de abajo, ni el win rate, ni el margen.'),
@@ -217,7 +228,7 @@ push(
 
 // 10. Cruce
 push(
-  h1('10. La dependencia clave: el cruce visita → cápita'),
+  h1('11. La dependencia clave: el cruce visita → cápita'),
   p('Para medir de punta a punta “qué visita termina siendo socio” falta estampar el mismo identificador (prospecto_id) en el alta de socio. Hoy el lead (Mixpanel/HubSpot) y el socio (Binary) son registros separados que no se pueden unir.'),
   lead('Qué significa: ', 'mientras no se cierre, la conversión visita→cápita es supuesta (hoy 6%), no medida. Por eso el motor la marca como supuesto.'),
   lead('De quién depende: ', 'NO es trabajo de SysData, sino instrumentación upstream (Data/Dev). Caminos: (A) estampar el prospecto_id en el alta; (B) cruzar las fuentes uniendo el comportamiento con la base de socios de Binary; (C) en HubSpot, asociar el deal ganado al contacto de origen.'),
@@ -226,7 +237,7 @@ push(
 
 // 11. Estado y roadmap
 push(
-  h1('11. Estado actual y roadmap'),
+  h1('12. Estado actual y roadmap'),
   h2('Funcionando hoy'),
   bullet('El loop completo (Resumen, Oportunidades, Experimentos, Aprendizajes) con datos en vivo de Mixpanel + HubSpot.'),
   bullet('Las 4 capas del motor: memoria diaria, detección, score con rango y priors que se afinan con cada experimento.'),
@@ -239,7 +250,7 @@ push(
 
 // 12. Principios
 push(
-  h1('12. Principios y restricciones'),
+  h1('13. Principios y restricciones'),
   bulletLead('Solo lectura', ' sobre los sistemas productivos (Mixpanel, HubSpot, Binary): nunca crear, editar ni borrar nada.'),
   bulletLead('Honestidad', ': medido vs supuesto siempre explícito; cada número muestra su fuente.'),
   bulletLead('Herramienta de equipo', ': estado compartido y persistente, no un archivo personal.'),
@@ -247,15 +258,19 @@ push(
 
 // 13. Glosario
 push(
-  h1('13. Glosario'),
+  h1('14. Glosario'),
   tablePct(['Término', 'Qué significa'], [
     ['Binary', 'La base de socios de Medicus (asociados, medicards, planes, vigencias, bajas). Fuente de verdad de los unit economics reales.'],
+    ['Medicard', 'El producto de cobertura de Medicus que tiene el socio; su detalle (plan, vigencia) vive en Binary.'],
     ['Cápita', 'Un socio activo. El resultado de negocio que SysData busca aumentar.'],
     ['Dato', 'Un lead que dejó sus datos en el cotizador.'],
+    ['Funnel / embudo', 'La secuencia de pasos que recorre un usuario (visita → datos → cotización → alta).'],
     ['Fuga (leak)', 'El paso donde más gente se cae; SysData la mide en personas y en plata.'],
     ['Win rate', 'Porcentaje de deals comerciales que se cierran (en HubSpot).'],
     ['LTV', 'Valor de contribución de una cápita en su permanencia (ARPU × meses × margen). Hoy supuesto; con Binary, real.'],
     ['CAC', 'Costo de adquirir una cápita (del PELG).'],
+    ['ARPU', 'Ingreso promedio mensual por socio; entra en el cálculo del LTV.'],
+    ['PELG', 'Fuente interna de unit economics de Medicus: inversión y gasto por canal, CAC y leads.'],
     ['prospecto_id', 'El identificador que uniría el comportamiento (Mixpanel) con la cápita (HubSpot/Binary).'],
     ['Prior', 'Lo aprendido de experimentos pasados; el motor lo usa para estimar mejor.'],
     ['Significancia', 'Que un resultado supere el ruido estadístico; sin ella, no es resultado.'],
