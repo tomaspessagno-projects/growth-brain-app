@@ -95,7 +95,7 @@ push(
   h1('1. Resumen ejecutivo'),
   p('SysData es la capa de decisión de growth. Lee las fuentes que Medicus ya tiene —comportamiento (Mixpanel), comercial (HubSpot), inversión/costos (PELG) y la base de socios (Binary)— y las cruza para responder, con un número de plata atrás, qué conviene mejorar, dónde, cuándo y por qué.'),
   p('El objetivo, en concreto: que el equipo sepa en minutos qué está mal, qué mejorar primero (priorizado por plata, no por intuición), por qué lo dice (con la evidencia y los supuestos a la vista) y si lo que probó funcionó (con rigor estadístico). Cada experimento que se cierra vuelve al motor como aprendizaje: es mejora continua, no un dashboard estático.'),
-  quoteBox('En una línea: convierte datos dispersos en decisiones de growth priorizadas por plata, con la evidencia y la honestidad a la vista.'),
+  quoteBox('En una línea: convierte datos dispersos en decisiones de growth priorizadas por plata —y, con los datos cruzados y completos, en saber a quién apuntar y cuándo—. Todo con la evidencia y la honestidad a la vista.'),
 );
 
 // 2. Puntos de dolor
@@ -105,6 +105,7 @@ push(
   tablePct(['Dolor de hoy', 'Cómo lo resuelve SysData'], [
     ['Datos en silos: Mixpanel, HubSpot, PELG y Binary no se cruzan.', 'Una sola capa los une y los traduce en decisiones; nadie tiene que abrir cuatro herramientas y reconciliarlas a mano.'],
     ['Datos incompletos: muchos contactos de HubSpot están vacíos, porque los asesores cargan la info en prospectos o en Binary.', 'Al cruzar las fuentes por persona (trazar al mismo socio entre HubSpot, prospectos y Binary), esos contactos se completan con lo que ya existe en las otras bases → sube fuerte el % de datos completos, y con eso mejoran la segmentación y el análisis.'],
+    ['No sabemos con precisión a quién apuntar ni cuándo.', 'Con los datos completos y cruzados se segmenta al usuario objetivo de verdad: a quién apuntar, con qué plan y en qué momento. Es un insumo de venta directo, no solo de growth.'],
     ['Se prioriza por opinión o por el % de fuga más grande.', 'Ranking por plata en juego (margen): primero lo que más mueve el negocio, no lo que parece urgente.'],
     ['No se sabe si una mejora funcionó (o fue casualidad).', 'Medición con significancia estadística (señal vs ruido) + guardrails (que no rompa otra cosa).'],
     ['Números sin respaldo, imposibles de discutir.', 'Honestidad: cada cifra muestra su fuente y marca explícitamente lo que es supuesto.'],
@@ -150,6 +151,7 @@ push(
   ], [16, 42, 42]),
   afterTable(),
   lead('Un beneficio inmediato de cruzar las fuentes: ', 'hoy muchos contactos de HubSpot están a medias porque el asesor carga los datos en prospectos o en Binary. Reconciliando al mismo socio entre las fuentes, SysData completa esos contactos con lo que ya existe → un % mucho mayor de datos utilizables para segmentar y analizar.'),
+  quoteBox('Dato clave de venta: con los datos completos y cruzados podemos segmentar al usuario objetivo de verdad —a quién apuntar, con qué plan y en qué momento—. Deja de ser intuición y pasa a ser un insumo accionable para el equipo comercial.'),
   lead('¿Esto es un data warehouse? No. ', 'Un data warehouse (ej. BigQuery/Snowflake) copia y consolida datos crudos de muchas fuentes para análisis a escala. SysData solo guarda métricas derivadas (la foto diaria de KPIs y recos) como su memoria. Un DWH real —donde convivan Mixpanel, HubSpot y Binary— sería del equipo de Data, y SysData lo consumiría (es la base de la “Opción B” del cruce).'),
 );
 
