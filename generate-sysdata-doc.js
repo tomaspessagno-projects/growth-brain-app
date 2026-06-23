@@ -65,7 +65,7 @@ push(
   new Paragraph({ text: '', spacing: { before: 460 } }),
   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'armatuplan · Medicus', bold: true, color: NAVY })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Audiencia: Product Owner y Líder Técnica', color: GREY })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 2.3 · 22 de junio de 2026', color: GREY })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40 }, children: [new TextRun({ text: 'Versión 2.4 · 23 de junio de 2026', color: GREY })] }),
   new Paragraph({ children: [new PageBreak()] }),
 );
 
@@ -167,7 +167,7 @@ push(
   quoteBox('fuga del paso = personas que entran − personas que avanzan   (se elige la mayor caída en personas, no en %)'),
   h2('2) Traducir a plata'),
   quoteBox('LTV = ARPU × permanencia × margen de contribución\nplata en juego = fuga × recuperable × (dato → cápita) × LTV'),
-  p('El LTV hoy se modela con supuestos (permanencia, margen); con Binary pasa a medirse con datos reales de socios, y todo el ranking se recalibra.'),
+  p('El LTV hoy se modela con supuestos; con Binary, la permanencia (ciclo de altas/bajas por CUIL) y el ARPU real por plan ya dejan de ser supuestos —el único que queda es el margen de contribución (siniestralidad)—, y todo el ranking se recalibra.'),
   h2('3) Ordenar (el score)'),
   quoteBox('score = plata en juego × confianza × urgencia ÷ esfuerzo   (lo acumulado se prorratea a mensual)'),
   h2('4) Mostrar la incertidumbre y validar'),
@@ -229,10 +229,12 @@ push(
 // 10. Cruce
 push(
   h1('11. La dependencia clave: el cruce visita → cápita'),
-  p('Para medir de punta a punta “qué visita termina siendo socio” falta estampar el mismo identificador (prospecto_id) en el alta de socio. Hoy el lead (Mixpanel/HubSpot) y el socio (Binary) son registros separados que no se pueden unir.'),
-  lead('Qué significa: ', 'mientras no se cierre, la conversión visita→cápita es supuesta (hoy 6%), no medida. Por eso el motor la marca como supuesto.'),
-  lead('De quién depende: ', 'NO es trabajo de SysData, sino instrumentación upstream (Data/Dev). Caminos: (A) estampar el prospecto_id en el alta; (B) cruzar las fuentes uniendo el comportamiento con la base de socios de Binary; (C) en HubSpot, asociar el deal ganado al contacto de origen.'),
-  lead('El payoff: ', 'datos más completos (se llenan los contactos vacíos de HubSpot con lo cargado en prospectos/Binary), tasa lead→cápita real por canal y segmento, ripple a cápita medido, y priorización por margen real. SysData ya detecta solo cuándo queda resuelto.'),
+  p('Para medir de punta a punta “qué visita termina siendo socio” hay que unir tres mundos que hoy viven separados: el comportamiento (Mixpanel), lo comercial (HubSpot/Salesforce) y la base de socios (Binary). El relevamiento de Binary aclaró cómo se cierra ese cruce.'),
+  lead('La llave es el CUIL, no un solo id: ', 'Binary no guarda prospecto_id (los prospectos viven en Salesforce) y el AFI_ID del socio no es estable (cambia en cada re-alta). El identificador estable por persona es el CUIL. Como ninguna llave sola cubre a todos, el cruce se arma por cascada: CUIL → email → hubspot_id → webid → DNI; la cobertura es la unión de todas.'),
+  lead('Qué significa hoy: ', 'mientras el cruce no esté armado, la conversión visita→cápita es supuesta (hoy 6%), no medida. Por eso el motor la marca como supuesto.'),
+  lead('De quién depende: ', 'NO es trabajo de SysData, sino instrumentación y datos upstream (Data/Dev): construir la tabla puente que resuelve identidad por CUIL/email, y verificar si Salesforce (SF_OPORTUNIDAD) ya linkea la oportunidad ganada con el socio —en ese caso el puente prospecto↔socio ya existe—.'),
+  lead('Un detalle clave para el churn: ', 'la permanencia se calcula por CUIL, no por AFI_ID; si no, las re-altas (baja→alta) inflan el churn y subestiman la vida del socio.'),
+  lead('El payoff: ', 'datos más completos (se llenan los contactos vacíos de HubSpot con lo que ya existe en Binary/Salesforce), tasa lead→cápita real por canal y segmento, ripple a cápita medido, y priorización por margen real. SysData ya detecta solo cuándo queda resuelto.'),
 );
 
 // 11. Estado y roadmap
@@ -242,8 +244,8 @@ push(
   bullet('El loop completo (Resumen, Oportunidades, Experimentos, Aprendizajes) con datos en vivo de Mixpanel + HubSpot.'),
   bullet('Las 4 capas del motor: memoria diaria, detección, score con rango y priors que se afinan con cada experimento.'),
   h2('Pendiente'),
-  bullet('Integrar Binary para unit economics reales (LTV/churn), completar los contactos y cerrar el cruce visita→cápita.'),
-  bullet('Cerrar el cruce prospecto_id (trabajo de Data/Dev).'),
+  bullet('Integrar Binary para unit economics reales (LTV/churn por plan), completar los contactos y cerrar el cruce visita→cápita.'),
+  bullet('Armar la tabla puente de identidad (CUIL/email; verificar el link en Salesforce) — trabajo de Data/Dev.'),
   h2('Próximo (ideas)'),
   bullet('Brief automático del “Lunes de growth”; “Value of Information” (cuánto vale en pesos cerrar cada supuesto); tarjeta de impacto multi-moneda.'),
 );
@@ -267,11 +269,13 @@ push(
     ['Funnel / embudo', 'La secuencia de pasos que recorre un usuario (visita → datos → cotización → alta).'],
     ['Fuga (leak)', 'El paso donde más gente se cae; SysData la mide en personas y en plata.'],
     ['Win rate', 'Porcentaje de deals comerciales que se cierran (en HubSpot).'],
-    ['LTV', 'Valor de contribución de una cápita en su permanencia (ARPU × meses × margen). Hoy supuesto; con Binary, real.'],
+    ['LTV', 'Valor de contribución de una cápita en su permanencia (ARPU × meses × margen). Con Binary, ARPU y permanencia son reales; el margen es el supuesto que queda.'],
     ['CAC', 'Costo de adquirir una cápita (del PELG).'],
     ['ARPU', 'Ingreso promedio mensual por socio; entra en el cálculo del LTV.'],
     ['PELG', 'Fuente interna de unit economics de Medicus: inversión y gasto por canal, CAC y leads.'],
-    ['prospecto_id', 'El identificador que uniría el comportamiento (Mixpanel) con la cápita (HubSpot/Binary).'],
+    ['prospecto_id', 'Id que une comportamiento (Mixpanel) con lo comercial (HubSpot). NO existe en Binary: del lado del socio la llave es el CUIL.'],
+    ['CUIL', 'El identificador estable por persona; la llave para cruzar Binary con HubSpot/Salesforce (el AFI_ID del socio no es estable).'],
+    ['Salesforce', 'Donde viven los prospectos/oportunidades de Medicus (SF_OPORTUNIDAD), separado de Binary.'],
     ['Prior', 'Lo aprendido de experimentos pasados; el motor lo usa para estimar mejor.'],
     ['Significancia', 'Que un resultado supere el ruido estadístico; sin ella, no es resultado.'],
     ['Data warehouse', 'Repositorio central que copia datos crudos de muchas fuentes para análisis. SysData no es uno: lo consumiría.'],
