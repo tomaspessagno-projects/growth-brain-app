@@ -23,6 +23,10 @@ export interface Recommendation {
 
 const ORDER: Record<RecPriority, number> = { alta: 0, media: 1, baja: 2 };
 
+// Peso de la EXPLORACIÓN en el ranking (UCB): cuánto suma el techo P90 de la banda sobre la media.
+// 0 = puro valor esperado (solo explotar); más alto = más peso al potencial poco probado.
+const EXPLORE_K = 0.5;
+
 // El motor lee el Playbook como priors: estas recos están respaldadas por una regla ya aprendida
 // (sube la confianza). Mapea rec.id → regla del playbook.
 const REC_PLAYBOOK_MAP: Record<string, string> = {
@@ -31,8 +35,9 @@ const REC_PLAYBOOK_MAP: Record<string, string> = {
   'loop-desconectado': 'r-loop',
   dead: 'r-dead',
   'quality-alta': 'r-alta',
-  'imp-cot-design': 'r-leak',
+  'imp-cot-design': 'r-form-fields',
   'imp-cot-product': 'r-aporte',
+  'imp-con-design': 'r-form-fields',
   'imp-con-dev': 'r-utm',
   'imp-emp-product': 'r-b2b',
   'imp-emp-design': 'r-b2b',
@@ -292,7 +297,18 @@ export function generateRecommendations(a: Analytics, voice?: Voice, priors?: Pr
     const tri = scoreRecommendation(r, a, priors);
     const band = simulateMargin(r, a, priors);
     if (band) tri.band = band;
+    // EXPLORACIÓN (UCB): además de la media, el ranking premia el TECHO (P90) de la banda, para que una
+    // oportunidad poco probada pero de alto potencial no quede enterrada por su promedio. Solo SUMA
+    // (nunca baja a una reco) → el orden sigue anclado en el valor esperado.
+    if (band && band.mean > 0 && tri.score > 0) {
+      const upside = band.p90 / band.mean; // cuánto más alto es el techo vs el promedio
+      tri.exploreScore = tri.score + EXPLORE_K * Math.max(0, tri.score * upside - tri.score);
+      tri.explore = upside >= 1.5 && tri.confidence < 0.6; // alto techo + poca evidencia → "explorá esto"
+    } else {
+      tri.exploreScore = tri.score;
+    }
     return { ...r, tri };
   });
-  return scored.sort((x, y) => (y.tri?.score ?? 0) - (x.tri?.score ?? 0));
+  // Ordena por el score de exploración (UCB); sin banda, exploreScore == score (no cambia nada).
+  return scored.sort((x, y) => (y.tri?.exploreScore ?? y.tri?.score ?? 0) - (x.tri?.exploreScore ?? x.tri?.score ?? 0));
 }

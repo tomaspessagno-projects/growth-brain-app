@@ -44,7 +44,20 @@ export interface ExperimentOutcome {
   } | null;
 }
 
-const M0 = ECON_ASSUMPTIONS.recoveryFraction.value; // 0.25 — el prior (supuesto declarado)
+// M0 = supuesto base de recuperación POR FAMILIA. El default es el global declarado (25%), pero
+// 'formularios' arranca un poco más alto (0.30) porque es la familia mejor evidenciada: la
+// investigación CRO (Baymard) documenta que las mejoras de formulario/checkout son la palanca de UX
+// con mayor recuperación. El ~35% de Baymard es un TECHO agregado (rediseño completo del checkout,
+// NO un A/B de UNA intervención) → se usa para justificar un M0 modesto (0.30), nunca como prior crudo.
+// El resto queda en 0.25 hasta tener experimentos propios. El empirical-Bayes sigue corrigiendo cada
+// M0 con la evidencia real (DIRECCIONAL: el dato es e-commerce, no prepaga).
+const M0_DEFAULT = ECON_ASSUMPTIONS.recoveryFraction.value; // 0.25 — supuesto declarado
+const M0_BY_FAMILY: Partial<Record<Family, number>> = {
+  formularios: 0.3,
+};
+export function recoveryM0(family: Family): number {
+  return M0_BY_FAMILY[family] ?? M0_DEFAULT;
+}
 const K0 = 4; // pseudo-observaciones del prior: ~4 experimentos para empezar a moverlo
 
 export const FAMILY_LABEL: Record<Family, string> = {
@@ -124,7 +137,7 @@ export function computePriors(experiments: ExperimentOutcome[]): PriorMap {
   for (const [family, s] of byFam) {
     const n = s.obs.length;
     const sum = s.obs.reduce((a, b) => a + b, 0);
-    const recoveryMean = (K0 * M0 + sum) / (K0 + n); // shrinkage hacia el supuesto base
+    const recoveryMean = (K0 * recoveryM0(family) + sum) / (K0 + n); // shrinkage hacia el M0 de la familia
     out[family] = {
       family,
       recoveryMean,

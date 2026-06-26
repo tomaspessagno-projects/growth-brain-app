@@ -15,7 +15,7 @@ export interface PlaybookRule {
   source: RuleSource;
 }
 
-export const PLAYBOOK_UPDATED = '2026-06-10';
+export const PLAYBOOK_UPDATED = '2026-06-26';
 
 export const RULE_CATEGORIES = [
   'Metodología / Triangulación',
@@ -80,6 +80,12 @@ export const PLAYBOOK_RULES: PlaybookRule[] = [
   { id: 'r-trend', category: 'Formularios / UX', status: 'observacion', source: 'observacion', date: '2026-06-09',
     statement: 'Con tráfico plano, completó datos +40% e intención +66% vs período previo: algo en el medio del funnel mejoró. Identificar qué para sostenerlo.',
     evidence: 'WoW abr vs may' },
+  { id: 'r-form-fields', category: 'Formularios / UX', status: 'observacion', source: 'manual', date: '2026-06-26',
+    statement: 'Reducir campos del formulario es la palanca de UX mejor documentada: el checkout promedio tiene ~13–15 campos y suele haber 20–60% para recortar; cada campo de más cuesta del orden de −10% de conversión y un flujo de una sola página puede convertir hasta +21% vs multi-paso. Atacar la fuga del paso de datos con menos campos, validación inline y barra de progreso.',
+    evidence: 'Investigación CRO — Baymard Institute (benchmark de checkout/formularios). DIRECCIONAL: es e-commerce, no prepaga.' },
+  { id: 'r-form-hick', category: 'Formularios / UX', status: 'observacion', source: 'manual', date: '2026-06-26',
+    statement: 'Menos decisiones por paso = menos fricción (principio de Hick-Hyman): mostrar lo mínimo en cada pantalla y revelar el resto progresivamente (como Google/Slack). Aplicar a formularios y onboarding largos. OJO: es un principio direccional, no una fórmula exacta de "menos campos = más conversión".',
+    evidence: 'Hick & Hyman (1952/53), principio de UX peer-reviewed; corroborado por datos CRO de reducción de fricción.' },
 
   // Conversión
   { id: 'r-b2b', category: 'Conversión', status: 'observacion', source: 'observacion', date: '2026-06-09',

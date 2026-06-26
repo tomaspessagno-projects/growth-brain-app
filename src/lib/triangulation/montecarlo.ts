@@ -8,7 +8,7 @@ import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { ARPU_MENSUAL_ARS } from '../mixpanel/snapshot';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
-import { recFamily, type PriorMap } from './priors';
+import { recFamily, recoveryM0, type PriorMap } from './priors';
 
 export interface MarginBand {
   p10: number;
@@ -60,7 +60,8 @@ interface Ranges {
 
 // Rangos de incertidumbre centrados en el supuesto (o en el prior aprendido si existe).
 function rangesFor(rec: Recommendation, priors?: PriorMap): Ranges {
-  const recBase = priors?.[recFamily(rec)]?.recoveryMean ?? 0.25;
+  const fam = recFamily(rec);
+  const recBase = priors?.[fam]?.recoveryMean ?? recoveryM0(fam);
   return {
     recovery: [Math.max(0.05, recBase * 0.6), recBase, Math.min(0.9, recBase * 1.5)],
     datoCapita: [0.04, 0.06, 0.08], // el supuesto 6% ± banda (rango del brief del cruce)

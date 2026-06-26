@@ -8,7 +8,7 @@ import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
 import { ltvArs, marginFromRecoveredEvents, ECON_ASSUMPTIONS } from '../economics/model';
-import { recFamily, priorConfidenceBoost, FAMILY_LABEL, type PriorMap } from './priors';
+import { recFamily, priorConfidenceBoost, recoveryM0, FAMILY_LABEL, type PriorMap } from './priors';
 import type { MarginBand } from './montecarlo';
 
 export type SrcTag = 'Mixpanel' | 'HubSpot' | 'PELG' | 'Supuesto' | 'Playbook';
@@ -36,9 +36,10 @@ export interface TriScore {
   urgencyReason: string;
   effortReason: string;
   band?: MarginBand; // Capa 3: rango probabilístico P10–P90 (Monte Carlo sobre los supuestos)
+  exploreScore?: number; // ranking con EXPLORACIÓN (UCB): media + peso del techo P90 de la banda
+  explore?: boolean; // "poco probada, alto techo" → la sube la exploración, no su promedio
 }
 
-const RECOVERY = ECON_ASSUMPTIONS.recoveryFraction.value;
 const DATO_CAPITA = ECON_ASSUMPTIONS.datoToCapitaPct.value;
 const fmtArs = (n: number) => `$${Math.round(n).toLocaleString('es-AR')}`;
 const fmtArsShort = (n: number) =>
@@ -138,7 +139,8 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       // si todavía no hay experimentos, cae al supuesto declarado (25%).
       const fam = recFamily(rec);
       const learned = priors?.[fam];
-      const baseRecovery = learned?.recoveryMean ?? RECOVERY;
+      // Sin experimentos aún, cae al M0 de la familia (formularios arranca más alto por evidencia CRO).
+      const baseRecovery = learned?.recoveryMean ?? recoveryM0(fam);
       const recFrac = rec.id === 'imp-cot-design' ? baseRecovery : baseRecovery * 0.6;
       if (leak > 0) {
         const recovered = leak * recFrac;
@@ -164,6 +166,9 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
           learned && learned.n > 0
             ? `Recuperable ${pc(recFrac)} APRENDIDO de ${learned.n} experimento(s) de "${FAMILY_LABEL[fam]}" (antes era 25% supuesto). dato→cápita ${pc(DATO_CAPITA)} sigue supuesto (falta el cruce prospecto_id).`
             : `Recuperable ${pc(recFrac)} y dato→cápita ${pc(DATO_CAPITA)} son supuestos.`,
+        );
+        honesty.push(
+          'Solo parte de la fuga es por el formulario: ~17% del abandono se atribuye a "checkout largo/complicado" (Baymard, auto-reportado) — el resto tiene otras causas (precio, intención). Es un techo de atribución, no garantía de recuperación.',
         );
       }
       break;
