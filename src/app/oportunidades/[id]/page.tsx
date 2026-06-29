@@ -65,16 +65,24 @@ export default function OportunidadDetallePage() {
         </div>
       </header>
 
-      {/* Headline $ */}
+      {/* Headline: por qué importa ($ directo o proceso/performance) */}
       {tri && (
-        <div className="glass-panel" style={{ marginTop: 14, padding: '16px 18px', display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <div className="glass-panel" style={{ marginTop: 14, padding: '16px 18px' }}>
+          <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, marginBottom: 10, color: tri.changeKind === 'proceso' ? '#1689C4' : '#15803d', background: tri.changeKind === 'proceso' ? 'rgba(22,137,196,0.10)' : 'rgba(21,128,61,0.10)' }}>
+            {tri.changeKind === 'proceso' ? '⚙️ Cambio de proceso / performance' : '💰 Cambio económico'}
+          </span>
           {moneyRec ? (
-            <>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 34, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, var(--font-satoshi), sans-serif' }}>{fmtArsShort(tri.marginAtStakeArs!)}</span>
               <span style={{ fontSize: 14, color: '#5b6b7f' }}>en juego {tri.cadence === 'acumulado' ? '· acumulado (stock)' : '/ mes'}{tri.reach != null && ` · alcance ${tri.reach.toLocaleString('es-AR')}`}</span>
-            </>
+            </div>
           ) : (
-            <span style={{ fontSize: 18, fontWeight: 600, color: '#5b6b7f' }}>Habilitador — sin $ directo, desbloquea medir el resto</span>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#5b6b7f', marginBottom: tri.feedsInto ? 8 : 0 }}>Sin $ directo — el impacto económico es indirecto (aguas abajo).</div>
+              {tri.feedsInto && (
+                <div style={{ fontSize: 14, color: '#102A45', display: 'flex', gap: 6 }}><span>↘</span><span><b>Alimenta a:</b> {tri.feedsInto}</span></div>
+              )}
+            </div>
           )}
         </div>
       )}

@@ -30,8 +30,12 @@ function SrcChip({ color, label, text }: { color: string; label: string; text: s
 
 // Bloque de triangulación: $ en juego + base (qué dato de cada fuente lo sostiene) + honestidad.
 function TriBlock({ tri }: { tri: TriScore }) {
+  const proceso = tri.changeKind === 'proceso';
   return (
     <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 10, background: 'rgba(0,45,95,0.035)', border: '1px solid rgba(0,45,95,0.08)' }}>
+      <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginBottom: 8, color: proceso ? '#1689C4' : '#15803d', background: proceso ? 'rgba(22,137,196,0.10)' : 'rgba(21,128,61,0.10)' }}>
+        {proceso ? '⚙️ Proceso / performance' : '💰 Económico'}
+      </span>
       {tri.marginAtStakeArs != null ? (
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 21, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, var(--font-satoshi), sans-serif' }}>
@@ -43,7 +47,12 @@ function TriBlock({ tri }: { tri: TriScore }) {
           </span>
         </div>
       ) : (
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#5b6b7f' }}>Sin $ directo — es un habilitador (desbloquea medir el resto)</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#5b6b7f' }}>{proceso ? 'Sin $ directo — es un cambio de proceso/performance' : 'Sin $ directo todavía (falta el dato que lo vuelve medible)'}</div>
+      )}
+      {proceso && tri.feedsInto && (
+        <div style={{ fontSize: 11.5, color: '#3a4a5c', marginTop: 6, display: 'flex', gap: 5 }}>
+          <span>↘</span><span><b>Alimenta a:</b> {tri.feedsInto}</span>
+        </div>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
         {tri.basis.mixpanel && <SrcChip color="#7b3fe4" label="Mixpanel" text={tri.basis.mixpanel} />}
