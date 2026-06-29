@@ -11,20 +11,20 @@ exports[`generateRecommendations — modo snapshot (offline, determinista) > GOL
     "score": 58690150,
   },
   {
-    "id": "channel-junk",
-    "score": 40040000,
-  },
-  {
-    "id": "channel-best",
-    "score": 27644380,
-  },
-  {
     "id": "dead",
-    "score": 17784894,
+    "score": 29641490,
   },
   {
     "id": "live",
-    "score": 12703496,
+    "score": 21172493,
+  },
+  {
+    "id": "channel-best",
+    "score": 3080000,
+  },
+  {
+    "id": "channel-junk",
+    "score": 616000,
   },
   {
     "id": "imp-con-design",

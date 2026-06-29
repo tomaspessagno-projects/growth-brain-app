@@ -110,42 +110,54 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
   switch (rec.id) {
     case 'channel-junk': {
       const junk = cot?.channels?.find((c) => c.flag === 'junk');
-      if (junk?.spendArs) {
-        marginAtStakeArs = junk.spendArs;
-        cadence = 'mensual';
+      if (junk) {
+        // NO es plata recuperable. Es tráfico no calificado (≈0% de conversión) que infla el
+        // denominador del cotizador y hace ver peor la conversión real. La acción es HIGIENE DEL
+        // DATO (sacarlo del cálculo), no recuperar pesos. La programática detrás es presupuesto
+        // PLANIFICADO y EXCLUIDO por el cliente: no es gasto medido ni reasignable como ganancia.
         reach = junk.visits;
-        urgency = 1.3;
-        urgencyReason = 'Alta: es gasto activo que se quema cada mes sin retorno.';
-        basis.pelg = `${fmtArs(junk.spendArs)}/mes de gasto`;
-        basis.mixpanel = `${pc(junk.conv)} de conversión a datos (${num(junk.visits)} visitas)`;
-        formula = 'Gasto mensual del canal que no convierte = plata reasignable';
+        changeKind = 'proceso';
+        feedsInto =
+          'la conversión REAL del cotizador — al excluir el tráfico no calificado, el denominador deja de estar inflado y la conversión se mide sobre tráfico con intención';
+        urgency = 1.1;
+        urgencyReason = 'Media: no mueve plata directa; es higiene del dato para no medir mal la conversión.';
+        basis.mixpanel = `${num(junk.visits)} visitas (${pc(junk.sharePct)} del tráfico) a ${pc(junk.conv)} de conversión — no calificado`;
+        if (junk.excluded) basis.pelg = 'Programática: presupuesto PLANIFICADO y EXCLUIDO por el cliente (no es gasto medido ni recuperable)';
+        formula = 'Sin $ recuperable — higiene del dato: excluir el tráfico no calificado para medir bien la conversión';
         breakdown = [
-          { label: 'Gasto del canal', value: `${fmtArs(junk.spendArs)}/mes`, src: 'PELG' },
-          { label: 'Conversión a datos', value: `${pc(junk.conv)} (${num(junk.visits)} visitas)`, src: 'Mixpanel' },
-          { label: '= Gasto reasignable', value: `${fmtArsShort(junk.spendArs)}/mes` },
+          { label: 'Visitas del canal', value: `${num(junk.visits)} (${pc(junk.sharePct)} del tráfico)`, src: 'Mixpanel' },
+          { label: 'Conversión a datos', value: `${pc(junk.conv)} — prácticamente no convierte`, src: 'Mixpanel' },
+          { label: 'Presupuesto detrás', value: junk.excluded ? 'Programática PLANIFICADA y excluida por el cliente' : 'sin gasto medido en SysData', src: 'PELG' },
+          { label: 'Acción', value: 'excluirlo del denominador de conversión (no “recuperar pesos”)' },
         ];
-        honesty.push('El $ es gasto reasignable, no margen perdido. El canal ya está excluido por el cliente.');
+        honesty.push(
+          'NO es plata recuperable: la programática es presupuesto PLANIFICADO y EXCLUIDO por el cliente, y reasignar gasto no es ganancia. El valor real acá es medir bien la conversión, no un retorno en pesos.',
+        );
       }
       break;
     }
     case 'channel-best': {
-      const extra = cot?.opportunity?.extraDatos ?? 0;
-      if (extra > 0) {
-        marginAtStakeArs = marginFromRecoveredEvents(extra);
-        cadence = 'mensual';
-        reach = extra;
+      // Palanca de adquisición REAL (canales que convierten muy por encima del 16% promedio) pero
+      // NO cuantificable en $ todavía: el margen depende de cuánto presupuesto incremental se les
+      // pueda mover y a qué CPL por canal, dato que hoy no tenemos. No le ponemos número para no
+      // inflar una falsa expectativa (antes se calculaba asumiendo que el tráfico basura rendiría
+      // al promedio — un contrafáctico que no se sostiene).
+      const best = (cot?.channels ?? []).filter((c) => c.flag === 'best');
+      if (best.length) {
+        reach = best.reduce((a, c) => a + c.visits, 0);
         urgency = 1.1;
-        urgencyReason = 'Media-alta: los mejores canales hoy traen poco volumen; escalar rinde más que el tráfico masivo.';
-        basis.mixpanel = `+${num(extra)} datos/mes si rindieran al promedio`;
-        basis.pelg = `LTV ${fmtArs(ltvArs())} × ${pc(DATO_CAPITA)} a cápita`;
-        formula = 'Datos extra potenciales × dato→cápita × LTV de contribución';
+        urgencyReason = 'Media-alta: convierten muy por encima del promedio, pero hoy traen poco volumen.';
+        const detail = best.map((c) => `${c.source} ${pc(c.conv)}`).join(' · ');
+        basis.mixpanel = `${detail} (vs ~16% promedio) · ${num(reach)} visitas/mes`;
+        formula = 'Palanca de adquisición sin $ cuantificado — falta presupuesto incremental + CPL por canal';
         breakdown = [
-          { label: 'Datos extra si rindieran al promedio', value: `+${num(extra)}/mes`, src: 'Mixpanel' },
-          { label: 'Dato → cápita', value: `× ${pc(DATO_CAPITA)} = ${num(extra * DATO_CAPITA)} cápitas`, src: 'Supuesto' },
-          { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
-          { label: '= Margen', value: `${fmtArsShort(marginAtStakeArs)}/mes` },
+          { label: 'Canales de alta conversión', value: detail, src: 'Mixpanel' },
+          { label: 'Volumen actual', value: `${num(reach)} visitas/mes (bajo)`, src: 'Mixpanel' },
+          { label: 'Qué falta para el $', value: 'cuánto presupuesto incremental se les puede mover y a qué CPL (no medido)' },
         ];
-        honesty.push(`Asume dato→cápita ${pc(DATO_CAPITA)} (supuesto, sin prospecto_id).`);
+        honesty.push(
+          'Sin $ cuantificado: escalar buenos canales rinde, pero el margen depende del presupuesto incremental y del CPL por canal, que hoy no tenemos. No lo inflamos con un número.',
+        );
       }
       break;
     }

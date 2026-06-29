@@ -32,6 +32,10 @@ describe('simulateMargin — banda probabilística (Monte Carlo seedeado)', () =
     expect(simulateMargin(rec('live', 'desarrollo'), makeAnalytics())).toBeNull();
   });
 
+  it('NO simula banda para channel-best (ya no tiene margen cuantificado → cero falsa esperanza)', () => {
+    expect(simulateMargin(rec('channel-best', 'datos'), makeAnalytics())).toBeNull();
+  });
+
   it('cubre los tipos comerciales (winrate / stock) con HubSpot vivo', () => {
     const a = makeAnalytics({ hubspot: liveHubspot() });
     expect(simulateMargin(rec('hs-winrate', 'producto'), a)).not.toBeNull();

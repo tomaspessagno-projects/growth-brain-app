@@ -57,12 +57,13 @@ export default function FunnelDetail() {
 
       {f.opportunity && (
         <div className={styles.callout}>
-          <span className={styles.calloutMark}>🔴</span>
+          <span className={styles.calloutMark}>🔎</span>
           <div>
-            <div className={styles.calloutTitle}>Oportunidad: el canal “{f.opportunity.channel}” está tirando la conversión</div>
+            <div className={styles.calloutTitle}>Ojo con el canal “{f.opportunity.channel}”: ensucia la medición</div>
             <div className={styles.calloutText}>
               Trae {fmt(f.opportunity.visits)} visitas ({pct(f.opportunity.sharePct)} del tráfico) y convierte ~0% a datos.
-              Si rindiera al {pct(f.opportunity.avgConv)} promedio → <strong>≈ +{fmt(f.opportunity.extraDatos)} datos/mes</strong>.
+              Es <strong>tráfico no calificado</strong> que infla el denominador y hace ver peor la conversión real del cotizador.
+              No es plata recuperable: la acción es excluirlo del cálculo de conversión para medir bien — no esperar un retorno en pesos de este canal.
             </div>
           </div>
         </div>

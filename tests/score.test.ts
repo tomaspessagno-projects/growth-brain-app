@@ -76,6 +76,24 @@ describe('HubSpot — cierre de ventas y stock (acumulado, mensualizado /24)', (
   });
 });
 
+describe('canales — meticulosidad con la plata (sin falsa esperanza)', () => {
+  it('channel-junk NO reclama pesos: es higiene del dato (proceso), no plata recuperable', () => {
+    const t = scoreRecommendation(rec({ id: 'channel-junk', discipline: 'datos' }), makeAnalytics());
+    expect(t.marginAtStakeArs).toBeNull(); // <- nada de "$44M reasignables"
+    expect(t.changeKind).toBe('proceso');
+    expect(t.feedsInto).toContain('conversión');
+    // y la honestidad lo dice explícito
+    expect(t.honesty.join(' ')).toMatch(/no es plata recuperable/i);
+  });
+
+  it('channel-best es palanca real pero SIN $ cuantificado (no se infla un número)', () => {
+    const t = scoreRecommendation(rec({ id: 'channel-best', discipline: 'datos' }), makeAnalytics());
+    expect(t.marginAtStakeArs).toBeNull();
+    expect(t.changeKind).toBe('economico');
+    expect(t.honesty.join(' ')).toMatch(/sin \$ cuantificado/i);
+  });
+});
+
 describe('segundo eje — changeKind económico vs proceso', () => {
   it('hs-loop es PROCESO con feedsInto (habilitador, sin $ propio)', () => {
     const t = scoreRecommendation(rec({ id: 'hs-loop', discipline: 'desarrollo' }), makeAnalytics({ hubspot: liveHubspot() }));

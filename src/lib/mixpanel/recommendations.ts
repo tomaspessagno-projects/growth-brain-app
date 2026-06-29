@@ -204,13 +204,13 @@ export function generateRecommendations(a: Analytics, voice?: Voice, priors?: Pr
   const recs: Recommendation[] = [];
   const cotizador = a.funnels.find((f) => f.id === 'cotizador');
 
-  // 1. Canal basura.
+  // 1. Canal no calificado (ensucia la medición; NO es plata recuperable).
   const junk = cotizador?.channels?.find((c) => c.flag === 'junk');
-  if (junk && cotizador?.opportunity) {
+  if (junk) {
     recs.push({
-      id: 'channel-junk', priority: 'alta', discipline: 'datos', tag: 'Canales', owner: 'marketing', funnel: 'Cotizador',
-      title: `Revisá o pausá el canal "${junk.source}"`,
-      detail: `Trae ${fmt(junk.visits)} visitas (${pc(junk.sharePct)} del tráfico) y convierte ~0% a datos${junk.spendArs ? ` — son ≈ $${(junk.spendArs / 1e6).toFixed(0)}M/mes de programática, casi sin retorno (ya excluida del análisis por el cliente)` : ' — infla la fuga'}. Recuperable: ≈ +${fmt(cotizador.opportunity.extraDatos)} datos/mes si rindiera al ${pc(cotizador.opportunity.avgConv)} promedio.`,
+      id: 'channel-junk', priority: 'media', discipline: 'datos', tag: 'Canales', owner: 'marketing', funnel: 'Cotizador',
+      title: `El canal "${junk.source}" ensucia la medición del cotizador`,
+      detail: `Trae ${fmt(junk.visits)} visitas (${pc(junk.sharePct)} del tráfico) y convierte ~0% a datos: es tráfico no calificado que infla el denominador y hace ver peor la conversión real del cotizador.${junk.excluded ? ' Detrás hay programática, pero es presupuesto PLANIFICADO y EXCLUIDO del análisis por el cliente.' : ''} No es plata recuperable: la acción es excluirlo del cálculo de conversión para medir bien — no esperar un retorno en pesos.`,
     });
   }
 
@@ -325,9 +325,14 @@ export function generateRecommendations(a: Analytics, voice?: Voice, priors?: Pr
     .map((s) => (s.tri.cadence === 'acumulado' ? s.tri.marginAtStakeArs! / 24 : s.tri.marginAtStakeArs!))
     .sort((a, b) => a - b);
   const refEcon = econMonthly.length ? econMonthly[Math.floor(econMonthly.length / 2)] : 0; // mediana
+  // El gate promueve ENABLERS estructurales (cierran el loop, conectan datos en vivo, habilitan medir
+  // y experimentar). NO promueve la higiene cosmética: sacar un canal no calificado del denominador
+  // mejora la medición pero NO destraba el flujo económico, así que rankea por su prioridad propia
+  // (modesta) y no hereda el valor del proceso económico. Evita inflar su importancia.
+  const PROCESS_HYGIENE = new Set(['channel-junk']);
   if (refEcon > 0) {
     for (const s of scored) {
-      if (s.tri.changeKind === 'proceso') {
+      if (s.tri.changeKind === 'proceso' && !PROCESS_HYGIENE.has(s.id)) {
         const inherited = (refEcon * PROCESS_GATE_WEIGHT * s.tri.confidence * s.tri.urgency) / s.tri.effort;
         s.tri.score = inherited;
         s.tri.exploreScore = inherited;

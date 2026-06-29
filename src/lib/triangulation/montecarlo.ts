@@ -70,10 +70,11 @@ function rangesFor(rec: Recommendation, priors?: PriorMap): Ranges {
   };
 }
 
-type Kind = 'leak' | 'channel' | 'winrate' | 'stock';
+type Kind = 'leak' | 'winrate' | 'stock';
 function kindOf(rec: Recommendation): Kind | null {
   if (rec.id === 'imp-cot-design' || rec.id === 'imp-cot-product') return 'leak';
-  if (rec.id === 'channel-best') return 'channel';
+  // channel-best ya NO tiene margen cuantificado (depende de presupuesto incremental + CPL por
+  // canal, no medido) → no se simula banda para no inflar una falsa expectativa.
   if (rec.id === 'hs-winrate') return 'winrate';
   if (rec.id === 'hs-stock') return 'stock';
   return null;
@@ -101,7 +102,6 @@ export function simulateMargin(rec: Recommendation, a: Analytics, priors?: Prior
   const h = a.hubspot;
   // Inputs base de cada fuente (Mixpanel/HubSpot) — NO inciertos: son data medida.
   const leak = cot?.leakDropCount ?? 0;
-  const extra = cot?.opportunity?.extraDatos ?? 0;
   const decided = h ? h.won + h.lost : 0;
   const gap = h && h.winRate != null ? Math.max(0, WINRATE_TARGET - h.winRate) : 0;
   const stock = h?.biggestOpenStage?.count ?? 0;
@@ -114,8 +114,6 @@ export function simulateMargin(rec: Recommendation, a: Analytics, priors?: Prior
     switch (kind) {
       case 'leak':
         return leak * (s.rec * recMult) * s.dc * ltv(s.ret, s.mg);
-      case 'channel':
-        return extra * s.dc * ltv(s.ret, s.mg);
       case 'winrate':
         return decided * gap * ltv(s.ret, s.mg); // acumulado
       case 'stock':
@@ -123,9 +121,9 @@ export function simulateMargin(rec: Recommendation, a: Analytics, priors?: Prior
     }
   };
 
-  // Qué inputs varían según el tipo (recovery solo en fugas; dato→cápita solo del lado adquisición).
+  // Qué inputs varían según el tipo (recovery y dato→cápita solo en las fugas del cotizador).
   const variesRec = kind === 'leak';
-  const variesDc = kind === 'leak' || kind === 'channel';
+  const variesDc = kind === 'leak';
 
   const draw = rng(hashSeed(rec.id));
   const margins: number[] = [];
