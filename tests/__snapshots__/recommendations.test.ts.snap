@@ -1,0 +1,62 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateRecommendations — modo snapshot (offline, determinista) > GOLDEN: el ranking y los scores quedan congelados (atrapa regresiones del motor) 1`] = `
+[
+  {
+    "id": "imp-cot-design",
+    "score": 115601811,
+  },
+  {
+    "id": "imp-cot-product",
+    "score": 58690150,
+  },
+  {
+    "id": "channel-junk",
+    "score": 40040000,
+  },
+  {
+    "id": "channel-best",
+    "score": 27644380,
+  },
+  {
+    "id": "dead",
+    "score": 17784894,
+  },
+  {
+    "id": "live",
+    "score": 12703496,
+  },
+  {
+    "id": "imp-con-design",
+    "score": 280000,
+  },
+  {
+    "id": "imp-emp-product",
+    "score": 280000,
+  },
+  {
+    "id": "imp-con-product",
+    "score": 200000,
+  },
+  {
+    "id": "imp-con-dev",
+    "score": 186667,
+  },
+  {
+    "id": "imp-cot-dev",
+    "score": 133333,
+  },
+  {
+    "id": "trend-up",
+    "score": 105000,
+  },
+  {
+    "id": "imp-emp-design",
+    "score": 52500,
+  },
+  {
+    "id": "imp-emp-dev",
+    "score": 35000,
+  },
+]
+`;

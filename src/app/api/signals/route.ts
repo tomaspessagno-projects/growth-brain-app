@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '@/utils/supabase/admin';
 import { buildSignals, type SnapshotRow } from '@/lib/brain/detect';
+import { buildCrossSignals } from '@/lib/brain/correlate';
 
 // Señales del motor (Capa 2): detección de quiebres + pace vs meta sobre la serie diaria que
 // persiste el cron (Capa 1). Gateado por el middleware (autenticado). Solo lectura.
@@ -20,7 +21,8 @@ export async function GET() {
     if (error) return NextResponse.json({ signals: [], days: 0, note: error.message });
     const rows = (data ?? []) as SnapshotRow[];
     const signals = buildSignals(rows);
-    return NextResponse.json({ signals, days: rows.length });
+    const cruces = buildCrossSignals(rows); // "cruzar datos con datos": correlaciones con rezago
+    return NextResponse.json({ signals, cruces, days: rows.length });
   } catch (e) {
     return NextResponse.json({ signals: [], days: 0, note: String((e as Error)?.message || e) });
   }
