@@ -38,6 +38,10 @@ export interface TriScore {
   band?: MarginBand; // Capa 3: rango probabilístico P10–P90 (Monte Carlo sobre los supuestos)
   exploreScore?: number; // ranking con EXPLORACIÓN (UCB): media + peso del techo P90 de la banda
   explore?: boolean; // "poco probada, alto techo" → la sube la exploración, no su promedio
+  // POR QUÉ importa el cambio (segundo eje, además del $): directo económico, o un cambio de
+  // proceso/performance que NO mueve plata directa pero alimenta aguas abajo un proceso que SÍ es económico.
+  changeKind: 'economico' | 'proceso';
+  feedsInto?: string; // si es 'proceso': el proceso económico aguas abajo al que afecta
 }
 
 const DATO_CAPITA = ECON_ASSUMPTIONS.datoToCapitaPct.value;
@@ -89,6 +93,19 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
   let breakdown: BreakdownRow[] = [];
   const basis: TriScore['basis'] = {};
   const honesty: string[] = [];
+
+  // POR QUÉ importa (segundo eje). Default por familia: instrumentación y voz son cambios de PROCESO
+  // (impacto económico INDIRECTO, aguas abajo); el resto es económico (mueve $ directo o un paso del
+  // funnel que se traduce a $). Se afina por caso abajo (ej. el loop).
+  const family = recFamily(rec);
+  let changeKind: TriScore['changeKind'] =
+    family === 'instrumentacion' || family === 'voz' ? 'proceso' : 'economico';
+  let feedsInto: string | undefined =
+    family === 'instrumentacion'
+      ? 'la confiabilidad de la medición del funnel — sin medir bien no se puede priorizar ni experimentar (aguas abajo: TODO el ranking en $)'
+      : family === 'voz'
+      ? 'el proceso comercial y la experiencia del socio — aguas abajo mueve la conversión a cápita y la retención'
+      : undefined;
 
   switch (rec.id) {
     case 'channel-junk': {
@@ -232,15 +249,28 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
         { label: 'Desbloquea', value: 'ripple-a-cápita MEDIDO (no modelado) en cada experimento' },
       ];
       honesty.push('No tiene $ propio: es el habilitador. Sin esto, la atribución visita→cápita es modelada, no medida.');
+      changeKind = 'proceso';
+      feedsInto = 'medir el ripple visita→cápita — habilita medir el impacto económico REAL de todo lo demás';
       break;
     }
     default:
-      formula = 'Sin $ cuantificable aún — priorizada por su prioridad cualitativa.';
-      breakdown = [
-        { label: 'Tipo', value: `${rec.tag} · ${rec.discipline}` },
-        { label: 'Por qué no tiene $', value: 'falta el dato que la haría cuantificable (instrumentación / valor por lead).' },
-      ];
-      honesty.push('No cuantificable en $ todavía: rankea por prioridad, no por plata.');
+      if (changeKind === 'proceso') {
+        formula = 'Cambio de proceso/performance — sin $ directo, pero alimenta un proceso económico aguas abajo.';
+        breakdown = [
+          { label: 'Tipo de cambio', value: 'Proceso / performance (impacto económico INDIRECTO)' },
+          { label: 'Dónde', value: `${rec.tag} · ${rec.discipline}` },
+          { label: 'Por qué importa', value: feedsInto ?? 'alimenta un proceso económico aguas abajo' },
+        ];
+        honesty.push('No tiene $ directo: es proceso/performance. Se prioriza por urgencia y por el proceso económico que destraba, no por plata directa.');
+      } else {
+        formula = 'Económico, pero sin cuantificar aún — falta el dato que lo vuelve $.';
+        breakdown = [
+          { label: 'Tipo de cambio', value: 'Económico (impacto en $ todavía sin cuantificar)' },
+          { label: 'Dónde', value: `${rec.tag} · ${rec.discipline}` },
+          { label: 'Qué falta para el $', value: 'instrumentación o valor-por-lead que lo haga medible.' },
+        ];
+        honesty.push('Económico pero no cuantificable en $ todavía: rankea por prioridad hasta tener el dato.');
+      }
       break;
   }
 
@@ -253,7 +283,7 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       : marginAtStakeArs;
   const score = (monthlyValue * confidence * urgency) / effort;
 
-  return { marginAtStakeArs, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason };
+  return { marginAtStakeArs, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason, changeKind, feedsInto };
 }
 
 function priorityBase(p: Recommendation['priority']): number {
