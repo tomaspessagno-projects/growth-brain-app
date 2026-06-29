@@ -103,16 +103,16 @@ export default function ExploradorPage() {
         <Link href="/crm" className={`glass-panel ${styles.fcard}`}>
           <div className={styles.fcardHead}>
             <div>
-              <div className={styles.fcName}>Pipeline de ventas</div>
-              <div className={styles.fcDesc}>Deals del pipeline Retail en vivo.</div>
+              <div className={styles.fcName}>Proceso de ventas</div>
+              <div className={styles.fcDesc}>Negocios del proceso comercial en vivo.</div>
             </div>
             <span className={styles.fcCat}>CRM</span>
           </div>
           <div className={styles.fcFooter} style={{ borderTop: 'none', paddingTop: 0 }}>
             {data.hubspot && (
               <>
-                <span className={`${styles.pill} ${styles.pillConv}`}>{fmt(data.hubspot.totalDeals)} deals</span>
-                <span className={`${styles.pill} ${styles.pillConv}`}>Win {pct(data.hubspot.winRate, 0)}</span>
+                <span className={`${styles.pill} ${styles.pillConv}`}>{fmt(data.hubspot.totalDeals)} negocios</span>
+                <span className={`${styles.pill} ${styles.pillConv}`}>Cierre {pct(data.hubspot.winRate, 0)}</span>
               </>
             )}
             <span className={styles.fcLink}>Abrir →</span>

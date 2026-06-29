@@ -65,9 +65,9 @@ export default function Resumen() {
   const byId = (id: string) => data.funnels.find((f) => f.id === id);
   const areas: { name: string; sub: string; h: Health; metric: string; link: string }[] = [
     { name: 'Adquisición', sub: 'Cotizador', h: byId('cotizador')?.health ?? 'atencion', metric: `Conv. ${pct(byId('cotizador')?.overallConversion, 1)} · meta ${pct(byId('cotizador')?.target, 0)}`, link: '/funnel/cotizador' },
-    { name: 'Alta online', sub: 'WhatsApp + Portal', h: rollup(['wa-individual', 'wa-familiar', 'portal-express'].map((id) => byId(id)?.health ?? 'atencion')), metric: '3 funnels', link: '/funnel/wa-individual' },
-    { name: 'Leads', sub: 'Contacto + Empresa', h: rollup(['contacto', 'empresa'].map((id) => byId(id)?.health ?? 'atencion')), metric: '2 funnels', link: '/funnel/contacto' },
-    { name: 'Comercial', sub: 'HubSpot', h: data.hubspot ? health(data.hubspot.winRate, WINRATE_TARGET) : 'atencion', metric: `Win ${pct(data.hubspot?.winRate, 0)} · meta ${pct(WINRATE_TARGET, 0)}`, link: '/crm' },
+    { name: 'Alta online', sub: 'WhatsApp + Portal', h: rollup(['wa-individual', 'wa-familiar', 'portal-express'].map((id) => byId(id)?.health ?? 'atencion')), metric: '3 embudos', link: '/funnel/wa-individual' },
+    { name: 'Leads', sub: 'Contacto + Empresa', h: rollup(['contacto', 'empresa'].map((id) => byId(id)?.health ?? 'atencion')), metric: '2 embudos', link: '/funnel/contacto' },
+    { name: 'Comercial', sub: 'HubSpot', h: data.hubspot ? health(data.hubspot.winRate, WINRATE_TARGET) : 'atencion', metric: `Cierre ${pct(data.hubspot?.winRate, 0)} · meta ${pct(WINRATE_TARGET, 0)}`, link: '/crm' },
   ];
 
   return (
@@ -103,7 +103,7 @@ export default function Resumen() {
         <div className={styles.kpi}>
           <span className={styles.kpiLabel}>Entradas a embudos</span>
           <span className={styles.kpiValue}>{fmt(s.totalEntradas)}</span>
-          <span className={styles.kpiSub}>{data.funnels.length} funnels</span>
+          <span className={styles.kpiSub}>{data.funnels.length} embudos</span>
         </div>
         <div className={styles.kpi}>
           <span className={styles.kpiLabel}>Altas completadas</span>
@@ -111,7 +111,7 @@ export default function Resumen() {
           <span className={styles.kpiSub}>WhatsApp (ind + fam)</span>
         </div>
         <div className={styles.kpi}>
-          <span className={styles.kpiLabel}>Win rate comercial</span>
+          <span className={styles.kpiLabel}>Cierre de ventas</span>
           <span className={styles.kpiValue}>{pct(data.hubspot?.winRate, 0)}</span>
           <span className={styles.kpiSub}>HubSpot · {fmt(data.hubspot?.won)} ganados</span>
         </div>

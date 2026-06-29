@@ -95,8 +95,8 @@ export function buildSignals(rows: SnapshotRow[]): Signal[] {
   const out: (Signal | null)[] = [
     detectBreak(cotConv, 'Conversión cotizador', pctF),
     forecastPace(cotConv, FUNNEL_TARGETS.cotizador ?? null, 'Conversión cotizador', pctF),
-    detectBreak(winRate, 'Win rate comercial', pctF),
-    forecastPace(winRate, WINRATE_TARGET, 'Win rate comercial', pctF),
+    detectBreak(winRate, 'Cierre de ventas', pctF),
+    forecastPace(winRate, WINRATE_TARGET, 'Cierre de ventas', pctF),
     detectBreak(entradas, 'Entradas a embudos', numF),
     detectBreak(asociados, 'Altas completadas', numF),
   ];

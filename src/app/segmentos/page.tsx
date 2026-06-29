@@ -59,10 +59,10 @@ export default function SegmentosPage() {
       tag: 'triple convergencia', tone: 'problem',
       sources: [
         { k: 'Cualitativo · NPS', t: `${Math.round(seg.detractorShare * 100)}% de los detractores dicen que no les responden (${seg.n} menciones, score ${seg.avgScore?.toFixed(1) ?? '—'})` },
-        ...(stuck ? [{ k: 'Comercial · HubSpot', t: `${stuck.count.toLocaleString('es-AR')} deals atascados en "${stuck.label}" sin follow-up` }] : []),
+        ...(stuck ? [{ k: 'Comercial · HubSpot', t: `${stuck.count.toLocaleString('es-AR')} negocios atascados en "${stuck.label}" sin seguimiento` }] : []),
         ...(cotConv != null ? [{ k: 'Conducta · Mixpanel', t: `la conversión del cotizador queda en ${(cotConv * 100).toFixed(1)}%` }] : []),
       ],
-      action: 'Experimento: SLA de respuesta del asesor (auto-recordatorio / bot de holding) y medí el impacto en NPS y en deals que avanzan.',
+      action: 'Experimento: compromiso de tiempo de respuesta del asesor (recordatorio automático / bot de espera) y medí el impacto en NPS y en negocios que avanzan.',
       link: '/experimentos', cta: 'Armar experimento →',
     });
     convergence.push({

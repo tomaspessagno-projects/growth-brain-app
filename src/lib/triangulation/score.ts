@@ -200,18 +200,18 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
           cadence = 'acumulado';
           reach = h.lost;
           urgency = 1.2;
-          urgencyReason = 'Alta: el win rate es palanca directa de cápitas sobre el stock comercial.';
-          basis.hubspot = `win rate ${pc(h.winRate)} vs meta ${pc(WINRATE_TARGET)} sobre ${num(decided)} deals`;
+          urgencyReason = 'Alta: la tasa de cierre de ventas es palanca directa de cápitas sobre el stock comercial.';
+          basis.hubspot = `cierre ${pc(h.winRate)} vs meta ${pc(WINRATE_TARGET)} sobre ${num(decided)} negocios`;
           basis.pelg = `${num(extraWon)} cápitas × LTV ${fmtArs(ltvArs())}`;
-          formula = 'Deals decididos × gap a la meta de win rate × LTV';
+          formula = 'Negocios decididos × brecha a la meta de cierre × LTV';
           breakdown = [
-            { label: 'Deals decididos (ganados + perdidos)', value: num(decided), src: 'HubSpot' },
-            { label: 'Gap a la meta', value: `${pc(WINRATE_TARGET)} − ${pc(h.winRate)} = ${pc(gap)}`, src: 'HubSpot' },
+            { label: 'Negocios decididos (ganados + perdidos)', value: num(decided), src: 'HubSpot' },
+            { label: 'Brecha a la meta de cierre', value: `${pc(WINRATE_TARGET)} − ${pc(h.winRate)} = ${pc(gap)}`, src: 'HubSpot' },
             { label: 'Cápitas extra recuperables', value: `= ${num(extraWon)}`, src: 'HubSpot' },
             { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
             { label: '= Margen (acumulado)', value: `${fmtArsShort(marginAtStakeArs)}` },
           ];
-          honesty.push('Figura ACUMULADA (stock histórico de deals), no mensual. No comparar 1:1 con las /mes.');
+          honesty.push('Figura ACUMULADA (stock histórico de negocios), no mensual. No comparar 1:1 con las /mes.');
         }
       }
       break;
@@ -223,12 +223,12 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
         marginAtStakeArs = h.biggestOpenStage.count * wr * ltvArs();
         cadence = 'acumulado';
         urgencyReason = 'Media: stock dormido; parte ya está en curso.';
-        basis.hubspot = `${num(h.biggestOpenStage.count)} deals en "${h.biggestOpenStage.label}"`;
-        basis.pelg = `× win rate × LTV ${fmtArs(ltvArs())}`;
-        formula = 'Deals atascados × win rate esperado × LTV';
+        basis.hubspot = `${num(h.biggestOpenStage.count)} negocios en "${h.biggestOpenStage.label}"`;
+        basis.pelg = `× tasa de cierre × LTV ${fmtArs(ltvArs())}`;
+        formula = 'Negocios atascados × cierre esperado × LTV';
         breakdown = [
-          { label: `Deals en "${h.biggestOpenStage.label}"`, value: num(h.biggestOpenStage.count), src: 'HubSpot' },
-          { label: 'Win rate esperado', value: `× ${pc(wr)}`, src: 'HubSpot' },
+          { label: `Negocios en "${h.biggestOpenStage.label}"`, value: num(h.biggestOpenStage.count), src: 'HubSpot' },
+          { label: 'Cierre esperado', value: `× ${pc(wr)}`, src: 'HubSpot' },
           { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
           { label: '= Margen (acumulado)', value: `${fmtArsShort(marginAtStakeArs)}` },
         ];
@@ -241,7 +241,7 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       urgency = 1.4;
       urgencyReason = 'Máxima: es el habilitador estructural — desbloquea medir todo lo demás.';
       basis.mixpanel = 'cotizador (visitas)';
-      basis.hubspot = 'deals (cápitas)';
+      basis.hubspot = 'negocios (cápitas)';
       formula = 'Sin $ propio — habilitador: une comportamiento (Mixpanel) con cápitas (HubSpot)';
       breakdown = [
         { label: 'Hoy', value: 'visita y cápita viven en sistemas separados', src: 'Mixpanel' },

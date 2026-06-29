@@ -27,7 +27,7 @@ export default function CrmPage() {
         <header className={styles.header}>
           <div>
             <h1 className="page-title">CRM · HubSpot</h1>
-            <p className="page-subtitle" style={{ marginBottom: 0 }}>Pipeline de ventas en vivo.</p>
+            <p className="page-subtitle" style={{ marginBottom: 0 }}>El proceso de ventas en vivo.</p>
           </div>
         </header>
         <div className={styles.callout}>
@@ -50,7 +50,7 @@ export default function CrmPage() {
         <div>
           <h1 className="page-title">CRM · HubSpot</h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>
-            Pipeline de deals «{data.pipelineLabel}» en vivo — la parte comercial del flujo.
+            El proceso de ventas «{data.pipelineLabel}» en vivo — la parte comercial del flujo.
           </p>
         </div>
         <div className={styles.badges}>
@@ -61,7 +61,7 @@ export default function CrmPage() {
 
       <section className={styles.kpis}>
         <div className={styles.kpi}>
-          <span className={styles.kpiLabel}>Deals en pipeline</span>
+          <span className={styles.kpiLabel}>Negocios en el proceso</span>
           <span className={styles.kpiValue}>{fmt(t.totalDeals)}</span>
           <span className={styles.kpiSub}>{data.pipelineLabel}</span>
         </div>
@@ -71,7 +71,7 @@ export default function CrmPage() {
           <span className={styles.kpiSub}>cápitas cerradas</span>
         </div>
         <div className={styles.kpi}>
-          <span className={styles.kpiLabel}>Win rate</span>
+          <span className={styles.kpiLabel}>Cierre de ventas</span>
           <span className={styles.kpiValue}>{pct(t.winRate, 0)}</span>
           <span className={styles.kpiSub}>ganados / (ganados + perdidos)</span>
         </div>
@@ -85,7 +85,7 @@ export default function CrmPage() {
       <section className={`glass-panel ${styles.card}`}>
         <div className={styles.cardHead}>
           <h2 className={styles.cardTitle}>Distribución por etapa</h2>
-          <span className={styles.count}>deals actuales</span>
+          <span className={styles.count}>negocios actuales</span>
         </div>
         <div className={styles.channels}>
           {data.stages.map((s) => {
@@ -95,7 +95,7 @@ export default function CrmPage() {
                 <div className={styles.chHead}>
                   <span className={styles.chName}>{s.label}</span>
                   <span className={styles.chMeta}>
-                    <span className={`${styles.chConv} ${flag === 'junk' ? styles.chConvJunk : flag === 'best' ? styles.chConvBest : ''}`}>{fmt(s.count)}</span> deals
+                    <span className={`${styles.chConv} ${flag === 'junk' ? styles.chConvJunk : flag === 'best' ? styles.chConvBest : ''}`}>{fmt(s.count)}</span> negocios
                   </span>
                 </div>
                 <div className={styles.chTrack}>
@@ -111,8 +111,8 @@ export default function CrmPage() {
       </section>
 
       <p className={styles.footnote}>
-        Datos en vivo de HubSpot (solo lectura). Es la <strong>distribución actual</strong> de deals por etapa, no una conversión secuencial.
-        Próximo paso: cruzar estos deals con el funnel del cotizador (Mixpanel) vía <code>prospecto_id</code> para cerrar el loop visita→socio.
+        Datos en vivo de HubSpot (solo lectura). Es la <strong>distribución actual</strong> de negocios por etapa, no una conversión secuencial.
+        Próximo paso: cruzar estos negocios con el embudo del cotizador (Mixpanel) vía <code>prospecto_id</code> para cerrar el loop visita→socio.
       </p>
     </div>
   );

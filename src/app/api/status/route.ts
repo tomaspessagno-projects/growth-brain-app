@@ -45,7 +45,7 @@ export async function GET() {
   const data = {
     asOf: new Date().toISOString(),
     services: [
-      { name: 'HubSpot', kind: 'CRM · deals, contactos, NPS', ...hs },
+      { name: 'HubSpot', kind: 'CRM · negocios, contactos, NPS', ...hs },
       { name: 'Mixpanel', kind: 'Comportamiento · funnels, eventos', ...mp },
     ],
   };

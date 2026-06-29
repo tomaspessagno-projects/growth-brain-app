@@ -197,7 +197,7 @@ export async function measureExperiment(
 
   const honesty: string[] = [
     capitaNote,
-    'Guardrail comercial (win rate) y económico (CAC/margen) no son medibles por experimento todavía: HubSpot es stock acumulado y el PELG es mensual.',
+    'El control comercial (tasa de cierre) y el económico (CAC/margen) no son medibles por experimento todavía: HubSpot es stock acumulado y el PELG es mensual.',
     'El veredicto se basa en el comportamiento (Mixpanel) con significancia estadística — es lo que sí podemos afirmar con rigor hoy.',
   ];
 
@@ -215,7 +215,7 @@ export async function measureExperiment(
     guardrails: {
       behavioral,
       commercial: hubspotWinRate != null
-        ? `Win rate actual ${(hubspotWinRate * 100).toFixed(0)}% (contexto; no atribuible a este experimento aún).`
+        ? `Tasa de cierre actual ${(hubspotWinRate * 100).toFixed(0)}% (contexto; no atribuible a este experimento aún).`
         : 'Sin datos comerciales en vivo.',
       economic: 'No medible por experimento: el PELG es un snapshot mensual, sin serie temporal por campaña.',
     },

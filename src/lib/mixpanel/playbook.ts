@@ -50,7 +50,7 @@ export const PLAYBOOK_RULES: PlaybookRule[] = [
     statement: 'El ripple de un experimento se traza hasta la cápita. Un lift en un paso intermedio que no llega a socio cerrado es hueco.',
     evidence: 'Definición de medición' },
   { id: 'm-guardrail3', category: 'Metodología / Triangulación', status: 'guardrail', source: 'manual', date: '2026-06-10',
-    statement: 'Cada experimento se chequea en 3 guardrails: comportamiento (paso aguas abajo cae), comercial (win rate / calidad del lead) y económico (CAC sube / margen baja).',
+    statement: 'Cada experimento se chequea en 3 controles de protección: comportamiento (un paso de abajo cae), comercial (tasa de cierre / calidad del lead) y económico (CAC sube / margen baja).',
     evidence: 'Motor de medición' },
   { id: 'm-ab', category: 'Metodología / Triangulación', status: 'guardrail', source: 'manual', date: '2026-06-10',
     statement: 'Preferir A/B (variante vs control) sobre antes/después. El antes/después confunde el efecto con cualquier cosa que cambió en el tiempo (campañas, estacionalidad).',
@@ -113,19 +113,19 @@ export const PLAYBOOK_RULES: PlaybookRule[] = [
 
   // Comercial / CRM (HubSpot)
   { id: 'r-winrate', category: 'Comercial / CRM', status: 'observacion', source: 'observacion', date: '2026-06-09',
-    statement: 'Win rate del pipeline Retail: 38% (4.979 ganados / 8.092 perdidos). Subir el win rate es palanca directa de cápitas.',
-    evidence: 'HubSpot deals por dealstage' },
+    statement: 'Tasa de cierre del proceso de ventas: 38% (4.979 ganados / 8.092 perdidos). Subir la tasa de cierre es palanca directa de cápitas.',
+    evidence: 'HubSpot negocios por etapa' },
   { id: 'r-hsstock', category: 'Comercial / CRM', status: 'observacion', source: 'observacion', date: '2026-06-09',
-    statement: 'El mayor stock abierto del pipeline está en "Propuesta Enviada" (~13.480 deals). Cuello comercial — revisar seguimiento.',
+    statement: 'El mayor stock abierto del proceso de ventas está en "Propuesta Enviada" (~13.480 negocios). Cuello comercial — revisar seguimiento.',
     evidence: 'HubSpot distribución por etapa' },
   { id: 'v-seguimiento', category: 'Comercial / CRM', status: 'observacion', source: 'observacion', date: '2026-06-10',
-    statement: 'El #1 motivo de detractores en el NPS es el SEGUIMIENTO: el asesor no responde o responde tarde (93 menciones, score 2.6) — explica el 35% de TODA la detracción. Es SISTÉMICO (aparece en todos los canales por igual: REDES, WEB, CHENGO, WhatsApp), no un bug de un canal. Explica los ~13.485 deals atascados en "Propuesta Enviada": falla de PROCESO comercial (SLA de respuesta), no de producto.',
+    statement: 'El #1 motivo de detractores en el NPS es el SEGUIMIENTO: el asesor no responde o responde tarde (93 menciones, score 2.6) — explica el 35% de TODA la detracción. Es SISTÉMICO (aparece en todos los canales por igual: REDES, WEB, CHENGO, WhatsApp), no un bug de un canal. Explica los ~13.485 negocios atascados en "Propuesta Enviada": falla de PROCESO comercial (falta un compromiso de tiempo de respuesta), no de producto.',
     evidence: 'Verbatims NPS × canal, 2026-06-10' },
   { id: 'v-promotores', category: 'Comercial / CRM', status: 'guardrail', source: 'observacion', date: '2026-06-10',
     statement: 'EL ASESOR HUMANO ES EL EJE DEL NPS: los 407 promotores valoran sobre todo claridad/buena info (186) y profesionalismo (135). El mismo eje en los dos extremos: presente y claro = promotor, ausente = detractor. GUARDRAIL: no automatizar/sacar el contacto humano — mejorar su SLA y consistencia.',
     evidence: 'Verbatims NPS de promotores (score≥9), 2026-06-10' },
   { id: 'r-hsloop', category: 'Comercial / CRM', status: 'guardrail', source: 'observacion', date: '2026-06-09',
-    statement: 'Ya tenemos ambos lados del flujo (cotizador en Mixpanel + deals en HubSpot), pero sin cruzar por prospecto_id no se puede medir visita→cápita end-to-end.',
+    statement: 'Ya tenemos ambos lados del flujo (cotizador en Mixpanel + negocios en HubSpot), pero sin cruzar por prospecto_id no se puede medir visita→cápita de punta a punta.',
     evidence: 'Mixpanel + HubSpot' },
 
   // Instrumentación / Sistema

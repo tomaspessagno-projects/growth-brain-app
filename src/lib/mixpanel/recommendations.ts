@@ -27,6 +27,11 @@ const ORDER: Record<RecPriority, number> = { alta: 0, media: 1, baja: 2 };
 // 0 = puro valor esperado (solo explotar); más alto = más peso al potencial poco probado.
 const EXPLORE_K = 0.5;
 
+// Peso del "valor heredado" de un cambio de PROCESO: como no tiene $ propio, su valor de ranking se
+// estima como una fracción del proceso económico que alimenta — para que un cuello de proceso no quede
+// sepultado por los $ directos. Solo afecta el ORDEN; no se muestra como un $ propio.
+const PROCESS_GATE_WEIGHT = 0.5;
+
 // El motor lee el Playbook como priors: estas recos están respaldadas por una regla ya aprendida
 // (sube la confianza). Mapea rec.id → regla del playbook.
 const REC_PLAYBOOK_MAP: Record<string, string> = {
@@ -58,22 +63,22 @@ function hubspotRecommendations(a: Analytics): Recommendation[] {
   out.push({
     id: 'hs-loop', priority: 'alta', discipline: 'desarrollo', owner: 'dev', tag: 'Instrumentación', funnel: 'CRM',
     title: 'Cerrá el loop visita→cápita (ya tenés ambos lados)',
-    detail: 'Ahora tenés el cotizador (Mixpanel) y los deals (HubSpot). Falta SOLO cruzarlos por prospecto_id para medir end-to-end qué visita se vuelve socio y atribuir el impacto de cada experimento hasta la cápita.',
+    detail: 'Ahora tenés el cotizador (Mixpanel) y los negocios comerciales (HubSpot). Falta SOLO cruzarlos por prospecto_id para medir de punta a punta qué visita se vuelve socio y atribuir el impacto de cada experimento hasta la cápita.',
   });
 
   if (h.winRate != null) {
     out.push({
       id: 'hs-winrate', priority: 'alta', discipline: 'producto', owner: 'producto', tag: 'Ventas', funnel: 'CRM',
-      title: `Recuperá los ${fmt(h.lost)} deals perdidos (win rate ${pc(h.winRate)})`,
-      detail: `El pipeline Retail cierra ${pc(h.winRate)} (${fmt(h.won)} ganados / ${fmt(h.lost)} perdidos). Analizá las razones de pérdida (closedlost): subir el win rate es palanca directa de cápitas.`,
+      title: `Recuperá los ${fmt(h.lost)} negocios perdidos (cierre de ventas ${pc(h.winRate)})`,
+      detail: `El proceso de ventas cierra ${pc(h.winRate)} (${fmt(h.won)} ganados / ${fmt(h.lost)} perdidos). Analizá las razones de pérdida: subir la tasa de cierre es palanca directa de cápitas.`,
     });
   }
 
   if (h.biggestOpenStage && h.biggestOpenStage.count > 0) {
     out.push({
       id: 'hs-stock', priority: 'media', discipline: 'producto', owner: 'producto', tag: 'Ventas', funnel: 'CRM',
-      title: `${fmt(h.biggestOpenStage.count)} deals atascados en "${h.biggestOpenStage.label}"`,
-      detail: 'Es el mayor stock abierto del pipeline comercial. Revisá si hay seguimiento/automación para moverlos: ahí hay cápitas dormidas.',
+      title: `${fmt(h.biggestOpenStage.count)} negocios atascados en "${h.biggestOpenStage.label}"`,
+      detail: 'Es el mayor stock abierto del proceso comercial. Revisá si hay seguimiento para moverlos: ahí hay cápitas dormidas.',
     });
   }
 
@@ -95,7 +100,7 @@ function voiceRecommendations(voice?: Voice): Recommendation[] {
   if (!voice || voice.source !== 'live') return [];
   const problems = voice.themes.filter((t) => t.isProblem && t.n >= 10 && t.detractorPct >= 0.4);
   return problems.slice(0, 2).map((t) => {
-    const tie = t.key === 'seguimiento' ? ' Coincide con los ~13.485 deals atascados en "Propuesta Enviada": nadie hace el follow-up.' : '';
+    const tie = t.key === 'seguimiento' ? ' Coincide con los ~13.485 negocios atascados en "Propuesta Enviada": nadie hace el seguimiento.' : '';
     const sys = t.systemic ? ' Es SISTÉMICO (aparece en todos los canales por igual) → pide un SLA de respuesta para toda la compañía, no un parche por canal.' : '';
     return {
       id: `voice-${t.key}`, priority: 'alta' as RecPriority, discipline: 'producto' as Discipline, owner: 'producto' as const, tag: 'Voz del cliente', funnel: 'NPS',
@@ -309,6 +314,27 @@ export function generateRecommendations(a: Analytics, voice?: Voice, priors?: Pr
     }
     return { ...r, tri };
   });
-  // Ordena por el score de exploración (UCB); sin banda, exploreScore == score (no cambia nada).
+
+  // URGENCIA DE LOS PROCESOS: un cambio de 'proceso' no tiene $ propio y, rankeado por la base de
+  // prioridad, quedaba sepultado bajo los $ directos. Para que un cuello de proceso compita, su valor de
+  // ranking se HEREDA del proceso económico que alimenta: una fracción del económico MEDIANO en juego
+  // (robusto al outlier), escalado por su confianza/urgencia/esfuerzo igual que el resto. Sigue
+  // mostrándose como ⚙️ Proceso (sin $ propio) — esto solo cambia el orden, no lo que se ve.
+  const econMonthly = scored
+    .filter((s) => s.tri.changeKind === 'economico' && s.tri.marginAtStakeArs != null)
+    .map((s) => (s.tri.cadence === 'acumulado' ? s.tri.marginAtStakeArs! / 24 : s.tri.marginAtStakeArs!))
+    .sort((a, b) => a - b);
+  const refEcon = econMonthly.length ? econMonthly[Math.floor(econMonthly.length / 2)] : 0; // mediana
+  if (refEcon > 0) {
+    for (const s of scored) {
+      if (s.tri.changeKind === 'proceso') {
+        const inherited = (refEcon * PROCESS_GATE_WEIGHT * s.tri.confidence * s.tri.urgency) / s.tri.effort;
+        s.tri.score = inherited;
+        s.tri.exploreScore = inherited;
+      }
+    }
+  }
+
+  // Ordena por el score de exploración (UCB); para los 'proceso', score = valor heredado del proceso económico.
   return scored.sort((x, y) => (y.tri?.exploreScore ?? y.tri?.score ?? 0) - (x.tri?.exploreScore ?? x.tri?.score ?? 0));
 }
