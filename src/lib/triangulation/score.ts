@@ -7,9 +7,10 @@
 import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
-import { ltvArs, marginFromRecoveredEvents, ECON_ASSUMPTIONS } from '../economics/model';
+import { ltvArs, ECON_ASSUMPTIONS } from '../economics/model';
 import { recFamily, priorConfidenceBoost, recoveryM0, FAMILY_LABEL, type PriorMap } from './priors';
 import type { MarginBand } from './montecarlo';
+import { marginFromScenario, engineAssumptions, type MarginInputs, type ScenarioAssumptions } from '../economics/scenario';
 
 export type SrcTag = 'Mixpanel' | 'HubSpot' | 'PELG' | 'Supuesto' | 'Playbook';
 
@@ -42,6 +43,10 @@ export interface TriScore {
   // proceso/performance que NO mueve plata directa pero alimenta aguas abajo un proceso que SÍ es económico.
   changeKind: 'economico' | 'proceso';
   feedsInto?: string; // si es 'proceso': el proceso económico aguas abajo al que afecta
+  // Para recalcular la cifra con TUS supuestos (panel de escenarios): los inputs MEDIDOS y los
+  // supuestos que usó el motor. Mismo input + tus supuestos ⇒ tu cifra, con la misma fórmula.
+  marginInputs?: MarginInputs;
+  assumptions?: ScenarioAssumptions;
 }
 
 const DATO_CAPITA = ECON_ASSUMPTIONS.datoToCapitaPct.value;
@@ -85,6 +90,8 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
   const effortReason = EFFORT_REASON[rec.discipline] ?? 'Esfuerzo medio (estimado).';
   const { c: confidence, reason: confidenceReason } = confidenceFor(rec, priors);
   let marginAtStakeArs: number | null = null;
+  let marginInputs: MarginInputs | undefined;
+  let assumptions: ScenarioAssumptions | undefined;
   let cadence: TriScore['cadence'] = null;
   let reach: number | null = null;
   let urgency = 1;
@@ -170,11 +177,17 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       const learned = priors?.[fam];
       // Sin experimentos aún, cae al M0 de la familia (formularios arranca más alto por evidencia CRO).
       const baseRecovery = learned?.recoveryMean ?? recoveryM0(fam);
-      const recFrac = rec.id === 'imp-cot-design' ? baseRecovery : baseRecovery * 0.6;
+      const recMult = rec.id === 'imp-cot-design' ? 1 : 0.6; // producto ataca la misma fuga con menos recuperación
       if (leak > 0) {
+        // La cifra sale de la fórmula compartida (marginFromScenario) con los supuestos del motor;
+        // el usuario puede recalcularla con los suyos en el panel de escenarios (misma fórmula).
+        const asum = engineAssumptions(baseRecovery);
+        marginInputs = { kind: 'leak', leak, recMult };
+        assumptions = asum;
+        marginAtStakeArs = marginFromScenario(marginInputs, asum);
+        const recFrac = baseRecovery * recMult; // recuperable efectivo, para mostrar el desglose
         const recovered = leak * recFrac;
         const capitas = recovered * DATO_CAPITA;
-        marginAtStakeArs = marginFromRecoveredEvents(recovered);
         cadence = 'mensual';
         reach = leak;
         urgency = rec.id === 'imp-cot-design' ? 1.3 : 1.1;
@@ -208,7 +221,9 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
         const gap = Math.max(0, WINRATE_TARGET - h.winRate);
         const extraWon = decided * gap;
         if (extraWon > 0) {
-          marginAtStakeArs = extraWon * ltvArs();
+          marginInputs = { kind: 'winrate', decided, gap };
+          assumptions = engineAssumptions();
+          marginAtStakeArs = marginFromScenario(marginInputs, assumptions);
           cadence = 'acumulado';
           reach = h.lost;
           urgency = 1.2;
@@ -232,7 +247,9 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       if (h?.biggestOpenStage) {
         reach = h.biggestOpenStage.count;
         const wr = h.winRate ?? 0.38;
-        marginAtStakeArs = h.biggestOpenStage.count * wr * ltvArs();
+        marginInputs = { kind: 'stock', stock: h.biggestOpenStage.count, winRate: wr };
+        assumptions = engineAssumptions();
+        marginAtStakeArs = marginFromScenario(marginInputs, assumptions);
         cadence = 'acumulado';
         urgencyReason = 'Media: stock dormido; parte ya está en curso.';
         basis.hubspot = `${num(h.biggestOpenStage.count)} negocios en "${h.biggestOpenStage.label}"`;
@@ -295,7 +312,7 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       : marginAtStakeArs;
   const score = (monthlyValue * confidence * urgency) / effort;
 
-  return { marginAtStakeArs, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason, changeKind, feedsInto };
+  return { marginAtStakeArs, marginInputs, assumptions, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason, changeKind, feedsInto };
 }
 
 function priorityBase(p: Recommendation['priority']): number {

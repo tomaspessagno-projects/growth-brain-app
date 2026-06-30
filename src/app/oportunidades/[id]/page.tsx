@@ -7,6 +7,7 @@ import PageSkeleton from '@/components/PageSkeleton';
 import type { SrcTag } from '@/lib/triangulation/score';
 import { ECON_ASSUMPTIONS } from '@/lib/economics/model';
 import { useAnalytics } from '@/components/AnalyticsProvider';
+import ScenarioPanel from '@/components/ScenarioPanel';
 
 const DISC_LABEL: Record<string, string> = { diseno: 'Diseño', producto: 'Producto', desarrollo: 'Desarrollo', datos: 'Datos' };
 
@@ -105,6 +106,17 @@ export default function OportunidadDetallePage() {
               })}
             </div>
           </Section>
+
+          {/* Tu escenario — ajustar los supuestos y dejar asentado lo que VOS asumís */}
+          {tri.marginInputs && tri.assumptions && tri.marginAtStakeArs != null && (
+            <ScenarioPanel
+              recId={rec.id}
+              inputs={tri.marginInputs}
+              baseAssumptions={tri.assumptions}
+              baseMargin={tri.marginAtStakeArs}
+              cadence={tri.cadence}
+            />
+          )}
 
           {/* De dónde sale cada número */}
           <Section title="De dónde sale cada número (las 3 fuentes)">
