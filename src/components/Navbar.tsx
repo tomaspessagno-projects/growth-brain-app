@@ -8,6 +8,7 @@ import { MVP_MODE, MVP_NAV_PATHS } from '@/lib/mvp';
 
 const NAV_ALL = [
   { name: 'Resumen', path: '/' },
+  { name: 'Embudos', path: '/funnel' },
   { name: 'Oportunidades', path: '/oportunidades' },
   { name: 'Experimentos', path: '/experimentos' },
   { name: 'Aprendizajes', path: '/playbook' },
@@ -22,10 +23,11 @@ function activeKey(pathname: string): string {
   if (pathname === '/') return '/';
   if (pathname.startsWith('/oportunidades')) return '/oportunidades';
   if (pathname.startsWith('/experimentos')) return '/experimentos';
+  if (pathname.startsWith('/funnel')) return '/funnel';
   if (pathname.startsWith('/playbook')) return '/playbook';
   if (pathname.startsWith('/segmentos')) return '/segmentos';
   if (pathname.startsWith('/status')) return '/status';
-  if (pathname.startsWith('/explorador') || pathname.startsWith('/funnel') || pathname.startsWith('/crm') || pathname.startsWith('/economia')) return '/explorador';
+  if (pathname.startsWith('/explorador') || pathname.startsWith('/crm') || pathname.startsWith('/economia')) return '/explorador';
   return '';
 }
 
