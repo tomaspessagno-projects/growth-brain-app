@@ -15,7 +15,7 @@ export interface PipelineStage {
 }
 
 export interface PipelineFunnel {
-  source: 'live' | 'error';
+  source: 'live' | 'error' | 'snapshot';
   pipelineId: string;
   pipelineLabel: string;
   stages: PipelineStage[];
@@ -78,11 +78,30 @@ async function countContacts(): Promise<number | null> {
   }
 }
 
+// SNAPSHOT del pipeline comercial (Retail) — para la SIMULACIÓN: cuando no hay HUBSPOT_TOKEN,
+// el motor corre con estos números (los reales del relevamiento) en vez de quedar vacío. Así la
+// parte Comercial (cierre, stock, oportunidades) se ve igual que el resto, 100% sobre snapshots.
+const SNAPSHOT_PIPELINE: PipelineFunnel = {
+  source: 'snapshot',
+  pipelineId: RETAIL_PIPELINE,
+  pipelineLabel: 'Retail (snapshot)',
+  stages: [
+    { id: 'snap-cotiz', label: 'Cotizacion inicial', order: 1, count: 6800, isClosed: false, probability: 0.2 },
+    { id: 'snap-prop', label: 'Propuesta Enviada', order: 2, count: 13485, isClosed: false, probability: 0.4 },
+    { id: 'snap-nego', label: 'Negociación', order: 3, count: 2900, isClosed: false, probability: 0.6 },
+    { id: 'snap-alta', label: 'Alta de Socio', order: 4, count: 4979, isClosed: true, probability: 1 },
+    { id: 'snap-perd', label: 'Cerrado Perdido', order: 5, count: 7492, isClosed: true, probability: 0 },
+    { id: 'snap-canc', label: 'Cancelado', order: 6, count: 600, isClosed: true, probability: 0 },
+  ],
+  totals: { totalDeals: 36256, won: 4979, lost: 8092, winRate: 4979 / (4979 + 8092), contacts: 250571 },
+  asOf: '2026-06-09',
+};
+
 export async function getRetailPipeline(): Promise<PipelineFunnel> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;
 
   if (!token()) {
-    return errorPayload('Falta HUBSPOT_TOKEN en el entorno.');
+    return SNAPSHOT_PIPELINE; // simulación: sin token, corre con el snapshot comercial
   }
 
   try {

@@ -22,7 +22,9 @@ describe('generateRecommendations — modo snapshot (offline, determinista)', ()
   it('GOLDEN: el ranking y los scores quedan congelados (atrapa regresiones del motor)', async () => {
     const a = await getAnalytics();
     expect(a.source).toBe('snapshot');
-    expect(a.hubspot).toBeNull();
+    // En la SIMULACIÓN, HubSpot también viene de snapshot (Comercial poblado), no null.
+    expect(a.hubspot).not.toBeNull();
+    expect(a.hubspot?.source).toBe('snapshot');
     const recs = generateRecommendations(a);
     expect(recs.length).toBeGreaterThan(0);
     expect(recs.map((r) => ({ id: r.id, score: Math.round(r.tri!.score) }))).toMatchSnapshot();

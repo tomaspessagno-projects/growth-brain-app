@@ -69,7 +69,7 @@ export interface ComputedFunnel {
 }
 
 export interface HubspotSummary {
-  source: 'live' | 'error';
+  source: 'live' | 'error' | 'snapshot';
   totalDeals: number;
   won: number;
   lost: number;
@@ -230,9 +230,9 @@ export async function getAnalytics(from?: string, to?: string): Promise<Analytic
   const openStages = pipe.stages.filter((s) => !s.isClosed);
   const biggestOpen = openStages.length ? openStages.reduce((a, b) => (b.count > a.count ? b : a)) : null;
   const hubspot: HubspotSummary | null =
-    pipe.source === 'live'
+    pipe.source !== 'error'
       ? {
-          source: 'live',
+          source: pipe.source, // 'live' o 'snapshot' (simulación)
           totalDeals: pipe.totals.totalDeals,
           won: pipe.totals.won,
           lost: pipe.totals.lost,

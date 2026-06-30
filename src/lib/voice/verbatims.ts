@@ -36,7 +36,7 @@ export interface ChannelVoice {
 }
 export interface Voice {
   asOf: string;
-  source: 'live' | 'error';
+  source: 'live' | 'error' | 'snapshot';
   total: number;
   withScore: number;
   totalDetractors: number;
@@ -71,6 +71,54 @@ const DRIVERS: { label: string; re: RegExp }[] = [
   { label: 'Paciencia / dedicación', re: /paciencia|dedicaci|atent/i },
 ];
 
+// SNAPSHOT de la voz del cliente (NPS) — para la SIMULACIÓN: sin HUBSPOT_TOKEN, el motor corre con
+// los hallazgos reales del relevamiento (el seguimiento como #1 motivo de detracción, sistémico).
+const SNAPSHOT_VOICE: Voice = {
+  asOf: '2026-06-09',
+  source: 'snapshot',
+  total: 733,
+  withScore: 400,
+  totalDetractors: 260,
+  promoters: 407,
+  themes: [
+    {
+      key: 'seguimiento', label: 'Seguimiento lento / sin respuesta', n: 93, avgScore: 2.6,
+      detractorPct: 0.78, detractorShare: 0.35, promoterPct: 0.05,
+      topChannels: [{ canal: 'REDES', n: 28 }, { canal: 'WEB', n: 24 }, { canal: 'CHENGO', n: 22 }, { canal: 'WhatsApp', n: 19 }],
+      systemic: true,
+      samples: ['Pedí la propuesta y nadie me volvió a contestar.', 'Hace una semana que sigo esperando que me llamen.', 'Clavaron el visto y no respondieron más.'],
+      isProblem: true,
+    },
+    {
+      key: 'precio', label: 'Precio / cuota', n: 41, avgScore: 4.2,
+      detractorPct: 0.55, detractorShare: 0.12, promoterPct: 0.1,
+      topChannels: [{ canal: 'WEB', n: 20 }, { canal: 'REDES', n: 12 }],
+      systemic: false,
+      samples: ['La cuota me quedó carísima.', 'Aumentó mucho respecto de lo cotizado.'],
+      isProblem: true,
+    },
+    {
+      key: 'positivo', label: 'Trato positivo', n: 320, avgScore: 9.3,
+      detractorPct: 0, detractorShare: 0, promoterPct: 0.9,
+      topChannels: [], systemic: false,
+      samples: ['Excelente atención, muy clara.', 'El asesor fue súper profesional.'],
+      isProblem: false,
+    },
+  ],
+  drivers: [
+    { label: 'Claridad / buena info', n: 186 },
+    { label: 'Profesionalismo / atención', n: 135 },
+    { label: 'Amabilidad / trato', n: 78 },
+    { label: 'Rapidez', n: 40 },
+    { label: 'Paciencia / dedicación', n: 33 },
+  ],
+  byChannel: [
+    { canal: 'REDES', n: 60, avgScore: 6.8, detractorPct: 0.4, topProblem: 'Seguimiento lento / sin respuesta' },
+    { canal: 'WEB', n: 120, avgScore: 7.6, detractorPct: 0.28, topProblem: 'Precio / cuota' },
+    { canal: 'CHENGO', n: 45, avgScore: 7.1, detractorPct: 0.33, topProblem: 'Seguimiento lento / sin respuesta' },
+  ],
+};
+
 let cache: { at: number; data: Voice } | null = null;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -89,7 +137,7 @@ interface Row {
 export async function getVoice(): Promise<Voice> {
   if (cache && Date.now() - cache.at < TTL) return cache.data;
   const token = process.env.HUBSPOT_TOKEN;
-  if (!token) return err('Falta HUBSPOT_TOKEN.');
+  if (!token) return SNAPSHOT_VOICE; // simulación: sin token, corre con el snapshot de NPS
   const H = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   try {

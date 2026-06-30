@@ -11,16 +11,28 @@ exports[`generateRecommendations — modo snapshot (offline, determinista) > GOL
     "score": 13585683,
   },
   {
-    "id": "dead",
-    "score": 6861456,
+    "id": "hs-stock",
+    "score": 6741920,
   },
   {
-    "id": "live",
-    "score": 4901040,
+    "id": "hs-loop",
+    "score": 5763623,
+  },
+  {
+    "id": "dead",
+    "score": 4116874,
   },
   {
     "id": "channel-best",
     "score": 3080000,
+  },
+  {
+    "id": "live",
+    "score": 2940624,
+  },
+  {
+    "id": "hs-winrate",
+    "score": 1422146,
   },
   {
     "id": "channel-junk",
@@ -53,6 +65,10 @@ exports[`generateRecommendations — modo snapshot (offline, determinista) > GOL
   {
     "id": "imp-emp-design",
     "score": 52500,
+  },
+  {
+    "id": "hs-cancel",
+    "score": 37500,
   },
   {
     "id": "imp-emp-dev",

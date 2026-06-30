@@ -57,7 +57,7 @@ const REC_PLAYBOOK_MAP: Record<string, string> = {
 // Recomendaciones que usan la data comercial de HubSpot (pipeline de deals).
 function hubspotRecommendations(a: Analytics): Recommendation[] {
   const h = a.hubspot;
-  if (!h || h.source !== 'live') return [];
+  if (!h || h.source === 'error') return []; // genera con datos live o snapshot (simulación)
   const out: Recommendation[] = [];
 
   out.push({
@@ -97,7 +97,7 @@ const pc = (n: number, d = 0) => `${(n * 100).toFixed(d)}%`;
 
 // Oportunidades nacidas de la VOZ DEL CLIENTE (verbatims NPS): los temas-problema más agudos.
 function voiceRecommendations(voice?: Voice): Recommendation[] {
-  if (!voice || voice.source !== 'live') return [];
+  if (!voice || voice.source === 'error') return []; // genera con datos live o snapshot (simulación)
   const problems = voice.themes.filter((t) => t.isProblem && t.n >= 10 && t.detractorPct >= 0.4);
   return problems.slice(0, 2).map((t) => {
     const tie = t.key === 'seguimiento' ? ' Coincide con los ~13.485 negocios atascados en "Propuesta Enviada": nadie hace el seguimiento.' : '';
