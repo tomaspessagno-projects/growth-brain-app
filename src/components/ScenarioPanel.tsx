@@ -30,28 +30,39 @@ const Res = ({ children }: { children: React.ReactNode }) => <b style={{ color: 
 function Narrative({ inp, a }: { inp: MarginInputs; a: ScenarioAssumptions }) {
   const ltv = ltvFromScenario(a.retentionMonths, a.marginPct);
   const margin = marginFromScenario(inp, a);
+  // El LTV (valor de vida) es por TODA la permanencia, NO por mes. Se aclara explícito porque es lo
+  // que más confunde: $388.800 = $90.000/mes × 24 meses × 18% de margen.
   const ltvSentence = (
     <>
-      Cada socio deja <Res>{fmtArs(ltv)}</Res> de margen en toda su permanencia (su “valor de vida”):
-      paga <Sup>{fmtArs(ARPU_MENSUAL_ARS)}/mes</Sup>, se queda en promedio <Sup>{a.retentionMonths} meses</Sup>, y de esa
+      Cada socio deja <Res>{fmtArs(ltv)}</Res> de margen en <b>toda su permanencia</b> —su “valor de vida”, <b>no por mes</b>—:
+      paga <Sup>{fmtArs(ARPU_MENSUAL_ARS)}/mes</Sup> durante ~<Sup>{a.retentionMonths} meses</Sup> que se queda, y de esa
       plata el <Sup>{pct(a.marginPct)}</Sup> es margen (lo que queda después de costos) → {fmtArs(ARPU_MENSUAL_ARS)} × {a.retentionMonths} × {pct(a.marginPct)} = <Res>{fmtArs(ltv)}</Res>.
     </>
   );
   const p: React.CSSProperties = { fontSize: 13.5, lineHeight: 1.9, color: '#3a4a5c', margin: 0 };
+  const ojoBox: React.CSSProperties = { marginTop: 10, padding: '10px 12px', background: 'rgba(154,106,0,0.08)', border: '1px solid rgba(154,106,0,0.18)', borderRadius: 8, fontSize: 12.5, lineHeight: 1.6, color: '#3a4a5c' };
 
   if (inp.kind === 'leak') {
     const recovered = (inp.leak ?? 0) * a.recovery * (inp.recMult ?? 1);
     const capitas = recovered * a.datoCapita;
+    const monthlyMargin = capitas * ARPU_MENSUAL_ARS * a.marginPct; // margen recurrente que SÍ entra por mes
     return (
-      <p style={p}>
-        Cada mes, <Med>{fmtN(inp.leak ?? 0)} personas</Med> llegan a este paso y se van sin completarlo <i>(medido en Mixpanel)</i>.{' '}
-        Si la mejora recupera el <Sup>{pct(a.recovery)}</Sup> de ellas{(inp.recMult ?? 1) !== 1 ? <> (y como esta variante ataca la misma fuga con menos fuerza, ×{inp.recMult})</> : null} <i>(tu supuesto — editalo abajo)</i>,{' '}
-        son <Res>{fmtN(recovered)} personas</Res> que sí completan los datos.{' '}
-        Pero no todas se vuelven socias: asumimos que <Sup>{pct(a.datoCapita)}</Sup> de los datos capturados termina firmando <i>(supuesto)</i> → <Res>{fmtN(capitas)} socios nuevos</Res> por mes.{' '}
-        {ltvSentence}{' '}
-        <br />
-        <span style={{ fontSize: 15 }}>En total: <Res>{fmtN(capitas)} socios × {fmtArs(ltv)} = {fmtArsShort(margin)} / mes</Res>.</span>
-      </p>
+      <>
+        <p style={p}>
+          Cada mes, <Med>{fmtN(inp.leak ?? 0)} personas</Med> llegan a este paso y se van sin completarlo <i>(medido en Mixpanel)</i>.{' '}
+          Si la mejora recupera el <Sup>{pct(a.recovery)}</Sup> de ellas{(inp.recMult ?? 1) !== 1 ? <> (y como esta variante ataca la misma fuga con menos fuerza, ×{inp.recMult})</> : null} <i>(tu supuesto — editalo abajo)</i>,{' '}
+          son <Res>{fmtN(recovered)} personas</Res> que sí completan los datos.{' '}
+          Pero no todas se vuelven socias: asumimos que <Sup>{pct(a.datoCapita)}</Sup> de los datos capturados termina firmando <i>(supuesto)</i> → <Res>{fmtN(capitas)} socios nuevos</Res> por mes.{' '}
+          {ltvSentence}{' '}
+          <br />
+          <span style={{ fontSize: 15 }}>Valor de vida del cohorte: <Res>{fmtN(capitas)} socios × {fmtArs(ltv)} = {fmtArsShort(margin)}</Res>.</span>
+        </p>
+        <div style={ojoBox}>
+          ⚠️ <b>Cuidado con el “por mes”:</b> esos <b>{fmtArsShort(margin)}</b> son el <b>valor de por vida</b> de los {fmtN(capitas)} socios que sumás en un mes — <b>no</b> es plata que entre todos los meses.{' '}
+          Lo que entra por mes de <b>margen recurrente</b> es {fmtN(capitas)} socios × {fmtArs(ARPU_MENSUAL_ARS)} × {pct(a.marginPct)} ≈ <Res>{fmtArsShort(monthlyMargin)} / mes</Res>{' '}
+          (y se acumula: el mes siguiente sumás otros {fmtN(capitas)}, y así).
+        </div>
+      </>
     );
   }
   if (inp.kind === 'winrate') {
@@ -62,7 +73,7 @@ function Narrative({ inp, a }: { inp: MarginInputs; a: ScenarioAssumptions }) {
         La tasa de cierre está <Med>{pct(inp.gap ?? 0)}</Med> por debajo de la meta: cerrar esa brecha equivale a <Res>{fmtN(extra)} socios</Res> más.{' '}
         {ltvSentence}{' '}
         <br />
-        <span style={{ fontSize: 15 }}>En total: <Res>{fmtN(extra)} × {fmtArs(ltv)} = {fmtArsShort(margin)}</Res> (acumulado, stock histórico — no mensual).</span>
+        <span style={{ fontSize: 15 }}>En total: <Res>{fmtN(extra)} × {fmtArs(ltv)} = {fmtArsShort(margin)}</Res> de valor de vida (es un stock histórico — no plata mensual).</span>
       </p>
     );
   }
@@ -73,7 +84,7 @@ function Narrative({ inp, a }: { inp: MarginInputs; a: ScenarioAssumptions }) {
       Si se cierran al <Med>{pct(inp.winRate ?? 0)}</Med> esperado, son <Res>{fmtN(socios)} socios</Res>.{' '}
       {ltvSentence}{' '}
       <br />
-      <span style={{ fontSize: 15 }}>En total: <Res>{fmtN(socios)} × {fmtArs(ltv)} = {fmtArsShort(margin)}</Res> (acumulado).</span>
+      <span style={{ fontSize: 15 }}>En total: <Res>{fmtN(socios)} × {fmtArs(ltv)} = {fmtArsShort(margin)}</Res> de valor de vida (stock — no plata mensual).</span>
     </p>
   );
 }

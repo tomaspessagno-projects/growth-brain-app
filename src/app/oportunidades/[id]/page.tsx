@@ -75,7 +75,7 @@ export default function OportunidadDetallePage() {
           {moneyRec ? (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 34, fontWeight: 700, color: '#002D5F', fontFamily: 'Satoshi, var(--font-satoshi), sans-serif' }}>{fmtArsShort(tri.marginAtStakeArs!)}</span>
-              <span style={{ fontSize: 14, color: '#5b6b7f' }}>en juego {tri.cadence === 'acumulado' ? '· acumulado (stock)' : '/ mes'}{tri.reach != null && ` · alcance ${tri.reach.toLocaleString('es-AR')}`}</span>
+              <span style={{ fontSize: 14, color: '#5b6b7f' }}>de valor de vida (LTV) {tri.cadence === 'acumulado' ? '· stock acumulado' : '· por mes de adquisición'}{tri.reach != null && ` · alcance ${tri.reach.toLocaleString('es-AR')}`}</span>
             </div>
           ) : (
             <div>
