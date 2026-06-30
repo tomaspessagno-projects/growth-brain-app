@@ -9,6 +9,7 @@ import { mapOppToFunnel, buildExperimentFromOpp } from '@/lib/experiments/fromOp
 import { upsertExperiment } from '@/lib/store/experiments';
 import { loadStatuses, setOppStatus } from '@/lib/store/oppStatus';
 import { useAnalytics } from '@/components/AnalyticsProvider';
+import { MVP_MODE } from '@/lib/mvp';
 
 function fmtArsShort(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)} mil M`;
@@ -59,16 +60,19 @@ function TriBlock({ tri }: { tri: TriScore }) {
         {tri.basis.hubspot && <SrcChip color="#ff7a59" label="HubSpot" text={tri.basis.hubspot} />}
         {tri.basis.pelg && <SrcChip color="#1689C4" label="PELG" text={tri.basis.pelg} />}
       </div>
-      <div style={{ fontSize: 11, color: '#8696a7', marginTop: 6 }}>
-        confianza {Math.round(tri.confidence * 100)}% · esfuerzo {tri.effort}/3 · urgencia ×{tri.urgency}
-      </div>
-      {tri.band && (
+      {!MVP_MODE && (
+        <div style={{ fontSize: 11, color: '#8696a7', marginTop: 6 }}>
+          confianza {Math.round(tri.confidence * 100)}% · esfuerzo {tri.effort}/3 · urgencia ×{tri.urgency}
+        </div>
+      )}
+      {!MVP_MODE && tri.band && (
         <div style={{ fontSize: 11.5, color: '#3a4a5c', marginTop: 6 }}>
           🎲 Rango P10–P90: <b>{fmtArsShort(tri.band.p10)} – {fmtArsShort(tri.band.p90)}</b>
           {tri.band.robust ? ' · robusto a los supuestos' : ` · sensible sobre todo a "${tri.band.dominantDriver}"`}
         </div>
       )}
-      {tri.honesty.map((h, i) => (
+      {/* MVP: en la tarjeta, solo la primera salvedad (el resto, en el detalle). */}
+      {(MVP_MODE ? tri.honesty.slice(0, 1) : tri.honesty).map((h, i) => (
         <div key={i} style={{ fontSize: 11, color: '#9a6a00', marginTop: 4, display: 'flex', gap: 5 }}>
           <span>⚠</span><span>{h}</span>
         </div>

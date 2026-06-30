@@ -8,6 +8,7 @@ import type { SrcTag } from '@/lib/triangulation/score';
 import { ECON_ASSUMPTIONS } from '@/lib/economics/model';
 import { useAnalytics } from '@/components/AnalyticsProvider';
 import ScenarioPanel from '@/components/ScenarioPanel';
+import { MVP_MODE } from '@/lib/mvp';
 
 const DISC_LABEL: Record<string, string> = { diseno: 'Diseño', producto: 'Producto', desarrollo: 'Desarrollo', datos: 'Datos' };
 
@@ -142,7 +143,8 @@ export default function OportunidadDetallePage() {
             </Section>
           )}
 
-          {/* Cómo se prioriza */}
+          {/* Cómo se prioriza — oculto en MVP (detalle interno del ranking) */}
+          {!MVP_MODE && (
           <Section title="Cómo se prioriza (score)">
             <div style={{ fontSize: 12.5, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>score = margen × confianza × urgencia ÷ esfuerzo (lo acumulado se prorratea a mensual)</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
@@ -163,9 +165,10 @@ export default function OportunidadDetallePage() {
               </div>
             </div>
           </Section>
+          )}
 
-          {/* Rango probabilístico (Monte Carlo) */}
-          {tri.band && (
+          {/* Rango probabilístico (Monte Carlo) — oculto en MVP */}
+          {!MVP_MODE && tri.band && (
             <Section title="Rango probabilístico (Monte Carlo · Capa 3)">
               <div style={{ fontSize: 12.5, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>
                 Los supuestos son inciertos: se muestrean {tri.band.n.toLocaleString('es-AR')} escenarios → la cifra puntual es el medio de un rango, no una certeza.

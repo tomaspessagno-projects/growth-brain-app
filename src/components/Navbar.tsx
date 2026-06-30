@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
 import NavRangePicker from '@/components/NavRangePicker';
+import { MVP_MODE, MVP_NAV_PATHS } from '@/lib/mvp';
 
-const NAV = [
+const NAV_ALL = [
   { name: 'Resumen', path: '/' },
   { name: 'Oportunidades', path: '/oportunidades' },
   { name: 'Experimentos', path: '/experimentos' },
@@ -14,6 +15,8 @@ const NAV = [
   { name: 'Explorador', path: '/explorador' },
   { name: 'Status', path: '/status' },
 ];
+// MVP: solo el núcleo. Poniendo MVP_MODE=false vuelven todas.
+const NAV = MVP_MODE ? NAV_ALL.filter((n) => MVP_NAV_PATHS.has(n.path)) : NAV_ALL;
 
 function activeKey(pathname: string): string {
   if (pathname === '/') return '/';
