@@ -90,24 +90,7 @@ export default function OportunidadDetallePage() {
 
       {tri && (
         <>
-          {/* Cómo se calcula */}
-          <Section title="Cómo se calcula">
-            <div style={{ fontSize: 13, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>{tri.formula}</div>
-            <div className="glass-panel" style={{ padding: '4px 0', overflow: 'hidden' }}>
-              {tri.breakdown.map((row, i) => {
-                const isTotal = i === tri.breakdown.length - 1;
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderTop: i ? '1px solid rgba(0,45,95,0.06)' : 'none', background: isTotal ? 'rgba(22,137,196,0.06)' : 'transparent' }}>
-                    <span style={{ flex: 1, fontSize: 12.5, color: '#3a4a5c', fontWeight: isTotal ? 700 : 400 }}>{row.label}</span>
-                    <span style={{ fontSize: 12.5, color: isTotal ? '#002D5F' : '#3a4a5c', fontWeight: isTotal ? 700 : 500, fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
-                    {row.src && <SrcTagChip src={row.src} />}
-                  </div>
-                );
-              })}
-            </div>
-          </Section>
-
-          {/* Tu escenario — ajustar los supuestos y dejar asentado lo que VOS asumís */}
+          {/* Tu escenario — para recos con $: explica de dónde sale el número y deja editarlo */}
           {tri.marginInputs && tri.assumptions && tri.marginAtStakeArs != null && (
             <ScenarioPanel
               recId={rec.id}
@@ -116,6 +99,25 @@ export default function OportunidadDetallePage() {
               baseMargin={tri.marginAtStakeArs}
               cadence={tri.cadence}
             />
+          )}
+
+          {/* Cómo se calcula — tabla del motor. Solo si NO hay panel de escenario (que ya lo explica mejor). */}
+          {!tri.marginInputs && (
+            <Section title="Cómo se calcula">
+              <div style={{ fontSize: 13, color: '#3a4a5c', fontStyle: 'italic', marginBottom: 10 }}>{tri.formula}</div>
+              <div className="glass-panel" style={{ padding: '4px 0', overflow: 'hidden' }}>
+                {tri.breakdown.map((row, i) => {
+                  const isTotal = i === tri.breakdown.length - 1;
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderTop: i ? '1px solid rgba(0,45,95,0.06)' : 'none', background: isTotal ? 'rgba(22,137,196,0.06)' : 'transparent' }}>
+                      <span style={{ flex: 1, fontSize: 12.5, color: '#3a4a5c', fontWeight: isTotal ? 700 : 400 }}>{row.label}</span>
+                      <span style={{ fontSize: 12.5, color: isTotal ? '#002D5F' : '#3a4a5c', fontWeight: isTotal ? 700 : 500, fontVariantNumeric: 'tabular-nums' }}>{row.value}</span>
+                      {row.src && <SrcTagChip src={row.src} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
           )}
 
           {/* De dónde sale cada número */}
@@ -127,8 +129,8 @@ export default function OportunidadDetallePage() {
             </div>
           </Section>
 
-          {/* Supuestos */}
-          {moneyRec && (
+          {/* Supuestos — solo si NO hay panel de escenario (el panel ya los muestra con sus valores reales y editables) */}
+          {moneyRec && !tri.marginInputs && (
             <Section title="Supuestos detrás del número (no medidos)">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 {Object.values(ECON_ASSUMPTIONS).map((as) => (
