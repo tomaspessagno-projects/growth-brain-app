@@ -58,6 +58,38 @@ function buildRows(inp: MarginInputs, a: ScenarioAssumptions): Row[] {
   ];
 }
 
+// Campo de número LIBRE: el usuario escribe el valor a su antojo (sin tope de slider). Para
+// fracciones se escribe el porcentaje (ej. 12,5 → 12,5%); se respeta lo tipeado mientras edita y
+// solo se re-sincroniza si el valor cambia desde afuera (un preset). Tope sano: una fracción ≤ 100%.
+function NumField({ value, unit, onChange }: { value: number; unit: 'pct' | 'months'; onChange: (n: number) => void }) {
+  const toText = (v: number) => (unit === 'pct' ? String(+(v * 100).toFixed(2)) : String(Math.round(v)));
+  const [text, setText] = useState(toText(value));
+  useEffect(() => {
+    const parsed = parseFloat(text.replace(',', '.'));
+    const cur = !Number.isFinite(parsed) ? NaN : unit === 'pct' ? Math.max(0, Math.min(100, parsed)) / 100 : Math.max(1, Math.round(parsed));
+    if (!Number.isFinite(cur) || Math.abs(cur - value) > 1e-9) setText(toText(value));
+    // solo re-sincroniza ante cambios EXTERNOS del valor (presets / carga); no pisa lo que tipeás.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  const commit = (s: string) => {
+    setText(s);
+    const n = parseFloat(s.replace(',', '.'));
+    if (!Number.isFinite(n)) return; // dejá tipear "0.", "," etc. sin romper
+    onChange(unit === 'pct' ? Math.max(0, Math.min(100, n)) / 100 : Math.max(1, Math.round(n)));
+  };
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <input
+        value={text}
+        onChange={(e) => commit(e.target.value)}
+        inputMode="decimal"
+        style={{ width: 88, textAlign: 'right', fontSize: 16, fontWeight: 800, color: '#002D5F', fontFamily: 'Satoshi, sans-serif', padding: '6px 9px', border: '1px solid rgba(0,45,95,0.2)', borderRadius: 8, background: '#fff' }}
+      />
+      <span style={{ fontSize: 13, color: '#5b6b7f', fontWeight: 600, minWidth: 46 }}>{unit === 'pct' ? '%' : 'meses'}</span>
+    </span>
+  );
+}
+
 export default function ScenarioPanel({
   recId, inputs, baseAssumptions, baseMargin, cadence,
 }: {
@@ -139,22 +171,17 @@ export default function ScenarioPanel({
         ))}
       </div>
 
-      {/* Sliders de supuestos */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
+      {/* Supuestos — número libre: poné el valor a tu antojo */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
         {editable.map((key) => {
           const m = ASSUMPTION_META[key];
-          const val = a[key];
-          const display = m.unit === 'months' ? `${val} meses` : pct(val, m.step < 0.01 ? 1 : 0);
           return (
             <div key={key} className="glass-panel" style={{ padding: '12px 14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#102A45' }}>{m.label}</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#002D5F', fontFamily: 'Satoshi, sans-serif' }}>{display}</span>
+                <NumField value={a[key]} unit={m.unit} onChange={(v) => set(key, v)} />
               </div>
-              <input type="range" min={m.min} max={m.max} step={m.step} value={val}
-                onChange={(e) => set(key, parseFloat(e.target.value))}
-                style={{ width: '100%', accentColor: '#1689C4' }} />
-              <div style={{ fontSize: 11, color: '#8696a7', lineHeight: 1.45, marginTop: 4 }}>{m.note}</div>
+              <div style={{ fontSize: 11, color: '#8696a7', lineHeight: 1.45, marginTop: 6 }}>{m.note}</div>
             </div>
           );
         })}
