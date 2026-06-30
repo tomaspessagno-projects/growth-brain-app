@@ -12,9 +12,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
 
-  // Bypass de autenticación SOLO para desarrollo local (NEXT_PUBLIC_DEV_BYPASS_AUTH=true).
-  // Permite ver la herramienta en localhost sin login de Supabase. Desactivar en prod.
-  const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
+  // Bypass de autenticación para DESARROLLO LOCAL: con `npm run dev` (NODE_ENV !== 'production')
+  // entra directo, sin login de Supabase y sin tener que tocar ningún archivo. En producción
+  // (Vercel, NODE_ENV=production) el login SIEMPRE queda activo. La env var lo fuerza si hiciera falta.
+  const DEV_BYPASS = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
 
   const isMedicus = (email?: string) => email?.toLowerCase().endsWith('@medicus.com.ar');
 

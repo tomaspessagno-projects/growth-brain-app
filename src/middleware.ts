@@ -10,7 +10,9 @@ export const config = { matcher: '/api/:path*' };
 const unauthorized = (msg: string, status = 401) => NextResponse.json({ error: msg }, { status });
 
 export async function middleware(req: NextRequest) {
-  if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') return NextResponse.next();
+  // En desarrollo local (npm run dev) se saltea el gate para poder ver la tool sin login.
+  // En producción (NODE_ENV=production) el gate SIEMPRE corre.
+  if (process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') return NextResponse.next();
 
   // El cron diario se autentica con CRON_SECRET en su propia ruta (no con la cookie de Supabase).
   if (req.nextUrl.pathname.startsWith('/api/cron')) return NextResponse.next();
