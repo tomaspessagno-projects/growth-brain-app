@@ -7,7 +7,6 @@
 import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { ARPU_MENSUAL_ARS } from '../mixpanel/snapshot';
-import { WINRATE_TARGET } from '../mixpanel/benchmarks';
 import { recFamily, recoveryM0, type PriorMap } from './priors';
 
 export interface MarginBand {
@@ -54,8 +53,6 @@ type Triple = [number, number, number]; // [low, mode, high]
 interface Ranges {
   recovery: Triple; // fracción de fuga recuperada
   datoCapita: Triple; // dato del cotizador → cápita
-  retention: Triple; // permanencia (meses)
-  margin: Triple; // margen de contribución
 }
 
 // Rangos de incertidumbre centrados en el supuesto (o en el prior aprendido si existe).
@@ -65,76 +62,41 @@ function rangesFor(rec: Recommendation, priors?: PriorMap): Ranges {
   return {
     recovery: [Math.max(0.05, recBase * 0.6), recBase, Math.min(0.9, recBase * 1.5)],
     datoCapita: [0.04, 0.06, 0.08], // el supuesto 6% ± banda (rango del brief del cruce)
-    retention: [18, 24, 30],
-    margin: [0.14, 0.18, 0.22],
   };
 }
 
-type Kind = 'leak' | 'winrate' | 'stock';
-function kindOf(rec: Recommendation): Kind | null {
-  if (rec.id === 'imp-cot-design' || rec.id === 'imp-cot-product') return 'leak';
-  // channel-best ya NO tiene margen cuantificado (depende de presupuesto incremental + CPL por
-  // canal, no medido) → no se simula banda para no inflar una falsa expectativa.
-  if (rec.id === 'hs-winrate') return 'winrate';
-  if (rec.id === 'hs-stock') return 'stock';
-  return null;
+// Solo la fuga del cotizador tiene supuestos INCIERTOS en el ingreso mensual (cuántos recuperás y
+// cuántos firman). winrate/stock salen de datos medidos × cuota → no hay incertidumbre que muestrear.
+function isLeak(rec: Recommendation): boolean {
+  return rec.id === 'imp-cot-design' || rec.id === 'imp-cot-product';
 }
 
-interface Sample {
-  rec: number;
-  dc: number;
-  ret: number;
-  mg: number;
-}
-
+interface Sample { rec: number; dc: number }
 const DRIVER_LABEL: Record<keyof Sample, string> = {
   rec: 'recuperable de la fuga',
   dc: 'dato → cápita',
-  ret: 'permanencia',
-  mg: 'margen de contribución',
 };
 
 export function simulateMargin(rec: Recommendation, a: Analytics, priors?: PriorMap, N = 2000): MarginBand | null {
-  const kind = kindOf(rec);
-  if (!kind) return null;
-
+  if (!isLeak(rec)) return null;
   const cot = a.funnels.find((f) => f.id === 'cotizador');
-  const h = a.hubspot;
-  // Inputs base de cada fuente (Mixpanel/HubSpot) — NO inciertos: son data medida.
   const leak = cot?.leakDropCount ?? 0;
-  const decided = h ? h.won + h.lost : 0;
-  const gap = h && h.winRate != null ? Math.max(0, WINRATE_TARGET - h.winRate) : 0;
-  const stock = h?.biggestOpenStage?.count ?? 0;
-  const wr = h?.winRate ?? 0.38;
+  if (leak <= 0) return null;
   const recMult = rec.id === 'imp-cot-product' ? 0.6 : 1;
 
   const r = rangesFor(rec, priors);
-  const ltv = (ret: number, mg: number) => ARPU_MENSUAL_ARS * ret * mg;
-  const margin = (s: Sample): number => {
-    switch (kind) {
-      case 'leak':
-        return leak * (s.rec * recMult) * s.dc * ltv(s.ret, s.mg);
-      case 'winrate':
-        return decided * gap * ltv(s.ret, s.mg); // acumulado
-      case 'stock':
-        return stock * wr * ltv(s.ret, s.mg); // acumulado
-    }
-  };
-
-  // Qué inputs varían según el tipo (recovery y dato→cápita solo en las fugas del cotizador).
-  const variesRec = kind === 'leak';
-  const variesDc = kind === 'leak';
+  // INGRESO NUEVO POR MES = fuga × recuperable × factor × dato→cápita × cuota mensual.
+  const revenue = (s: Sample): number => leak * (s.rec * recMult) * s.dc * ARPU_MENSUAL_ARS;
 
   const draw = rng(hashSeed(rec.id));
   const margins: number[] = [];
   for (let i = 0; i < N; i++) {
-    const s: Sample = {
-      rec: variesRec ? tri(draw(), r.recovery[0], r.recovery[1], r.recovery[2]) : 1,
-      dc: variesDc ? tri(draw(), r.datoCapita[0], r.datoCapita[1], r.datoCapita[2]) : 1,
-      ret: tri(draw(), r.retention[0], r.retention[1], r.retention[2]),
-      mg: tri(draw(), r.margin[0], r.margin[1], r.margin[2]),
-    };
-    margins.push(margin(s));
+    margins.push(
+      revenue({
+        rec: tri(draw(), r.recovery[0], r.recovery[1], r.recovery[2]),
+        dc: tri(draw(), r.datoCapita[0], r.datoCapita[1], r.datoCapita[2]),
+      }),
+    );
   }
   margins.sort((x, y) => x - y);
   const mean = margins.reduce((x, y) => x + y, 0) / N;
@@ -142,22 +104,13 @@ export function simulateMargin(rec: Recommendation, a: Analytics, priors?: Prior
   const p50 = quantile(margins, 0.5);
   const p90 = quantile(margins, 0.9);
 
-  // Sensibilidad OAT (one-at-a-time): qué input, movido de low a high (el resto en su modo),
-  // produce el mayor swing del margen. Ese es el supuesto del que más depende la cifra.
-  const base: Sample = { rec: r.recovery[1], dc: r.datoCapita[1], ret: r.retention[1], mg: r.margin[1] };
-  const keys: (keyof Sample)[] = [
-    ...(variesRec ? (['rec'] as const) : []),
-    ...(variesDc ? (['dc'] as const) : []),
-    'ret',
-    'mg',
-  ];
-  const lohi: Record<keyof Sample, Triple> = { rec: r.recovery, dc: r.datoCapita, ret: r.retention, mg: r.margin };
-  let dominant = keys[0];
+  // Sensibilidad OAT: qué supuesto, de low a high (el otro en su modo), mueve más la cifra.
+  const base: Sample = { rec: r.recovery[1], dc: r.datoCapita[1] };
+  const lohi: Record<keyof Sample, Triple> = { rec: r.recovery, dc: r.datoCapita };
+  let dominant: keyof Sample = 'rec';
   let maxSwing = -1;
-  for (const k of keys) {
-    const lo = { ...base, [k]: lohi[k][0] };
-    const hi = { ...base, [k]: lohi[k][2] };
-    const swing = Math.abs(margin(hi) - margin(lo));
+  for (const k of ['rec', 'dc'] as (keyof Sample)[]) {
+    const swing = Math.abs(revenue({ ...base, [k]: lohi[k][2] }) - revenue({ ...base, [k]: lohi[k][0] }));
     if (swing > maxSwing) {
       maxSwing = swing;
       dominant = k;

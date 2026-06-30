@@ -27,6 +27,27 @@ export interface ScenarioAssumptions {
   marginPct: number; // margen de contribución (LTV)
 }
 
+// Socios nuevos (cápitas) que trae la oportunidad: el final de la cadena del funnel.
+//   leak    → fuga × recuperable × factor × dato→cápita
+//   winrate → negocios decididos × brecha a la meta
+//   stock   → negocios atascados × cierre esperado
+export function convertedSocios(inp: MarginInputs, a: ScenarioAssumptions): number {
+  switch (inp.kind) {
+    case 'leak':
+      return (inp.leak ?? 0) * a.recovery * (inp.recMult ?? 1) * a.datoCapita;
+    case 'winrate':
+      return (inp.decided ?? 0) * (inp.gap ?? 0);
+    case 'stock':
+      return (inp.stock ?? 0) * (inp.winRate ?? 0);
+  }
+}
+
+// LA CIFRA PRINCIPAL: ingreso nuevo POR MES = socios nuevos × la cuota mensual ($90.000).
+// Es facturación recurrente: esos socios pagan todos los meses que siguen activos.
+export function monthlyRevenueFromScenario(inp: MarginInputs, a: ScenarioAssumptions): number {
+  return convertedSocios(inp, a) * ARPU_MENSUAL_ARS;
+}
+
 export function ltvFromScenario(retentionMonths: number, marginPct: number): number {
   return ARPU_MENSUAL_ARS * retentionMonths * marginPct;
 }
@@ -56,11 +77,12 @@ export function engineAssumptions(recovery?: number): ScenarioAssumptions {
   };
 }
 
-// Qué supuestos afectan la cifra de cada tipo (los demás no se muestran como editables).
+// Qué supuestos editás para mover el INGRESO MENSUAL. Solo aplican a la fuga del cotizador
+// (cuántos recuperás y cuántos de esos firman). En winrate/stock los socios salen de datos medidos.
 export const EDITABLE_BY_KIND: Record<MarginKind, (keyof ScenarioAssumptions)[]> = {
-  leak: ['recovery', 'datoCapita', 'retentionMonths', 'marginPct'],
-  winrate: ['retentionMonths', 'marginPct'],
-  stock: ['retentionMonths', 'marginPct'],
+  leak: ['recovery', 'datoCapita'],
+  winrate: [],
+  stock: [],
 };
 
 export interface AssumptionMeta {

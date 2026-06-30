@@ -36,10 +36,10 @@ describe('simulateMargin — banda probabilística (Monte Carlo seedeado)', () =
     expect(simulateMargin(rec('channel-best', 'datos'), makeAnalytics())).toBeNull();
   });
 
-  it('cubre los tipos comerciales (winrate / stock) con HubSpot vivo', () => {
+  it('winrate / stock NO tienen banda: su ingreso/mes sale de datos medidos (sin supuesto incierto)', () => {
     const a = makeAnalytics({ hubspot: liveHubspot() });
-    expect(simulateMargin(rec('hs-winrate', 'producto'), a)).not.toBeNull();
-    expect(simulateMargin(rec('hs-stock', 'producto'), a)).not.toBeNull();
+    expect(simulateMargin(rec('hs-winrate', 'producto'), a)).toBeNull();
+    expect(simulateMargin(rec('hs-stock', 'producto'), a)).toBeNull();
   });
 
   it('un prior aprendido más alto desplaza la mediana hacia arriba', () => {

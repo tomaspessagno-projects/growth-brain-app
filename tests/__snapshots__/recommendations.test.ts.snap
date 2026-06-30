@@ -4,19 +4,19 @@ exports[`generateRecommendations — modo snapshot (offline, determinista) > GOL
 [
   {
     "id": "imp-cot-design",
-    "score": 115601811,
+    "score": 26759678,
   },
   {
     "id": "imp-cot-product",
-    "score": 58690150,
+    "score": 13585683,
   },
   {
     "id": "dead",
-    "score": 29641490,
+    "score": 6861456,
   },
   {
     "id": "live",
-    "score": 21172493,
+    "score": 4901040,
   },
   {
     "id": "channel-best",

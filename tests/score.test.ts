@@ -4,6 +4,7 @@ import type { Recommendation } from '../src/lib/mixpanel/recommendations';
 import type { PriorMap } from '../src/lib/triangulation/priors';
 import { ltvArs, ECON_ASSUMPTIONS } from '../src/lib/economics/model';
 import { WINRATE_TARGET } from '../src/lib/mixpanel/benchmarks';
+import { ARPU_MENSUAL_ARS } from '../src/lib/mixpanel/snapshot';
 import { makeAnalytics, liveHubspot } from './fixtures';
 
 const DATO_CAPITA = ECON_ASSUMPTIONS.datoToCapitaPct.value; // 0.06
@@ -30,17 +31,20 @@ describe('confianza — base / Playbook / aprendido, clampeada a [0.30, 0.95]', 
   });
 });
 
-describe('imp-cot-design — fuga × recuperable × dato→cápita × LTV', () => {
+describe('imp-cot-design — la cifra es INGRESO POR MES (socios × cuota), no LTV', () => {
   it('sin priors usa el M0 de formularios (0.30) y es económico', () => {
     const a = makeAnalytics();
     const t = scoreRecommendation(rec({ id: 'imp-cot-design', discipline: 'diseno' }), a);
     const leak = a.funnels[0].leakDropCount!;
-    const expected = leak * 0.3 * DATO_CAPITA * ltvArs();
+    const socios = leak * 0.3 * DATO_CAPITA;
+    const expected = socios * ARPU_MENSUAL_ARS; // ingreso/mes = socios × cuota
     expect(t.marginAtStakeArs).toBeCloseTo(expected, 2);
     expect(t.cadence).toBe('mensual');
     expect(t.changeKind).toBe('economico');
     expect(t.feedsInto).toBeUndefined();
-    // score = margen mensual · conf · urgencia / esfuerzo  (urgencia 1.3, esfuerzo diseño=2)
+    // el valor de vida (LTV) queda como dato secundario
+    expect(t.lifetimeArs).toBeCloseTo(socios * ltvArs(), 2);
+    // score = ingreso/mes · conf · urgencia / esfuerzo  (urgencia 1.3, esfuerzo diseño=2)
     expect(t.score).toBeCloseTo((expected * 0.5 * 1.3) / 2, 2);
   });
   it('con prior aprendido usa esa recovery', () => {
@@ -49,29 +53,28 @@ describe('imp-cot-design — fuga × recuperable × dato→cápita × LTV', () =
     };
     const a = makeAnalytics();
     const t = scoreRecommendation(rec({ id: 'imp-cot-design', discipline: 'diseno' }), a, priors);
-    expect(t.marginAtStakeArs).toBeCloseTo(a.funnels[0].leakDropCount! * 0.4 * DATO_CAPITA * ltvArs(), 2);
+    expect(t.marginAtStakeArs).toBeCloseTo(a.funnels[0].leakDropCount! * 0.4 * DATO_CAPITA * ARPU_MENSUAL_ARS, 2);
   });
 });
 
-describe('HubSpot — cierre de ventas y stock (acumulado, mensualizado /24)', () => {
-  it('hs-winrate: decididos × brecha × LTV', () => {
+describe('HubSpot — ingreso/mes que se destraba del stock (mensualizado /24 en el score)', () => {
+  it('hs-winrate: decididos × brecha = socios; × cuota', () => {
     const a = makeAnalytics({ hubspot: liveHubspot() });
     const h = a.hubspot!;
     const t = scoreRecommendation(rec({ id: 'hs-winrate' }), a);
     const decided = h.won + h.lost; // 8000
     const gap = Math.max(0, WINRATE_TARGET - h.winRate!); // 0.075
-    const expected = decided * gap * ltvArs(); // 600 · 388800
+    const expected = decided * gap * ARPU_MENSUAL_ARS; // 600 socios · cuota
     expect(t.marginAtStakeArs).toBeCloseTo(expected, 0);
     expect(t.cadence).toBe('acumulado');
     expect(t.changeKind).toBe('economico');
-    // mensualizado: /24
     expect(t.score).toBeCloseTo((expected / 24 * 0.5 * 1.2) / 2, 0);
   });
-  it('hs-stock: negocios atascados × cierre esperado × LTV', () => {
+  it('hs-stock: atascados × cierre = socios; × cuota', () => {
     const a = makeAnalytics({ hubspot: liveHubspot() });
     const h = a.hubspot!;
     const t = scoreRecommendation(rec({ id: 'hs-stock', discipline: 'producto' }), a);
-    expect(t.marginAtStakeArs).toBeCloseTo(h.biggestOpenStage!.count * h.winRate! * ltvArs(), 0);
+    expect(t.marginAtStakeArs).toBeCloseTo(h.biggestOpenStage!.count * h.winRate! * ARPU_MENSUAL_ARS, 0);
     expect(t.cadence).toBe('acumulado');
   });
 });

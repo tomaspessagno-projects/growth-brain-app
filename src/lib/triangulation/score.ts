@@ -7,10 +7,11 @@
 import type { Analytics } from '../mixpanel/analytics';
 import type { Recommendation } from '../mixpanel/recommendations';
 import { WINRATE_TARGET } from '../mixpanel/benchmarks';
-import { ltvArs, ECON_ASSUMPTIONS } from '../economics/model';
+import { ECON_ASSUMPTIONS } from '../economics/model';
+import { ARPU_MENSUAL_ARS } from '../mixpanel/snapshot';
 import { recFamily, priorConfidenceBoost, recoveryM0, FAMILY_LABEL, type PriorMap } from './priors';
 import type { MarginBand } from './montecarlo';
-import { marginFromScenario, engineAssumptions, type MarginInputs, type ScenarioAssumptions } from '../economics/scenario';
+import { marginFromScenario, monthlyRevenueFromScenario, convertedSocios, engineAssumptions, type MarginInputs, type ScenarioAssumptions } from '../economics/scenario';
 
 export type SrcTag = 'Mixpanel' | 'HubSpot' | 'PELG' | 'Supuesto' | 'Playbook';
 
@@ -21,7 +22,8 @@ export interface BreakdownRow {
 }
 
 export interface TriScore {
-  marginAtStakeArs: number | null; // $ en juego
+  marginAtStakeArs: number | null; // INGRESO NUEVO POR MES (socios nuevos × cuota mensual). Recurrente.
+  lifetimeArs?: number | null; // valor de vida (LTV) total — dato secundario, no la cifra principal
   cadence: 'mensual' | 'acumulado' | null;
   reach: number | null; // usuarios / deals afectados
   confidence: number; // 0..1
@@ -50,7 +52,6 @@ export interface TriScore {
 }
 
 const DATO_CAPITA = ECON_ASSUMPTIONS.datoToCapitaPct.value;
-const fmtArs = (n: number) => `$${Math.round(n).toLocaleString('es-AR')}`;
 const fmtArsShort = (n: number) =>
   n >= 1e9 ? `$${(n / 1e9).toFixed(1)} mil M` : n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(0)}k` : `$${Math.round(n)}`;
 const pc = (n: number, d = 0) => `${(n * 100).toFixed(d)}%`;
@@ -90,6 +91,7 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
   const effortReason = EFFORT_REASON[rec.discipline] ?? 'Esfuerzo medio (estimado).';
   const { c: confidence, reason: confidenceReason } = confidenceFor(rec, priors);
   let marginAtStakeArs: number | null = null;
+  let lifetimeArs: number | null = null;
   let marginInputs: MarginInputs | undefined;
   let assumptions: ScenarioAssumptions | undefined;
   let cadence: TriScore['cadence'] = null;
@@ -179,15 +181,17 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       const baseRecovery = learned?.recoveryMean ?? recoveryM0(fam);
       const recMult = rec.id === 'imp-cot-design' ? 1 : 0.6; // producto ataca la misma fuga con menos recuperación
       if (leak > 0) {
-        // La cifra sale de la fórmula compartida (marginFromScenario) con los supuestos del motor;
-        // el usuario puede recalcularla con los suyos en el panel de escenarios (misma fórmula).
+        // CIFRA PRINCIPAL = ingreso nuevo POR MES = socios nuevos × cuota mensual ($90.000),
+        // con la fórmula compartida (el panel la recalcula con TUS supuestos). El valor de vida
+        // (LTV) total queda como dato SECUNDARIO.
         const asum = engineAssumptions(baseRecovery);
         marginInputs = { kind: 'leak', leak, recMult };
         assumptions = asum;
-        marginAtStakeArs = marginFromScenario(marginInputs, asum);
+        const socios = convertedSocios(marginInputs, asum);
+        marginAtStakeArs = monthlyRevenueFromScenario(marginInputs, asum); // ingreso/mes
+        lifetimeArs = marginFromScenario(marginInputs, asum); // valor de vida (secundario)
         const recFrac = baseRecovery * recMult; // recuperable efectivo, para mostrar el desglose
         const recovered = leak * recFrac;
-        const capitas = recovered * DATO_CAPITA;
         cadence = 'mensual';
         reach = leak;
         urgency = rec.id === 'imp-cot-design' ? 1.3 : 1.1;
@@ -195,19 +199,22 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
           ? 'Alta: es la mayor fuga del funnel, el lever más grande del producto.'
           : 'Media-alta: ataca la misma fuga con menos recuperación esperada.';
         basis.mixpanel = `${num(leak)} se caen en ${cot?.leakTransition} (recuperable ${pc(recFrac)})`;
-        basis.pelg = `${num(recovered)} datos × ${pc(DATO_CAPITA)} × LTV ${fmtArs(ltvArs())}`;
-        formula = 'Fuga del paso × recuperable × dato→cápita × LTV de contribución';
+        basis.pelg = `${num(socios)} socios nuevos/mes × $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}/mes (cuota)`;
+        formula = 'Fuga × recuperable × dato→cápita = socios nuevos/mes; × cuota mensual = ingreso nuevo/mes';
         breakdown = [
           { label: `Fuga en ${cot?.leakTransition}`, value: `${num(leak)} usuarios/mes`, src: 'Mixpanel' },
           { label: 'Recuperable con la mejora', value: `× ${pc(recFrac)} = ${num(recovered)} datos`, src: learned && learned.n > 0 ? 'Playbook' : 'Supuesto' },
-          { label: 'Dato → cápita', value: `× ${pc(DATO_CAPITA)} = ${num(capitas)} cápitas`, src: 'Supuesto' },
-          { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
-          { label: '= Margen en juego', value: `${fmtArsShort(marginAtStakeArs)}/mes` },
+          { label: 'Dato → cápita', value: `× ${pc(DATO_CAPITA)} = ${num(socios)} socios`, src: 'Supuesto' },
+          { label: 'Cuota mensual', value: `× $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}`, src: 'PELG' },
+          { label: '= Ingreso nuevo / mes', value: `${fmtArsShort(marginAtStakeArs)}/mes` },
         ];
         honesty.push(
           learned && learned.n > 0
-            ? `Recuperable ${pc(recFrac)} APRENDIDO de ${learned.n} experimento(s) de "${FAMILY_LABEL[fam]}" (antes era 25% supuesto). dato→cápita ${pc(DATO_CAPITA)} sigue supuesto (falta el cruce prospecto_id).`
-            : `Recuperable ${pc(recFrac)} y dato→cápita ${pc(DATO_CAPITA)} son supuestos.`,
+            ? `Recuperable ${pc(recFrac)} APRENDIDO de ${learned.n} experimento(s) de "${FAMILY_LABEL[fam]}" (antes 25% supuesto). dato→cápita ${pc(DATO_CAPITA)} sigue supuesto (falta el cruce prospecto_id).`
+            : `Recuperable ${pc(recFrac)} y dato→cápita ${pc(DATO_CAPITA)} son supuestos — editalos en "Tu escenario".`,
+        );
+        honesty.push(
+          'Es INGRESO (facturación) nuevo por mes, recurrente; el margen es ~18% de eso. El valor de vida total del socio (mayor) figura como dato secundario.',
         );
         honesty.push(
           'Solo parte de la fuga es por el formulario: ~17% del abandono se atribuye a "checkout largo/complicado" (Baymard, auto-reportado) — el resto tiene otras causas (precio, intención). Es un techo de atribución, no garantía de recuperación.',
@@ -223,22 +230,24 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
         if (extraWon > 0) {
           marginInputs = { kind: 'winrate', decided, gap };
           assumptions = engineAssumptions();
-          marginAtStakeArs = marginFromScenario(marginInputs, assumptions);
+          const socios = convertedSocios(marginInputs, assumptions);
+          marginAtStakeArs = monthlyRevenueFromScenario(marginInputs, assumptions); // ingreso/mes que se destraba
+          lifetimeArs = marginFromScenario(marginInputs, assumptions);
           cadence = 'acumulado';
           reach = h.lost;
           urgency = 1.2;
           urgencyReason = 'Alta: la tasa de cierre de ventas es palanca directa de cápitas sobre el stock comercial.';
           basis.hubspot = `cierre ${pc(h.winRate)} vs meta ${pc(WINRATE_TARGET)} sobre ${num(decided)} negocios`;
-          basis.pelg = `${num(extraWon)} cápitas × LTV ${fmtArs(ltvArs())}`;
-          formula = 'Negocios decididos × brecha a la meta de cierre × LTV';
+          basis.pelg = `${num(socios)} socios × $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}/mes (cuota)`;
+          formula = 'Negocios decididos × brecha a la meta = socios; × cuota mensual = ingreso/mes que se destraba';
           breakdown = [
             { label: 'Negocios decididos (ganados + perdidos)', value: num(decided), src: 'HubSpot' },
             { label: 'Brecha a la meta de cierre', value: `${pc(WINRATE_TARGET)} − ${pc(h.winRate)} = ${pc(gap)}`, src: 'HubSpot' },
-            { label: 'Cápitas extra recuperables', value: `= ${num(extraWon)}`, src: 'HubSpot' },
-            { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
-            { label: '= Margen (acumulado)', value: `${fmtArsShort(marginAtStakeArs)}` },
+            { label: 'Socios extra recuperables', value: `= ${num(socios)}`, src: 'HubSpot' },
+            { label: 'Cuota mensual', value: `× $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}`, src: 'PELG' },
+            { label: '= Ingreso / mes que se destraba', value: `${fmtArsShort(marginAtStakeArs)}` },
           ];
-          honesty.push('Figura ACUMULADA (stock histórico de negocios), no mensual. No comparar 1:1 con las /mes.');
+          honesty.push('Es un STOCK histórico de negocios: ese ingreso/mes se destraba una vez (no es flujo nuevo cada mes). Es facturación; el margen es ~18%.');
         }
       }
       break;
@@ -249,19 +258,21 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
         const wr = h.winRate ?? 0.38;
         marginInputs = { kind: 'stock', stock: h.biggestOpenStage.count, winRate: wr };
         assumptions = engineAssumptions();
-        marginAtStakeArs = marginFromScenario(marginInputs, assumptions);
+        const socios = convertedSocios(marginInputs, assumptions);
+        marginAtStakeArs = monthlyRevenueFromScenario(marginInputs, assumptions); // ingreso/mes que se destraba
+        lifetimeArs = marginFromScenario(marginInputs, assumptions);
         cadence = 'acumulado';
         urgencyReason = 'Media: stock dormido; parte ya está en curso.';
         basis.hubspot = `${num(h.biggestOpenStage.count)} negocios en "${h.biggestOpenStage.label}"`;
-        basis.pelg = `× tasa de cierre × LTV ${fmtArs(ltvArs())}`;
-        formula = 'Negocios atascados × cierre esperado × LTV';
+        basis.pelg = `${num(socios)} socios × $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}/mes (cuota)`;
+        formula = 'Negocios atascados × cierre esperado = socios; × cuota mensual = ingreso/mes que se destraba';
         breakdown = [
           { label: `Negocios en "${h.biggestOpenStage.label}"`, value: num(h.biggestOpenStage.count), src: 'HubSpot' },
-          { label: 'Cierre esperado', value: `× ${pc(wr)}`, src: 'HubSpot' },
-          { label: 'LTV de contribución', value: `× ${fmtArs(ltvArs())}`, src: 'PELG' },
-          { label: '= Margen (acumulado)', value: `${fmtArsShort(marginAtStakeArs)}` },
+          { label: 'Cierre esperado', value: `× ${pc(wr)} = ${num(socios)} socios`, src: 'HubSpot' },
+          { label: 'Cuota mensual', value: `× $${ARPU_MENSUAL_ARS.toLocaleString('es-AR')}`, src: 'PELG' },
+          { label: '= Ingreso / mes que se destraba', value: `${fmtArsShort(marginAtStakeArs)}` },
         ];
-        honesty.push('Stock acumulado; parte ya está en curso. No todo es recuperable.');
+        honesty.push('Stock acumulado; parte ya está en curso. Es facturación; el margen es ~18%.');
       }
       break;
     }
@@ -312,7 +323,7 @@ export function scoreRecommendation(rec: Recommendation, a: Analytics, priors?: 
       : marginAtStakeArs;
   const score = (monthlyValue * confidence * urgency) / effort;
 
-  return { marginAtStakeArs, marginInputs, assumptions, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason, changeKind, feedsInto };
+  return { marginAtStakeArs, lifetimeArs, marginInputs, assumptions, cadence, reach, confidence, effort, urgency, score, basis, honesty, formula, breakdown, confidenceReason, urgencyReason, effortReason, changeKind, feedsInto };
 }
 
 function priorityBase(p: Recommendation['priority']): number {

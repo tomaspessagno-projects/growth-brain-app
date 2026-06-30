@@ -42,7 +42,7 @@ function TriBlock({ tri }: { tri: TriScore }) {
             {fmtArsShort(tri.marginAtStakeArs)}
           </span>
           <span style={{ fontSize: 12, color: '#5b6b7f' }}>
-            de valor de vida (LTV) {tri.cadence === 'acumulado' ? '· stock' : '· por mes de adquisición'}
+            de ingreso nuevo / mes {tri.cadence === 'acumulado' ? '· del stock' : '· recurrente'}
             {tri.reach != null && ` · alcance ${tri.reach.toLocaleString('es-AR')}`}
           </span>
         </div>
