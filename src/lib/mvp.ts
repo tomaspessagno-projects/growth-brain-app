@@ -3,5 +3,5 @@
 // esconde lo "fancy" (Monte Carlo, desglose del score). NADA se borra: poniendo false vuelve todo.
 export const MVP_MODE = true;
 
-// Pestañas del núcleo MVP: Resumen + Embudos + Oportunidades + Experimentos (trackear desde adentro).
-export const MVP_NAV_PATHS = new Set(['/', '/funnel', '/oportunidades', '/experimentos']);
+// Pestañas del núcleo MVP: Resumen + Embudos + Histórico + Oportunidades + Experimentos.
+export const MVP_NAV_PATHS = new Set(['/', '/funnel', '/historico', '/oportunidades', '/experimentos']);

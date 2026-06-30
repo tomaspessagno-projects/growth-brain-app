@@ -6,6 +6,7 @@ import PageSkeleton from '@/components/PageSkeleton';
 import { rollup, health, WINRATE_TARGET, HEALTH_META, type Health } from '@/lib/mixpanel/benchmarks';
 import { loadExperiments } from '@/lib/store/experiments';
 import { useAnalytics } from '@/components/AnalyticsProvider';
+import { MVP_MODE } from '@/lib/mvp';
 import type { ComputedFunnel } from '@/lib/mixpanel/analytics';
 import type { Recommendation } from '@/lib/mixpanel/recommendations';
 
@@ -233,7 +234,7 @@ export default function Resumen() {
               <div className={styles.recTop}>
                 <span className={styles.oppRank}>#{i + 1}</span>
                 {r.funnel && <span className={styles.recFunnel}>· {r.funnel}</span>}
-                {r.tri?.marginAtStakeArs != null && <span className={styles.recFunnel} style={{ color: '#1689C4', fontWeight: 700 }}>· {r.tri.marginAtStakeArs >= 1e6 ? `$${(r.tri.marginAtStakeArs / 1e6).toFixed(0)}M` : `$${Math.round(r.tri.marginAtStakeArs / 1e3)}k`}/mes</span>}
+                {!MVP_MODE && r.tri?.marginAtStakeArs != null && <span className={styles.recFunnel} style={{ color: '#1689C4', fontWeight: 700 }}>· {r.tri.marginAtStakeArs >= 1e6 ? `$${(r.tri.marginAtStakeArs / 1e6).toFixed(0)}M` : `$${Math.round(r.tri.marginAtStakeArs / 1e3)}k`}/mes</span>}
                 <span className={`${styles.recPrio} ${styles['prio_' + r.priority]}`}>{r.priority}</span>
               </div>
               <div className={styles.recTitle}>{r.title}</div>

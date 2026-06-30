@@ -29,9 +29,24 @@ function SrcChip({ color, label, text }: { color: string; label: string; text: s
   );
 }
 
-// Bloque de triangulación: $ en juego + base (qué dato de cada fuente lo sostiene) + honestidad.
+// Bloque de triangulación. En MVP: SOLO el impacto MEDIDO (Mixpanel/HubSpot), sin $ (cero confusión).
 function TriBlock({ tri }: { tri: TriScore }) {
   const proceso = tri.changeKind === 'proceso';
+  // MVP: tarjeta medida — la base de cada fuente (datos reales), sin plata ni supuestos.
+  if (MVP_MODE) {
+    return (
+      <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 10, background: 'rgba(0,45,95,0.035)', border: '1px solid rgba(0,45,95,0.08)' }}>
+        {proceso && <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginBottom: 8, color: '#1689C4', background: 'rgba(22,137,196,0.10)' }}>⚙️ Mejora de proceso / medición</span>}
+        {proceso && tri.feedsInto && (
+          <div style={{ fontSize: 11.5, color: '#3a4a5c', marginBottom: 8, display: 'flex', gap: 5 }}><span>↘</span><span><b>Destraba:</b> {tri.feedsInto}</span></div>
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {tri.basis.mixpanel && <SrcChip color="#7b3fe4" label="Mixpanel" text={tri.basis.mixpanel} />}
+          {tri.basis.hubspot && <SrcChip color="#ff7a59" label="HubSpot" text={tri.basis.hubspot} />}
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ marginTop: 10, padding: '10px 12px', borderRadius: 10, background: 'rgba(0,45,95,0.035)', border: '1px solid rgba(0,45,95,0.08)' }}>
       <span style={{ display: 'inline-block', fontSize: 10.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999, marginBottom: 8, color: proceso ? '#1689C4' : '#15803d', background: proceso ? 'rgba(22,137,196,0.10)' : 'rgba(21,128,61,0.10)' }}>
@@ -157,7 +172,7 @@ export default function OportunidadesPage() {
         <div>
           <h1 className="page-title">Oportunidades</h1>
           <p className="page-subtitle" style={{ marginBottom: 0 }}>
-            Qué hay que mejorar — priorizadas por <b>plata en juego</b> (Mixpanel × HubSpot × PELG), no por % de fuga. Marcá las que vas tomando.
+            Qué hay que mejorar — cruzando <b>Mixpanel × HubSpot × PELG</b>, priorizadas por impacto medido. Marcá las que vas tomando.
           </p>
         </div>
         <div className={styles.badges}>

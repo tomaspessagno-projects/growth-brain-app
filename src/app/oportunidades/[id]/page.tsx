@@ -67,8 +67,20 @@ export default function OportunidadDetallePage() {
         </div>
       </header>
 
-      {/* Headline: por qué importa ($ directo o proceso/performance) */}
-      {tri && (
+      {/* Headline: en MVP = impacto medido (sin $). Fuera de MVP = la lente económica. */}
+      {tri && MVP_MODE && (
+        <div className="glass-panel" style={{ marginTop: 14, padding: '16px 18px' }}>
+          <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, marginBottom: 10, color: tri.changeKind === 'proceso' ? '#1689C4' : '#15803d', background: tri.changeKind === 'proceso' ? 'rgba(22,137,196,0.10)' : 'rgba(21,128,61,0.10)' }}>
+            {tri.changeKind === 'proceso' ? '⚙️ Mejora de proceso / medición' : '📈 Mejora medible'}
+          </span>
+          {tri.changeKind === 'proceso' && tri.feedsInto ? (
+            <div style={{ fontSize: 14, color: '#102A45', display: 'flex', gap: 6 }}><span>↘</span><span><b>Destraba:</b> {tri.feedsInto}</span></div>
+          ) : (
+            <div style={{ fontSize: 14, color: '#5b6b7f' }}>El impacto medido (Mixpanel · HubSpot) está abajo. {tri.reach != null && `Alcance: ${tri.reach.toLocaleString('es-AR')}.`}</div>
+          )}
+        </div>
+      )}
+      {tri && !MVP_MODE && (
         <div className="glass-panel" style={{ marginTop: 14, padding: '16px 18px' }}>
           <span style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999, marginBottom: 10, color: tri.changeKind === 'proceso' ? '#1689C4' : '#15803d', background: tri.changeKind === 'proceso' ? 'rgba(22,137,196,0.10)' : 'rgba(21,128,61,0.10)' }}>
             {tri.changeKind === 'proceso' ? '⚙️ Cambio de proceso / performance' : '💰 Cambio económico'}
@@ -91,8 +103,8 @@ export default function OportunidadDetallePage() {
 
       {tri && (
         <>
-          {/* Tu escenario — para recos con $: explica de dónde sale el número y deja editarlo */}
-          {tri.marginInputs && tri.assumptions && tri.marginAtStakeArs != null && (
+          {/* Tu escenario — capa económica OPCIONAL, fuera del MVP (cero confusión por defecto). */}
+          {!MVP_MODE && tri.marginInputs && tri.assumptions && tri.marginAtStakeArs != null && (
             <ScenarioPanel
               recId={rec.id}
               inputs={tri.marginInputs}
@@ -126,7 +138,7 @@ export default function OportunidadDetallePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {tri.basis.mixpanel && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="Mixpanel" /> {tri.basis.mixpanel}</div>}
               {tri.basis.hubspot && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="HubSpot" /> {tri.basis.hubspot}</div>}
-              {tri.basis.pelg && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="PELG" /> {tri.basis.pelg}</div>}
+              {!MVP_MODE && tri.basis.pelg && <div style={{ fontSize: 12.5, color: '#3a4a5c' }}><SrcTagChip src="PELG" /> {tri.basis.pelg}</div>}
             </div>
           </Section>
 
@@ -198,12 +210,20 @@ export default function OportunidadDetallePage() {
             </Section>
           )}
 
-          {/* Honestidad */}
-          <Section title="Lo que el número NO cuenta">
-            {tri.honesty.map((hn, i) => (
-              <div key={i} style={{ fontSize: 12, color: '#9a6a00', marginTop: 5, display: 'flex', gap: 6 }}><span>⚠</span><span>{hn}</span></div>
-            ))}
-          </Section>
+          {/* A tener en cuenta. En MVP filtramos las salvedades de plata (la capa $ está fuera). */}
+          {(() => {
+            const lines = MVP_MODE
+              ? tri.honesty.filter((h) => !/\$|plata|peso|escenario|ingreso|facturaci|margen|valor de vida|reasign/i.test(h))
+              : tri.honesty;
+            if (!lines.length) return null;
+            return (
+              <Section title={MVP_MODE ? 'A tener en cuenta' : 'Lo que el número NO cuenta'}>
+                {lines.map((hn, i) => (
+                  <div key={i} style={{ fontSize: 12, color: '#9a6a00', marginTop: 5, display: 'flex', gap: 6 }}><span>⚠</span><span>{hn}</span></div>
+                ))}
+              </Section>
+            );
+          })()}
         </>
       )}
     </div>

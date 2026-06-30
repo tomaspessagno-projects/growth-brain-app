@@ -9,6 +9,7 @@ import { MVP_MODE, MVP_NAV_PATHS } from '@/lib/mvp';
 const NAV_ALL = [
   { name: 'Resumen', path: '/' },
   { name: 'Embudos', path: '/funnel' },
+  { name: 'Histórico', path: '/historico' },
   { name: 'Oportunidades', path: '/oportunidades' },
   { name: 'Experimentos', path: '/experimentos' },
   { name: 'Aprendizajes', path: '/playbook' },
@@ -24,6 +25,7 @@ function activeKey(pathname: string): string {
   if (pathname.startsWith('/oportunidades')) return '/oportunidades';
   if (pathname.startsWith('/experimentos')) return '/experimentos';
   if (pathname.startsWith('/funnel')) return '/funnel';
+  if (pathname.startsWith('/historico')) return '/historico';
   if (pathname.startsWith('/playbook')) return '/playbook';
   if (pathname.startsWith('/segmentos')) return '/segmentos';
   if (pathname.startsWith('/status')) return '/status';
