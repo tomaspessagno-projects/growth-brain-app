@@ -38,6 +38,7 @@ export default function PlaybookPage() {
     validado: PLAYBOOK_RULES.filter((r) => r.status === 'validado').length,
     observacion: PLAYBOOK_RULES.filter((r) => r.status === 'observacion').length,
     guardrail: PLAYBOOK_RULES.filter((r) => r.status === 'guardrail').length,
+    principio: PLAYBOOK_RULES.filter((r) => r.status === 'principio').length,
   };
 
   const copy = async () => {
@@ -55,8 +56,13 @@ export default function PlaybookPage() {
       <header className={styles.header}>
         <div>
           <h1 className="page-title">Aprendizajes</h1>
-          <p className="page-subtitle" style={{ marginBottom: 0 }}>
-            El Playbook de Medicus — cada cosa que el motor aprende, anotada como regla. La memoria que compone.
+          <p className="page-subtitle" style={{ marginBottom: 6 }}>
+            El Playbook de Medicus — lo que el motor aprende sobre el negocio, más la base de conocimiento
+            (Producto, UX, BI y Data Science) que lo informa. La memoria que compone.
+          </p>
+          <p className="page-subtitle" style={{ marginBottom: 0, fontSize: '0.8rem' }}>
+            🔍 Observación / ✅ Validado / ⚠️ Guardrail = medido o decidido sobre Medicus. 📚 Principio = conocimiento
+            externo (con fuente), <strong>direccional</strong>, no una medición propia.
           </p>
         </div>
         <div className={styles.copyWrap}>
@@ -68,7 +74,7 @@ export default function PlaybookPage() {
 
       <div className={styles.progress}>
         <span className={styles.progressLabel}>
-          {PLAYBOOK_RULES.length} reglas · {counts.observacion} observaciones · {counts.guardrail} guardrails · {counts.validado} validadas
+          {PLAYBOOK_RULES.length} reglas · {counts.principio} principios 📚 · {counts.observacion} observaciones · {counts.guardrail} guardrails · {counts.validado} validadas
         </span>
         <div className={styles.progressTrack}><div className={styles.progressFill} style={{ width: '100%' }} /></div>
         <span className={styles.progressLabel}>Actualizado {PLAYBOOK_UPDATED}</span>

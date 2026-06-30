@@ -2,23 +2,28 @@
 // (observaciones del funnel + resultados de experimentos). Hoy sembrado con los hallazgos reales
 // de Mixpanel; a futuro, cada experimento que concluye appendea su regla (vía Supabase en prod).
 
-export type RuleStatus = 'validado' | 'refutado' | 'observacion' | 'guardrail';
-export type RuleSource = 'observacion' | 'experimento' | 'manual';
+// 'principio' = conocimiento DIGERIDO de la literatura (Producto/UX/BI/Data Science): un marco o
+// benchmark externo, DIRECCIONAL, que informa al motor — NO una medición sobre datos de Medicus.
+export type RuleStatus = 'validado' | 'refutado' | 'observacion' | 'guardrail' | 'principio';
+export type RuleSource = 'observacion' | 'experimento' | 'manual' | 'investigacion';
 
 export interface PlaybookRule {
   id: string;
   category: string;
   status: RuleStatus;
   statement: string;
-  evidence: string;
+  evidence: string; // para observaciones: el dato de Medicus. para principios: la fuente/cita.
   date: string;
   source: RuleSource;
 }
 
-export const PLAYBOOK_UPDATED = '2026-06-26';
+export const PLAYBOOK_UPDATED = '2026-06-30';
 
 export const RULE_CATEGORIES = [
   'Metodología / Triangulación',
+  'Marco de métricas (Producto / BI)',
+  'Estadística y causalidad (Data Science)',
+  'Identidad y calidad del dato',
   'Canales',
   'Formularios / UX',
   'Conversión',
@@ -33,6 +38,7 @@ export const STATUS_META: Record<RuleStatus, { label: string; emoji: string }> =
   refutado: { label: 'Refutado', emoji: '❌' },
   observacion: { label: 'Observación', emoji: '🔍' },
   guardrail: { label: 'Guardrail', emoji: '⚠️' },
+  principio: { label: 'Principio', emoji: '📚' },
 };
 
 export const PLAYBOOK_RULES: PlaybookRule[] = [
@@ -144,6 +150,88 @@ export const PLAYBOOK_RULES: PlaybookRule[] = [
   { id: 'r-resolved', category: 'Instrumentación / Sistema', status: 'observacion', source: 'observacion', date: '2026-06-09',
     statement: 'Pasos resueltos: inicio_alta = cotizador__alta_online_modal__click; cliente = handoff al funnel Alta (Flow_Asociado).',
     evidence: 'validación secuencial' },
+
+  // ======================================================================================
+  // BASE DE CONOCIMIENTO (📚 principios). Marcos y benchmarks DIGERIDOS de la literatura de
+  // Producto, UX, BI y Data Science. Son DIRECCIONALES y con fuente — informan al motor, NO son
+  // mediciones sobre datos de Medicus. Lo medido en Medicus está arriba (🔍 observaciones).
+  // ======================================================================================
+
+  // Marco de métricas (Producto / BI)
+  { id: 'kb-northstar', category: 'Marco de métricas (Producto / BI)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'North Star Metric: una sola métrica que captura el VALOR real entregado al cliente; el resto son inputs que la mueven. Para una prepaga, la candidata es la cápita activa retenida — no “leads” ni “cotizaciones”, que son medios. Optimizar un medio puede romper el fin.',
+    evidence: 'Sean Ellis; Amplitude / Reforge. Marco, no medición.' },
+  { id: 'kb-metric-tree', category: 'Marco de métricas (Producto / BI)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Árbol de métricas: la North Star se descompone en drivers casi multiplicativos — tráfico × conversión a dato × dato→cápita × retención × ARPU. Sirve para ubicar DÓNDE pega un cambio y propagar su efecto hasta la plata. Es la columna vertebral del score triangulado de SysData.',
+    evidence: 'Metric trees (BI estándar; Amplitude). Marco.' },
+  { id: 'kb-heart', category: 'Marco de métricas (Producto / BI)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'HEART para medir UX más allá del último clic: Happiness, Engagement, Adoption, Retention, Task success — cada uno bajado a Goal → Signal → Metric. Recuerda medir éxito de tarea y satisfacción, no solo conversión.',
+    evidence: 'Rodden, Hutchinson & Fu, Google (CHI 2010).' },
+  { id: 'kb-aarrr', category: 'Marco de métricas (Producto / BI)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Embudo de growth AARRR: Adquisición, Activación, Retención, Revenue, Referido. SysData hoy cubre fuerte Adquisición→Activación (cotizador, formularios); Retención / Revenue / Referido son el hueco de medición más grande (depende del cruce a cápita y del dato de bajas).',
+    evidence: 'Dave McClure, 500 Startups (2007). Marco.' },
+  { id: 'kb-vanity', category: 'Marco de métricas (Producto / BI)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Métrica accionable vs vanidosa: una métrica sirve SOLO si cambia una decisión. Los totales que siempre suben (impresiones, visitas) tranquilizan pero no guían; preferir tasas, cohortes y márgenes. (Por eso el motor rankea por margen en juego, no por volumen.)',
+    evidence: 'Lean Analytics — Croll & Yoskovitz (2013).' },
+
+  // Estadística y causalidad (Data Science)
+  { id: 'kb-power', category: 'Estadística y causalidad (Data Science)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Antes de un A/B: fijar el efecto mínimo relevante (MDE) y calcular el N necesario para detectarlo con ~80% de poder. Correr sin N suficiente no concluye nada — y peor, invita a leer ruido como señal.',
+    evidence: 'Kohavi, Tang & Xu — “Trustworthy Online Controlled Experiments” (2020).' },
+  { id: 'kb-peeking', category: 'Estadística y causalidad (Data Science)', status: 'guardrail', source: 'investigacion', date: '2026-06-30',
+    statement: 'No cortar el A/B “cuando da significativo” (peeking): mirar y parar infla el falso positivo. Fijar duración/N de antemano, o usar tests secuenciales diseñados para mirar en el camino.',
+    evidence: 'Kohavi et al.; Johari et al. (always-valid / sequential testing).' },
+  { id: 'kb-did', category: 'Estadística y causalidad (Data Science)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Cuando no se puede randomizar, diferencias-en-diferencias (diff-in-diff): comparar el cambio del grupo tratado contra un control en el mismo período, restando la tendencia común. Exige tendencias paralelas previas — hay que chequearlas.',
+    evidence: 'Card & Krueger (1994); econometría estándar.' },
+  { id: 'kb-survival', category: 'Estadística y causalidad (Data Science)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'El churn de una prepaga es CONTRACTUAL y censurado (la mayoría sigue activa hoy): usar análisis de supervivencia — Kaplan-Meier para la curva de permanencia y Cox para qué variables aceleran la baja — NO un “% que se dio de baja” crudo ni BG/NBD (que es para compras NO contractuales). Reemplaza el supuesto de permanencia 24m cuando llegue el dato de bajas.',
+    evidence: 'Klein & Moeschberger; Fader & Hardie (contractual vs no-contractual). Pendiente del dato de bajas (Metabase).' },
+  { id: 'kb-eb', category: 'Estadística y causalidad (Data Science)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Empirical Bayes / shrinkage: con poca evidencia, mezclar el dato observado con un prior razonable; a medida que llegan experimentos, manda el dato. Evita sobre-reaccionar a un solo resultado. Es exactamente cómo SysData aprende el “recuperable” por familia de intervención.',
+    evidence: 'Efron & Morris (1975). Implementado en los priors del motor (K0=4).' },
+  { id: 'kb-rtm', category: 'Estadística y causalidad (Data Science)', status: 'guardrail', source: 'investigacion', date: '2026-06-30',
+    statement: 'Regresión a la media: un valor extremo tiende a moderarse solo, sin que hayas hecho nada. No declarar victoria (ni desastre) por un día atípico; mirar la serie y desestacionalizar. (El motor desestacionaliza por día de semana antes de marcar un quiebre.)',
+    evidence: 'Kahneman, “Thinking, Fast and Slow” (2011).' },
+  { id: 'kb-simpson', category: 'Estadística y causalidad (Data Science)', status: 'guardrail', source: 'investigacion', date: '2026-06-30',
+    statement: 'Paradoja de Simpson: un efecto agregado puede INVERTIRSE al segmentar (por canal, plan, edad). Antes de concluir “subió/bajó”, mirar los cortes — el promedio puede mentir.',
+    evidence: 'Simpson (1951); BI estándar.' },
+  { id: 'kb-montecarlo', category: 'Estadística y causalidad (Data Science)', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Ante supuestos inciertos, no dar un número puntual: muestrear los supuestos (Monte Carlo) y reportar un RANGO (P10–P90) + de qué supuesto depende más. Hace explícito cuánto de la cifra es apuesta. Es lo que hace el motor con el margen en juego.',
+    evidence: 'Método estándar. Implementado en SysData (2.000 simulaciones, RNG seedeado).' },
+  { id: 'kb-correlacion', category: 'Estadística y causalidad (Data Science)', status: 'guardrail', source: 'investigacion', date: '2026-06-30',
+    statement: 'Correlación ≠ causa. Dos métricas que se mueven juntas (incluso con rezago) son una PISTA de dónde mirar, no una explicación. La causa se prueba con un experimento. Los “cruces” de SysData son diagnósticos, nunca causales.',
+    evidence: 'Principio estadístico básico.' },
+
+  // Identidad y calidad del dato
+  { id: 'kb-fellegi', category: 'Identidad y calidad del dato', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Resolución de identidad probabilística (Fellegi-Sunter): sin una llave única, matchear registros por similitud ponderada de varios campos (documento, nombre, fecha) con umbrales de match/no-match. Herramienta open-source madura: Splink. Es la SALIDA si no se puede estampar una llave en origen.',
+    evidence: 'Fellegi & Sunter (1969); Splink (UK Ministry of Justice).' },
+  { id: 'kb-key', category: 'Identidad y calidad del dato', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Una sola llave estable estampada de punta a punta (CUIL / prospecto_id) vale más que cualquier match probabilístico posterior. Resolver la identidad en ORIGEN > resolverla después. Es el fix de fondo del loop visita→cápita (ver r-loop).',
+    evidence: 'Principio de data modeling. Conecta con r-loop / r-hsloop.' },
+  { id: 'kb-dataquality', category: 'Identidad y calidad del dato', status: 'guardrail', source: 'investigacion', date: '2026-06-30',
+    statement: 'Garbage in, garbage out: un análisis sobre datos sucios (eventos muertos, utm faltante, esquemas inconsistentes) es PEOR que no tener análisis, porque da falsa confianza. La higiene del dato es prerequisito, no opcional.',
+    evidence: 'DAMA-DMBOK. Conecta con r-dead, r-utm, r-alta y el canal display.' },
+
+  // Formularios / UX (principios que complementan las observaciones de Medicus de arriba)
+  { id: 'kb-price-first', category: 'Formularios / UX', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Mostrar precio/valor ANTES de pedir datos personales baja la fricción de entrada; los muros de registro previos a ver valor matan conversión. Sostiene la hipótesis de “cotizá sin registrarte” en el cotizador.',
+    evidence: 'Baymard Institute; Nielsen Norman Group. DIRECCIONAL (evidencia de e-commerce).' },
+  { id: 'kb-jakob', category: 'Formularios / UX', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Ley de Jakob: los usuarios pasan la mayor parte del tiempo en OTROS sitios y esperan que el tuyo funcione igual. No reinventar patrones conocidos de formularios, pasos y botones — la familiaridad reduce fricción.',
+    evidence: 'Jakob Nielsen, Nielsen Norman Group.' },
+  { id: 'kb-friction-tech', category: 'Formularios / UX', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Parte del abandono de un formulario es TÉCNICO (errores de validación, lentitud de carga), no de diseño. Instrumentar Validation Error y tiempo de carga del paso antes de rediseñar a ciegas — el rediseño no arregla un bug.',
+    evidence: 'Práctica CRO estándar. Conecta con imp-cot-dev.' },
+
+  // Comercial / CRM (principios que complementan las observaciones de NPS / pipeline)
+  { id: 'kb-lead-speed', category: 'Comercial / CRM', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'La velocidad de respuesta al lead es decisiva: contactar en los primeros minutos aumenta drásticamente la probabilidad de calificarlo, y la chance cae fuerte pasada la primera hora. Conecta directo con el cuello de “Propuesta Enviada” y el compromiso de tiempo de respuesta que pide el NPS (ver v-seguimiento).',
+    evidence: 'Oldroyd (Lead Response Management, 2007); HBR “The Short Life of Online Sales Leads” (2011). DIRECCIONAL.' },
+  { id: 'kb-retention', category: 'Comercial / CRM', status: 'principio', source: 'investigacion', date: '2026-06-30',
+    statement: 'Retener cuesta menos que adquirir y compone más: en negocios contractuales como prepaga, subir la retención unos puntos mueve el LTV más que bajar el CAC, y la baja TEMPRANA (primeros meses) es la más cara. Refuerza priorizar onboarding y seguimiento post-alta.',
+    evidence: 'Reichheld, “The Loyalty Effect”; unit economics. Principio.' },
 ];
 
 export function playbookToMarkdown(rules: PlaybookRule[]): string {
