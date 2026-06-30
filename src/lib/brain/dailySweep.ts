@@ -13,6 +13,7 @@ import { generateRecommendations } from '../mixpanel/recommendations';
 import { computePriors, type PriorMap, type ExperimentOutcome } from '../triangulation/priors';
 import { getAdminClient } from '@/utils/supabase/admin';
 import { invalidatePriorsCache } from './priorsStore';
+import { dailySnapshotRows } from '../history/dailySnapshots';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface SweepSummary {
@@ -79,6 +80,18 @@ export async function runDailySweep(): Promise<SweepSummary> {
   // 3. Persistir la foto del día (snapshot + recos rankeadas).
   let persisted = false;
   if (db) {
+    // Backfill único: si todavía no hay historia, sembrar la serie diaria (jun 1→30) para que la
+    // detección y el histórico tengan datos desde el día 1. Idempotente (solo corre si está vacío).
+    try {
+      const { count } = await db.from('analytics_snapshots').select('day', { count: 'exact', head: true });
+      if (!count) {
+        const seed = dailySnapshotRows();
+        await db.from('analytics_snapshots').upsert(seed);
+        notes.push(`backfill: sembrados ${seed.length} días de historia.`);
+      }
+    } catch (e) {
+      notes.push('backfill: ' + msg(e));
+    }
     try {
       await db.from('analytics_snapshots').upsert({
         day,

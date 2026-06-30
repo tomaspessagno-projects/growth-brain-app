@@ -35,9 +35,19 @@ export default function Resumen() {
   const { data, loading, busy } = useAnalytics();
   const [expsEnCurso, setExpsEnCurso] = useState(0);
   const [sel, setSel] = useState<string>('todos'); // 'todos' | funnel.id | 'comercial'
+  const [signals, setSignals] = useState<{ kind: string; direction: string; headline: string; detail: string }[]>([]);
+  const [signalDays, setSignalDays] = useState(0);
 
   useEffect(() => {
     loadExperiments().then((list) => setExpsEnCurso(list.filter((e) => e.estado === 'en_curso').length)).catch(() => {});
+  }, []);
+
+  // Señales del motor (Capa 2): quiebres + pace vs meta sobre la serie diaria (cron / serie bakeada).
+  useEffect(() => {
+    fetch('/api/signals')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j) { setSignals(j.signals ?? []); setSignalDays(j.days ?? 0); } })
+      .catch(() => {});
   }, []);
 
   if (loading) return <PageSkeleton />;
@@ -175,6 +185,7 @@ export default function Resumen() {
               </Link>
             ))}
           </section>
+          <div className={styles.linkRow}><Link href="/funnel" className={styles.moreLink}>Ver los {data.funnels.length} embudos en detalle →</Link></div>
         </>
       )}
 
@@ -222,6 +233,42 @@ export default function Resumen() {
           ))}
         </section>
       </div>
+
+      {/* SEÑALES DEL MOTOR (Capa 2) — qué detectó solo sobre la serie diaria (cron / serie bakeada). */}
+      {sel === 'todos' && (
+        <>
+          <h3 className={styles.sectionTitle}>Señales del motor · detección automática</h3>
+          <section className={`glass-panel ${styles.card}`}>
+            <div className={styles.cardHead}>
+              <h2 className={styles.cardTitle}>⚙️ Qué detectó el motor solo</h2>
+              {signalDays > 0 && <span className={styles.count}>{signalDays} días de serie</span>}
+            </div>
+            {signalDays < 8 ? (
+              <div className={styles.signalSub}>
+                El motor necesita ≥8 días de serie diaria para separar un quiebre real del ruido del día a día. Lleva {signalDays} {signalDays === 1 ? 'día' : 'días'} — el barrido diario la sigue acumulando.
+              </div>
+            ) : signals.length === 0 ? (
+              <div className={styles.signalSub}>Sin quiebres ni desvíos de meta en los últimos {signalDays} días. 🟢 La serie viene estable.</div>
+            ) : (
+              signals.map((sig, i) => (
+                <div key={i} className={styles.signalRow} style={{ alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: 16, lineHeight: 1.35, flex: '0 0 auto' }}>{sig.kind === 'quiebre' ? '⚡' : '📉'}</span>
+                    <div>
+                      <div className={styles.signalLabel} style={{ fontWeight: 700, color: sig.direction === 'up' ? 'var(--success-color)' : 'var(--danger-color)' }}>{sig.headline}</div>
+                      <div className={styles.signalSub}>{sig.detail}</div>
+                    </div>
+                  </div>
+                  <span className={styles.recTag} style={{ flex: '0 0 auto' }}>{sig.kind === 'quiebre' ? 'QUIEBRE' : 'RITMO'}</span>
+                </div>
+              ))
+            )}
+            <div className={styles.signalSub} style={{ marginTop: 13, fontSize: 11, lineHeight: 1.55, opacity: 0.85 }}>
+              Sobre la serie diaria que persiste el barrido del cron. <strong>Quiebre</strong>: el último valor sale de 3σ robustos, desestacionalizando por día de semana. <strong>Ritmo</strong>: el promedio de 7 días viene bajo la meta.
+            </div>
+          </section>
+        </>
+      )}
 
       {/* OPORTUNIDADES (del embudo elegido) */}
       <h3 className={styles.sectionTitle}>Qué hay que mejorar{sel !== 'todos' ? ` · ${scopeLabel}` : ''}</h3>
