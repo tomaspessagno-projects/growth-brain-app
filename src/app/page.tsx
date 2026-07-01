@@ -7,6 +7,7 @@ import { rollup, health, WINRATE_TARGET, HEALTH_META, type Health } from '@/lib/
 import { loadExperiments } from '@/lib/store/experiments';
 import { useAnalytics } from '@/components/AnalyticsProvider';
 import { MVP_MODE } from '@/lib/mvp';
+import CrossChain from '@/components/CrossChain';
 import type { ComputedFunnel } from '@/lib/mixpanel/analytics';
 import type { Recommendation } from '@/lib/mixpanel/recommendations';
 
@@ -52,6 +53,58 @@ export default function Resumen() {
 
   if (loading) return <PageSkeleton />;
   if (!data || !data.summary) return <div className={styles.container}>Error cargando datos. Reintentá en un momento.</div>;
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MVP · MÍNIMA EXPRESIÓN — una sola pantalla de diagnóstico:
+  //   (1) la cadena de crecimiento cruzando Mixpanel + HubSpot + PELG,
+  //   (2) el cuello de botella priorizado (dónde se cae, con evidencia).
+  // Nada más. El resto (histórico, experimentos, detección, selector, $) vive detrás del flag → v1.1+.
+  if (MVP_MODE) {
+    const cuellos = data.recommendations.slice(0, 3);
+    return (
+      <div className={`animate-fade-in ${styles.container}`}>
+        <header className={styles.header}>
+          <div>
+            <h1 className="page-title">El embudo de crecimiento</h1>
+            <p className="page-subtitle" style={{ marginBottom: 0 }}>
+              Tus 3 herramientas en una sola cadena. Dónde entran los prospectos, dónde se caen, y cuál es el cuello de botella.
+            </p>
+          </div>
+          <div className={styles.badges}>
+            <span className={`${styles.badge} ${data.source === 'live' ? styles.badgeLive : styles.badgeSnap}`}>
+              {data.source === 'live' ? '● En vivo' : `Snapshot · ${data.meta.asOf}`}
+            </span>
+            <span className={styles.badgeMeta}>{data.window ? `${data.window.from} → ${data.window.to}` : `Últimos ${data.meta.rangeDays}d`}{busy ? ' · actualizando…' : ''}</span>
+          </div>
+        </header>
+
+        <CrossChain data={data} />
+
+        <h3 className={styles.sectionTitle}>El cuello de botella · dónde se cae</h3>
+        {cuellos.length === 0 ? (
+          <div className={`glass-panel ${styles.card}`}><div className={styles.signalSub}>Sin cuellos de botella detectados en este rango.</div></div>
+        ) : (
+          <div className={styles.recsGrid}>
+            {cuellos.map((r, i) => (
+              <Link key={r.id} href={`/oportunidades/${encodeURIComponent(r.id)}`} className={`glass-panel ${styles.rec}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className={styles.recTop}>
+                  <span className={styles.oppRank}>#{i + 1}</span>
+                  {r.funnel && <span className={styles.recFunnel}>· {r.funnel}</span>}
+                  <span className={`${styles.recPrio} ${styles['prio_' + r.priority]}`}>{r.priority}</span>
+                </div>
+                <div className={styles.recTitle}>{r.title}</div>
+                <div className={styles.recDetail}>{r.detail}</div>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#1689C4', fontWeight: 600 }}>Ver la lógica →</div>
+              </Link>
+            ))}
+          </div>
+        )}
+        <p style={{ marginTop: 20, fontSize: 12.5, color: '#8696a7', lineHeight: 1.6 }}>
+          SysData te dice <strong>dónde</strong> está el problema cruzando las 3 herramientas — no qué hacer. La solución la decide el equipo.
+        </p>
+      </div>
+    );
+  }
 
   const s = data.summary;
   const h = data.hubspot;

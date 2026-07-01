@@ -3,7 +3,8 @@
 // esconde lo "fancy" (Monte Carlo, desglose del score). NADA se borra: poniendo false vuelve todo.
 export const MVP_MODE = true;
 
-// Pestañas del núcleo MVP: Resumen + Histórico + Oportunidades + Experimentos.
-// Embudos no va en el nav: se navega desde Resumen (el selector reacomoda los KPIs por embudo y
-// cada embudo tiene su drill-down). Así el nav queda en 4 pantallas, como define el plan de MVP.
-export const MVP_NAV_PATHS = new Set(['/', '/historico', '/oportunidades', '/experimentos']);
+// MÍNIMA EXPRESIÓN: el MVP es UNA sola pantalla (la cadena de crecimiento cruzada + el cuello de
+// botella). No hay pestañas: el detalle de cada oportunidad se abre desde la pantalla ("ver la
+// lógica"). Todo lo demás (histórico, experimentos, detección, selector, $) queda detrás del flag
+// para v1.1+. Poniendo MVP_MODE=false vuelve el nav completo y las pantallas ricas.
+export const MVP_NAV_PATHS = new Set(['/']);

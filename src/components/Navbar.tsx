@@ -45,13 +45,16 @@ export default function Navbar() {
           <span className={styles.brandName}>SysData</span>
         </Link>
 
-        <nav className={styles.nav}>
-          {NAV.map((item) => (
-            <Link key={item.path} href={item.path} className={`${styles.link} ${active === item.path ? styles.active : ''}`}>
-              {item.name}
-            </Link>
-          ))}
-        </nav>
+        {/* MVP mínimo = 1 sola pantalla → sin pestañas (la marca vuelve al inicio). */}
+        {NAV.length > 1 && (
+          <nav className={styles.nav}>
+            {NAV.map((item) => (
+              <Link key={item.path} href={item.path} className={`${styles.link} ${active === item.path ? styles.active : ''}`}>
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         <div className={styles.right}>
           <NavRangePicker />
